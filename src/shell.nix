@@ -1,4 +1,4 @@
-// https://github.com/NixOS/nixpkgs/issues/338165
+# https://github.com/NixOS/nixpkgs/issues/338165
 {
   pkgs ? import <nixpkgs> { },
   ...
