@@ -11,6 +11,7 @@ pkgs.mkShell {
     glibc
     glib
     gsettings-desktop-schemas
+    scenebuilder
     (pkgs.jdk21.override { enableJavaFX = true; })
   ];
   GSETTINGS_SCHEMA_DIR = "${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}/glib-2.0/schemas";

@@ -1,4 +1,4 @@
-package io.github.bmb0136.composer;
+package io.github.bmb0136.maestro;
 
 import javafx.application.Application;
 
