@@ -1,5 +1,3 @@
-import org.gradle.kotlin.dsl.sourceSets
-
 plugins {
   application
   id("org.openjfx.javafxplugin") version "0.1.0"
@@ -13,6 +11,7 @@ dependencies {
   implementation(project(":core"))
   testImplementation("org.junit.jupiter:junit-jupiter:6.0.2")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+  compileOnly("org.jetbrains:annotations:26.0.2-1")
 }
 
 tasks.named<Test>("test") {
