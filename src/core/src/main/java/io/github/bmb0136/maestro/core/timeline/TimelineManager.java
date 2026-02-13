@@ -9,7 +9,7 @@ import java.util.List;
 
 public class TimelineManager {
     private final int maxHistory;
-    private final ArrayDeque<Event<?>> events = new ArrayDeque<>();
+    private final ArrayDeque<Event<?>> events;
     private final Timeline referencePoint;
     private Timeline current;
     private int undoOffset = 0;
@@ -18,6 +18,7 @@ public class TimelineManager {
     public TimelineManager(int maxHistory, @NotNull Timeline referencePoint) {
         this.maxHistory = maxHistory;
         this.referencePoint = referencePoint;
+        this.events = new ArrayDeque<>(maxHistory);
     }
 
     public Timeline get() {
@@ -71,6 +72,7 @@ public class TimelineManager {
             return;
         }
         undoOffset--;
+        // TODO: only apply the redone event instead of marking entire current timeline dirty
         currentDirty = true;
     }
 
