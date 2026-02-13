@@ -65,7 +65,7 @@ class PitchNameTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", "   " , "\t", "   \n  "})
+    @ValueSource(strings = {"", "   ", "\t", "   \n  "})
     public void tryParse_emptyInput_fails(String input) {
         assertTrue(PitchName.tryParse(input).isEmpty());
     }

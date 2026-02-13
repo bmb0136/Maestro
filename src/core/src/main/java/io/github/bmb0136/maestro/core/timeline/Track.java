@@ -3,7 +3,10 @@ package io.github.bmb0136.maestro.core.timeline;
 import io.github.bmb0136.maestro.core.clip.Clip;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Optional;
+import java.util.UUID;
 
 public class Track implements Iterable<Clip> {
     private final HashMap<UUID, Clip> clips = new HashMap<>();

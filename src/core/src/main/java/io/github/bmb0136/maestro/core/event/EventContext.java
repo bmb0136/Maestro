@@ -5,11 +5,7 @@ import io.github.bmb0136.maestro.core.timeline.Track;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class EventContext<T> {
-    private final T target;
-    private final Timeline timeline;
-    private final Track track;
-
+public record EventContext<T>(T target, Timeline timeline, Track track) {
     public EventContext(@NotNull T target, @Nullable Timeline timeline, @Nullable Track track) {
         this.target = target;
         this.timeline = timeline;
@@ -24,18 +20,21 @@ public class EventContext<T> {
         this(target, null, null);
     }
 
+    @Override
     @NotNull
-    public T getTarget() {
+    public T target() {
         return target;
     }
 
+    @Override
     @Nullable
-    public Track getTrack() {
+    public Track track() {
         return track;
     }
 
+    @Override
     @Nullable
-    public Timeline getTimeline() {
+    public Timeline timeline() {
         return timeline;
     }
 }

@@ -14,6 +14,6 @@ public class RemoveTrackFromTimelineEvent extends TimelineEvent {
 
     @Override
     public EventResult apply(@NotNull EventContext<Timeline> context) {
-        return context.getTarget().removeTrack(trackId) ? EventResult.OK : EventResult.NOOP;
+        return context.target().removeTrack(trackId) ? EventResult.OK : EventResult.NOOP;
     }
 }

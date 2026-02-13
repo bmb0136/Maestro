@@ -3,7 +3,9 @@ package io.github.bmb0136.maestro.core.timeline;
 import io.github.bmb0136.maestro.core.event.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.List;
 
 public class TimelineManager {
     private final int maxHistory;

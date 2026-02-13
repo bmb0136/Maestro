@@ -13,7 +13,7 @@ public class AddTrackToTimelineEvent extends TimelineEvent {
 
     @Override
     public EventResult apply(@NotNull EventContext<Timeline> context) {
-        Timeline target = context.getTarget();
+        Timeline target = context.target();
         if (target.hasTrack(track.getId())) {
             return EventResult.TRACK_ALREADY_ON_TIMELINE;
         }

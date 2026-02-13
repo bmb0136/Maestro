@@ -17,8 +17,8 @@ public class AddClipToTrackEvent extends TrackEvent {
 
     @Override
     public EventResult apply(@NotNull EventContext<Track> context) {
-        Track target = context.getTarget();
-        for (Track track : Objects.requireNonNull(context.getTimeline())) {
+        Track target = context.target();
+        for (Track track : Objects.requireNonNull(context.timeline())) {
             if (track.hasClip(clip.getId())) {
                 return EventResult.CLIP_ALREADY_ON_TIMELINE;
             }

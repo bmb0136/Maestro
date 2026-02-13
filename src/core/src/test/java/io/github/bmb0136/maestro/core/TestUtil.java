@@ -8,7 +8,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public final class TestUtil {
-    private TestUtil() {}
+    private TestUtil() {
+    }
 
     public static Stream<Arguments> allCapitalization(int index, Iterable<Arguments> args) {
         List<Arguments> result = new ArrayList<>();

@@ -19,8 +19,8 @@ public class SetClipDurationEvent extends ClipEvent {
         if (newDuration < 0) {
             return EventResult.INVALID_CLIP_DURATION;
         }
-        Clip target = context.getTarget();
-        for (Clip other : Objects.requireNonNull(context.getTrack())) {
+        Clip target = context.target();
+        for (Clip other : Objects.requireNonNull(context.track())) {
             if (!other.getId().equals(target.getId())
                     && target.getPosition() < other.getPosition()
                     && other.getPosition() + newDuration > other.getPosition()) {

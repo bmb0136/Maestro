@@ -19,8 +19,8 @@ public class SetClipPositionEvent extends ClipEvent {
         if (newPosition < 0) {
             return EventResult.INVALID_CLIP_POSITION;
         }
-        Clip target = context.getTarget();
-        for (Clip other : Objects.requireNonNull(context.getTrack())) {
+        Clip target = context.target();
+        for (Clip other : Objects.requireNonNull(context.track())) {
             if (other != target && newPosition + target.getDuration() > other.getPosition() && newPosition < other.getPosition() + other.getDuration()) {
                 return EventResult.CLIP_OVERLAP;
             }

@@ -15,6 +15,6 @@ public class RemoveClipFromTrackEvent extends TrackEvent {
 
     @Override
     public EventResult apply(@NotNull EventContext<Track> context) {
-        return context.getTarget().removeClip(clipId) ? EventResult.OK : EventResult.NOOP;
+        return context.target().removeClip(clipId) ? EventResult.OK : EventResult.NOOP;
     }
 }
