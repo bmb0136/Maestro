@@ -26,7 +26,7 @@ public class AddClipToTrackEvent extends TrackEvent {
         if (CommonChecks.doesClipOverlapExisting(target, clip)) {
             return EventResult.CLIP_OVERLAP;
         }
-        target.addClip(clip);
+        target.addClip(clip.copy(false));
         return EventResult.OK;
     }
 }

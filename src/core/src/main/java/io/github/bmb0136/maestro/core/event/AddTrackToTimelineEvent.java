@@ -17,7 +17,7 @@ public class AddTrackToTimelineEvent extends TimelineEvent {
         if (target.hasTrack(track.getId())) {
             return EventResult.TRACK_ALREADY_ON_TIMELINE;
         }
-        target.addTrack(track);
+        target.addTrack(track.copy(false));
         return EventResult.OK;
     }
 }
