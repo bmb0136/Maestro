@@ -9,7 +9,7 @@ import java.util.List;
 
 public class TimelineManager {
     private final int maxHistory;
-    private final ArrayDeque<Event<?>> events = new ArrayDeque<>();
+    private final ArrayDeque<Event<?>> events;
     private final Timeline referencePoint;
     private Timeline current;
     private int undoOffset = 0;
@@ -18,13 +18,16 @@ public class TimelineManager {
     public TimelineManager(int maxHistory, @NotNull Timeline referencePoint) {
         this.maxHistory = maxHistory;
         this.referencePoint = referencePoint;
+        this.events = new ArrayDeque<>(maxHistory);
     }
 
     public Timeline get() {
         if (currentDirty) {
             current = referencePoint.copy(false);
             var toApply = List.copyOf(events);
-            toApply.subList(events.size() - undoOffset, events.size()).clear();
+            for (int i = 0; i < undoOffset; i++) {
+                toApply.removeLast();
+            }
             applyEvents(current, toApply, true);
             currentDirty = false;
         }
@@ -49,6 +52,7 @@ public class TimelineManager {
         var res = applyEvents(current, Collections.singletonList(event), false);
         if (!res.isOk() || res.equals(EventResult.NOOP)) {
             events.removeLast();
+            currentDirty = !res.isOk();
             return res;
         }
 
@@ -71,6 +75,7 @@ public class TimelineManager {
             return;
         }
         undoOffset--;
+        // TODO: only apply the redone event instead of marking entire current timeline dirty
         currentDirty = true;
     }
 
@@ -123,7 +128,7 @@ public class TimelineManager {
                 // If this happens then there was an event that put the Timeline into an invalid state
                 // The purpose of the event system is to make that impossible
                 // If you do get this error, something has gone horribly wrong
-                throw new IllegalStateException("Failed to apply events to Timeline. An intermediate event failed to apply");
+                throw new IllegalStateException("Failed to apply events to Timeline. An intermediate event failed to apply (%s returned %s)".formatted(event.getClass().getSimpleName(), result.name()));
             }
         }
         return result;

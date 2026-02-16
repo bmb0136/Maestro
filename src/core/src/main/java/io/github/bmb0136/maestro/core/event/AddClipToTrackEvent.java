@@ -23,7 +23,10 @@ public class AddClipToTrackEvent extends TrackEvent {
                 return EventResult.CLIP_ALREADY_ON_TIMELINE;
             }
         }
-        target.addClip(clip);
+        if (CommonEventChecks.doesClipOverlapExisting(target, clip)) {
+            return EventResult.CLIP_OVERLAP;
+        }
+        target.addClip(clip.copy(false));
         return EventResult.OK;
     }
 }

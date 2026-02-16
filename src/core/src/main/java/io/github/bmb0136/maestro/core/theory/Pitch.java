@@ -75,4 +75,12 @@ public record Pitch(@NotNull PitchName name, int octave) implements Comparable<P
     public int compareTo(@NotNull Pitch other) {
         return Integer.compare(toMidi(), other.toMidi());
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Pitch other) {
+            return compareTo(other) == 0;
+        }
+        return false;
+    }
 }

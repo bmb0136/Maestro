@@ -10,7 +10,8 @@ public enum EventResult {
     INVALID_CLIP_DURATION,
     INVALID_CLIP_POSITION,
     CLIP_OVERLAP,
-    WRONG_CLIP_TYPE;
+    WRONG_CLIP_TYPE,
+    NOTE_OUTSIDE_CLIP;
 
     private final boolean ok;
 

@@ -20,6 +20,9 @@ public class AddNoteToPianoRollClipEvent extends ClipEvent {
         if (!(context.target() instanceof PianoRollClip target)) {
             return EventResult.WRONG_CLIP_TYPE;
         }
+        if (note.position() < 0 || note.position() + note.duration() > target.getDuration() + 1e-6f) {
+            return EventResult.NOTE_OUTSIDE_CLIP;
+        }
         return target.addNote(note) ? EventResult.OK : EventResult.NOOP;
     }
 }
