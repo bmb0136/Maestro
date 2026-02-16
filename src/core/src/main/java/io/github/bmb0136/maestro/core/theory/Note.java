@@ -14,6 +14,14 @@ public record Note(Pitch pitch, float position, float duration, float volume) {
         }
     }
 
+    public Note(Pitch pitch, float position, float duration) {
+        this(pitch, position, duration, 1.0f);
+    }
+
+    public Note(Pitch pitch, float position) {
+        this(pitch, position, 1.0f, 1.0f);
+    }
+
     /**
      * Modify the {@link Note#pitch()} of this {@link Note} by applying the provided {@link Function}
      *
