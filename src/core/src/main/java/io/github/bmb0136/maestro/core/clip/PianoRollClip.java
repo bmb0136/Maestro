@@ -127,4 +127,18 @@ public class PianoRollClip extends Clip {
     public @NotNull Iterator<Note> iterator() {
         return notes.iterator();
     }
+
+    public static PianoRollClip create(float position, float duration) {
+        return create(position, duration, Collections.emptyList());
+    }
+
+    public static PianoRollClip create(float position, float duration, Iterable<Note> notes) {
+        var clip = new PianoRollClip();
+        clip.setMutable(true);
+        clip.setPosition(position);
+        clip.setPosition(duration);
+        notes.forEach(clip::addNote);
+        clip.setMutable(false);
+        return clip;
+    }
 }
