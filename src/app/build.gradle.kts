@@ -19,7 +19,7 @@ tasks.named<Test>("test") {
 }
 
 application {
-  mainClass = "io.github.bmb0136.composer.Main"
+  mainClass = "io.github.bmb0136.maestro.Main"
 }
 
 javafx {
