@@ -25,7 +25,9 @@ public class TimelineManager {
         if (currentDirty) {
             current = referencePoint.copy(false);
             var toApply = List.copyOf(events);
-            toApply.subList(events.size() - undoOffset, events.size()).clear();
+            for (int i = 0; i < undoOffset; i++) {
+                toApply.removeLast();
+            }
             applyEvents(current, toApply, true);
             currentDirty = false;
         }
