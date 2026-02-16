@@ -52,6 +52,7 @@ public class TimelineManager {
         var res = applyEvents(current, Collections.singletonList(event), false);
         if (!res.isOk() || res.equals(EventResult.NOOP)) {
             events.removeLast();
+            currentDirty = !res.isOk();
             return res;
         }
 
