@@ -123,24 +123,6 @@ public class PianoRollClip extends Clip {
         return copy;
     }
 
-        // Scan right to find first note that contains
-        int i = r + 1;
-        while (i < notes.size()) {
-            Note n = notes.get(i);
-            // If note is after position then we didn't find anything
-            if (n.position() >= position) {
-                break;
-            }
-            // Check that we are inside the note
-            if (position < n.position() + n.duration() && n.pitch().equals(pitch)) {
-                notes.remove(i);
-                return true;
-            }
-            i++;
-        }
-        return false;
-    }
-
     public static PianoRollClip create(float position, float duration) {
         return create(position, duration, Collections.emptyList());
     }
@@ -153,5 +135,10 @@ public class PianoRollClip extends Clip {
         notes.forEach(clip::addNote);
         clip.setMutable(false);
         return clip;
+    }
+
+    @Override
+    public @NotNull Iterator<Note> iterator() {
+        return notes.iterator();
     }
 }
