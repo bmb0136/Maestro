@@ -108,13 +108,12 @@
                         </AnchorPane>
                      </children>
                   </StackPane>
-                  <Separator orientation="VERTICAL" prefHeight="200.0" GridPane.columnIndex="1" GridPane.halignment="CENTER" />
+                  <Separator fx:id="centerColumn" orientation="VERTICAL" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowSpan="2" GridPane.valignment="CENTER" />
                   <ScrollBar fx:id="centerScrollBar" blockIncrement="0.2" max="1.0" orientation="VERTICAL" visibleAmount="1.0" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="2" />
-                  <Separator prefWidth="200.0" GridPane.rowIndex="1" />
-                  <Separator prefWidth="200.0" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+                  <Separator prefWidth="200.0" GridPane.columnSpan="2147483647" GridPane.rowIndex="1" />
                </children>
             </GridPane>
-            <Separator orientation="VERTICAL" prefHeight="200.0" />
+            <Separator maxWidth="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefWidth="0.0" />
             <VBox minWidth="-Infinity" prefWidth="320.0" spacing="4.0" HBox.hgrow="NEVER">
                <children>
                   <AnchorPane>

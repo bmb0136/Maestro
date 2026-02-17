@@ -11,6 +11,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 
 import java.awt.*;
@@ -19,9 +20,11 @@ import java.util.UUID;
 public class AppController {
 
     @FXML
-    private ScrollPane trackListScrollPane;
-    @FXML
     private ScrollBar centerScrollBar;
+    @FXML
+    private Node centerColumn;
+    @FXML
+    private ScrollPane trackListScrollPane;
     @FXML
     private VBox trackList;
     @FXML
@@ -36,6 +39,9 @@ public class AppController {
         trackList.getChildren().addListener((ListChangeListener<Node>) change -> {
             centerScrollBar.setVisibleAmount(trackListScrollPane.getHeight() / trackList.getHeight());
             centerScrollBar.setVisible(trackList.getHeight() > trackListScrollPane.getHeight());
+        });
+        centerScrollBar.visibleProperty().addListener((observableValue, oldValue, newValue) -> {
+            GridPane.setRowSpan(centerColumn, newValue ? 2 : 3);
         });
         centerScrollBar.setVisible(false);
     }
