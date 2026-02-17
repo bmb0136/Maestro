@@ -46,16 +46,22 @@ public class AppController {
     private void initialize() {
         root.getStylesheets().add("/DarkMode.css");
 
+        // Sync track list and the actual clips to the center scroll bar
         centerScrollBar.valueProperty().bindBidirectional(trackListScrollPane.vvalueProperty());
         centerScrollBar.valueProperty().bindBidirectional(trackClipListScrollPane.vvalueProperty());
 
+        // Auto-resize center scroll bar handle based on track count
         trackList.getChildren().addListener((ListChangeListener<Node>) change -> {
             centerScrollBar.setVisibleAmount(trackListScrollPane.getHeight() / trackList.getHeight());
             centerScrollBar.setVisible(trackList.getHeight() > trackListScrollPane.getHeight());
         });
+
+        // Make column span over scroll bar's space when scroll bar is invisible
+        // Can't always make this the case since the scroll bar is semi-transparent
         centerScrollBar.visibleProperty().addListener((observableValue, oldValue, newValue) -> {
             GridPane.setRowSpan(centerColumn, newValue ? 2 : 3);
         });
+
         centerScrollBar.setVisible(false);
 
         bpmLabel.textProperty().bind(bpm.map(value -> "BPM: " + value));
