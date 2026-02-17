@@ -73,7 +73,7 @@
                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
               </rowConstraints>
                <children>
-                  <ScrollPane prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: transparent;" vbarPolicy="NEVER" GridPane.columnIndex="2" GridPane.rowIndex="2">
+                  <ScrollPane fx:id="trackClipListScrollPane" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: transparent;" vbarPolicy="NEVER" GridPane.columnIndex="2" GridPane.rowIndex="2">
                      <content>
                         <VBox fx:id="trackClipList" />
                      </content></ScrollPane>

@@ -30,6 +30,8 @@ public class AppController {
     @FXML
     private ScrollPane trackListScrollPane;
     @FXML
+    private ScrollPane trackClipListScrollPane;
+    @FXML
     private VBox trackList;
     @FXML
     private VBox trackClipList;
@@ -45,6 +47,8 @@ public class AppController {
         root.getStylesheets().add("/DarkMode.css");
 
         centerScrollBar.valueProperty().bindBidirectional(trackListScrollPane.vvalueProperty());
+        centerScrollBar.valueProperty().bindBidirectional(trackClipListScrollPane.vvalueProperty());
+
         trackList.getChildren().addListener((ListChangeListener<Node>) change -> {
             centerScrollBar.setVisibleAmount(trackListScrollPane.getHeight() / trackList.getHeight());
             centerScrollBar.setVisible(trackList.getHeight() > trackListScrollPane.getHeight());
