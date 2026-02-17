@@ -1,11 +1,15 @@
 package io.github.bmb0136.maestro;
 
+import io.github.bmb0136.maestro.core.event.SetTrackNameEvent;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
+import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.SubScene;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 
 import java.io.IOException;
@@ -22,6 +26,8 @@ public class TrackSubScene extends SubScene {
     @FXML
     private Label nameLabel;
     @FXML
+    private TextField nameEditField;
+    @FXML
     private Parent root;
 
     private TrackSubScene(TimelineManager manager, UUID trackId, BiConsumer<UUID, CallbackType> callback) {
@@ -29,6 +35,39 @@ public class TrackSubScene extends SubScene {
         this.manager = manager;
         this.trackId = trackId;
         this.callback = callback;
+    }
+
+    @FXML
+    private void initialize() {
+        root.getStylesheets().add("/DarkMode.css");
+        manager.get().getTrack(trackId).ifPresent(t -> nameEditField.setText(t.getName()));
+        nameLabel.textProperty().bind(nameEditField.textProperty());
+        nameLabel.visibleProperty().bind(Bindings.not(nameEditField.visibleProperty()));
+        nameEditField.mouseTransparentProperty().bind(Bindings.not(nameEditField.visibleProperty()));
+        nameEditField.setVisible(false);
+    }
+
+    @FXML
+    private void onNameEdited() {
+        if (!manager.append(new SetTrackNameEvent(trackId, nameEditField.getText())).isOk()) {
+            return;
+        }
+        var name = manager.get().getTrack(trackId).orElseThrow().getName();
+        nameEditField.setText(name);
+        nameEditField.setVisible(false);
+    }
+
+    @FXML
+    private void onNameLabelClicked(MouseEvent event) {
+        if (event.getClickCount() == 2) {
+            nameEditField.setVisible(true);
+            nameEditField.requestFocus();
+        }
+    }
+
+    @FXML
+    private void onDeleteButtonClicked() {
+        callback.accept(trackId, CallbackType.DELETE);
     }
 
     public static TrackSubScene create(TimelineManager manager, UUID trackId, BiConsumer<UUID, CallbackType> callback) {
@@ -42,17 +81,6 @@ public class TrackSubScene extends SubScene {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @FXML
-    private void initialize() {
-        root.getStylesheets().add("/DarkMode.css");
-        manager.get().getTrack(trackId).ifPresent(t -> nameLabel.setText(t.getName()));
-    }
-
-    @FXML
-    private void onDeleteButtonClicked() {
-        callback.accept(trackId, CallbackType.DELETE);
     }
 
     public enum CallbackType {
