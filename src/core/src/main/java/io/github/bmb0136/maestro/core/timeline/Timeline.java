@@ -70,4 +70,13 @@ public class Timeline implements Iterable<Track> {
         copy.setMutable(false);
         return copy;
     }
+
+    public int indexOf(@NotNull UUID trackId) {
+        for (int i = 0; i < tracks.size(); i++) {
+            if (trackId.equals(tracks.get(i).getId())) {
+                return i;
+            }
+        }
+        return -1;
+    }
 }

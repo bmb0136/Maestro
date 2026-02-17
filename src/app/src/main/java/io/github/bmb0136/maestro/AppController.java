@@ -1,38 +1,66 @@
 package io.github.bmb0136.maestro;
 
 import io.github.bmb0136.maestro.core.event.AddTrackToTimelineEvent;
+import io.github.bmb0136.maestro.core.event.RemoveTrackFromTimelineEvent;
 import io.github.bmb0136.maestro.core.timeline.Timeline;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import io.github.bmb0136.maestro.core.timeline.Track;
+import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.SubScene;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.Objects;
+import java.awt.*;
+import java.util.UUID;
 
 public class AppController {
 
     @FXML
     private ScrollPane trackListScrollPane;
     @FXML
+    private ScrollBar centerScrollBar;
+    @FXML
     private VBox trackList;
+    @FXML
+    private Parent root;
     private final TimelineManager manager = new TimelineManager(1024, new Timeline());
 
     @FXML
-    public void onAddTrackButtonClicked() throws IOException {
+    private void initialize() {
+        root.getStylesheets().add("/DarkMode.css");
+
+        centerScrollBar.valueProperty().bindBidirectional(trackListScrollPane.vvalueProperty());
+        trackList.getChildren().addListener((ListChangeListener<Node>) change -> {
+            centerScrollBar.setVisibleAmount(trackListScrollPane.getHeight() / trackList.getHeight());
+            centerScrollBar.setVisible(trackList.getHeight() > trackListScrollPane.getHeight());
+        });
+        centerScrollBar.setVisible(false);
+    }
+
+    @FXML
+    private void onAddTrackButtonClicked() {
         Track track = new Track();
         if (!manager.append(new AddTrackToTimelineEvent(track)).isOk()) {
             return;
         }
 
-        URL resource = Objects.requireNonNull(getClass().getResource("/Track.fxml"));
-        FXMLLoader loader = new FXMLLoader(resource);
-        loader.setController(new TrackController(manager, track.getId()));
-        SubScene subScene = new SubScene(loader.load(), 240, 120);
+        var subScene = TrackSubScene.create(manager, track.getId(), this::trackCallback);
         trackList.getChildren().add(subScene);
+    }
+
+    private void trackCallback(UUID trackId, TrackSubScene.CallbackType type) {
+        switch (type) {
+            case DELETE -> {
+                int index = manager.get().indexOf(trackId);
+                if (!manager.append(new RemoveTrackFromTimelineEvent(trackId)).isOk()) {
+                    return;
+                }
+                trackList.getChildren().remove(index);
+            }
+            case null, default -> throw new IllegalArgumentException();
+        }
     }
 }
