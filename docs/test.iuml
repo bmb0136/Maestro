@@ -1,0 +1,7 @@
+@startuml StartSession Object
+class StartSession <<control>>
+class StartSessionButton <<boundary>>
+class Session <<entity>>
+StartSession --> StartSessionButton
+StartSession --> Session
+@enduml

@@ -1,0 +1,21 @@
+@startuml PianoRoll object
+class PianoRollClip {
+    + addNote(Note): boolean
+    + removeNote(Pitch, float): boolean
+    + {static} create(float, float): PianoRollClip
+    + {static} create(float, float, Iterable<Note>): PianoRollClip
+    + iterator(): Iterator<Note>
+}
+abstract class Clip {
++copy(boolean): Clip
+#{abstract} createCopy(): Clip
++getDuration(): float
++getId(): UUID
++getPosition(): float
++isMutable(): boolean
++setDuration(float): void
++setMutable(boolean): void
++setPosition(float): void
+}
+PianoRollClip <|-- Clip
+@enduml
