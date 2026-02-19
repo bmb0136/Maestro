@@ -10,14 +10,15 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Line;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
@@ -37,9 +38,11 @@ public class AppController {
     @FXML
     private VBox trackClipList;
     @FXML
-    private Parent root;
+    private Region root;
     @FXML
     private Label bpmLabel;
+    @FXML
+    private Line playbackHead;
     private final TimelineManager manager = new TimelineManager(1024, new Timeline());
     private final SimpleIntegerProperty bpm = new SimpleIntegerProperty(120);
     private final SimpleDoubleProperty pixelsPerBeat = new SimpleDoubleProperty(60.0);
@@ -67,6 +70,8 @@ public class AppController {
         centerScrollBar.setVisible(false);
 
         bpmLabel.textProperty().bind(bpm.map(value -> "BPM: " + value));
+
+        playbackHead.endYProperty().bind(root.heightProperty());
     }
 
     @FXML

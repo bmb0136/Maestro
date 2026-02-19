@@ -46,9 +46,11 @@
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Line?>
 <?import javafx.scene.text.Font?>
 
 <VBox fx:id="root" prefHeight="720.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/21.0.3-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="io.github.bmb0136.maestro.AppController">
@@ -75,7 +77,11 @@
                <children>
                   <ScrollPane fx:id="trackClipListScrollPane" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: transparent;" vbarPolicy="NEVER" GridPane.columnIndex="2" GridPane.rowIndex="2">
                      <content>
-                        <VBox fx:id="trackClipList" />
+                        <Pane>
+                           <children>
+                              <VBox fx:id="trackClipList" layoutX="0.7071067690849304" layoutY="0.7071067690849304" />
+                           </children>
+                        </Pane>
                      </content></ScrollPane>
                   <HBox prefHeight="100.0" prefWidth="200.0" spacing="4.0">
                      <children>
@@ -121,6 +127,11 @@
                      </GridPane.margin></Separator>
                   <ScrollBar fx:id="centerScrollBar" blockIncrement="0.2" max="1.0" orientation="VERTICAL" visibleAmount="1.0" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="2" />
                   <Separator prefWidth="200.0" GridPane.columnSpan="2147483647" GridPane.rowIndex="1" />
+                  <AnchorPane GridPane.columnIndex="2" GridPane.columnSpan="2147483647" GridPane.halignment="LEFT" GridPane.valignment="TOP">
+                     <children>
+                        <Line fx:id="playbackHead" stroke="RED" />
+                     </children>
+                  </AnchorPane>
                </children>
             </GridPane>
             <Separator maxWidth="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefWidth="0.0" />
