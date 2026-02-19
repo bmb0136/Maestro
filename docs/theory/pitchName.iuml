@@ -1,0 +1,14 @@
+@startuml pitchName object
+class pitchName{
++next(): PitchName
++next(int): PitchName
++previous(): PitchName
++previous(int): PitchName
++isSharp(): boolean
++isFlat(): boolean
++isNatural(): boolean
++getOctaveOffset(): int
++toString(): String
++tryParse(String): Optional<PitchName>
+}
+@enduml
