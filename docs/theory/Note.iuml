@@ -1,0 +1,8 @@
+@startuml Note object
+class TrackEvent{
++ modifyPitch(Function<Pitch, Pitch>): Note
++ modifyPosition(Function<Float, Float>): Note
++ modifyDuration(Function<Float, Float>): Note
++ modifyVolume(Function<Float, Float>): Note
+}
+@enduml

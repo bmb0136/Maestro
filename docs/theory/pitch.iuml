@@ -1,0 +1,13 @@
+@startuml Pitch object
+class TrackEvent{
+    + toMidi(): int
+    + fromMidi(int,boolen): Pitch
+    + addSemitones(int): Pitch
+    + addSemitones(int, boolean): Pitch
+    + compareTo(Pitch): int
+    + equals(Object): boolean
+    + {static} tryParse(String): Optional<Pitch>
+    }
+@enduml
+
+do tryparse
