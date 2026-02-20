@@ -79,4 +79,12 @@ public class Timeline implements Iterable<Track> {
         }
         return -1;
     }
+
+    public float getDuration() {
+        float duration = 0;
+        for (Track track : tracks) {
+            duration = Math.max(duration, track.getDuration());
+        }
+        return duration;
+    }
 }

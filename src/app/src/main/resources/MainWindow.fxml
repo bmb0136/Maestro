@@ -49,6 +49,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.TilePane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Line?>
 <?import javafx.scene.text.Font?>
@@ -75,6 +76,22 @@
                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
               </rowConstraints>
                <children>
+                  <ScrollPane fx:id="timeMarkerScrollPane" hbarPolicy="NEVER" vbarPolicy="NEVER" GridPane.columnIndex="2" GridPane.halignment="LEFT" GridPane.rowSpan="2147483647" GridPane.valignment="TOP">
+                     <content>
+                        <AnchorPane>
+                           <children>
+                              <Line fx:id="playbackHead" layoutX="0.7071067690849304" layoutY="0.7071067690849304" stroke="RED" />
+                              <TilePane fx:id="timeMarkerList" layoutY="2.0" onMouseClicked="#onTimeMarkerListClicked" prefColumns="0" prefRows="1" />
+                           </children>
+                           <padding>
+                              <Insets left="8.0" />
+                           </padding>
+                        </AnchorPane>
+                     </content>
+                     <GridPane.margin>
+                        <Insets />
+                     </GridPane.margin>
+                  </ScrollPane>
                   <ScrollPane fx:id="trackClipListScrollPane" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: transparent;" vbarPolicy="NEVER" GridPane.columnIndex="2" GridPane.rowIndex="2">
                      <content>
                         <Pane>
@@ -121,17 +138,13 @@
                         </AnchorPane>
                      </children>
                   </StackPane>
-                  <Separator fx:id="centerColumn" orientation="VERTICAL" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowSpan="2" GridPane.valignment="CENTER">
+                  <Separator fx:id="trackColumn" orientation="VERTICAL" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowSpan="2" GridPane.valignment="CENTER">
                      <GridPane.margin>
                         <Insets left="2.5" />
                      </GridPane.margin></Separator>
-                  <ScrollBar fx:id="centerScrollBar" blockIncrement="0.2" max="1.0" orientation="VERTICAL" visibleAmount="1.0" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="2" />
-                  <Separator prefWidth="200.0" GridPane.columnSpan="2147483647" GridPane.rowIndex="1" />
-                  <AnchorPane GridPane.columnIndex="2" GridPane.columnSpan="2147483647" GridPane.halignment="LEFT" GridPane.valignment="TOP">
-                     <children>
-                        <Line fx:id="playbackHead" stroke="RED" />
-                     </children>
-                  </AnchorPane>
+                  <ScrollBar fx:id="trackScrollBar" blockIncrement="0.2" max="1.0" orientation="VERTICAL" visibleAmount="1.0" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="2" />
+                  <Separator fx:id="timelineColumn" prefWidth="200.0" GridPane.columnSpan="2147483647" GridPane.rowIndex="1" />
+                  <ScrollBar fx:id="timelineScrollBar" blockIncrement="0.2" max="1.0" visibleAmount="1.0" GridPane.columnIndex="2" GridPane.rowIndex="1" />
                </children>
             </GridPane>
             <Separator maxWidth="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefWidth="0.0" />

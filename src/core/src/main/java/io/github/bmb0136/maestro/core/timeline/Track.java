@@ -77,4 +77,12 @@ public class Track implements Iterable<Clip> {
         copy.setMutable(false);
         return copy;
     }
+
+    public float getDuration() {
+        float duration = 0;
+        for (Clip clip : clips.values()) {
+            duration = Math.max(duration, clip.getPosition() + clip.getDuration());
+        }
+        return duration;
+    }
 }
