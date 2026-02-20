@@ -8,3 +8,6 @@ build/
 result
 
 src/.idea/
+src/**/bin
+.idea/
+*.iml

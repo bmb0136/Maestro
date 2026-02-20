@@ -1,0 +1,141 @@
+@startuml ObjectModel
+
+abstract class Clip {
+    + getDuration(): float
+    + getId(): UUID
+    + getPosition(): float
+    + isMutable(): boolean
+    + setDuration(float): void
+    + setMutable(boolean): void
+    + setPosition(float): void
+    + copy(boolean): Clip
+    # {abstract} createCopy(boolean): Clip
+    + iterator(): Iterator<Note>
+}
+
+class PianoRollClip {
+    + addNote(Note): boolean
+    + removeNote(Pitch, float): boolean
+    + {static} create(float, float): PianoRollClip
+    + {static} create(float, float, Iterable<Note>): PianoRollClip
+}
+
+abstract class Event<T> {
+    + {abstract} apply(EventContext<T>): EventResult
+}
+
+enum EventResult {
+    + isOk(): boolean
+}
+
+record EventContext<T> {
+    + target(): T
+    + timeline(): Timeline
+    + track(): Track
+}
+
+abstract class TimelineEvent {
+}
+
+abstract class TrackEvent {
+    + getTrackId(): UUID
+}
+
+abstract class ClipEvent {
+    + getTrackId(): UUID
+    + getClipId(): UUID
+}
+
+
+record Note {
+    + pitch(): Pitch
+    + position(): float
+    + duration(): float
+    + volume(): float
+    + modifyPitch(Function<Pitch, Pitch>): Note
+    + modifyPosition(Function<Float, Float>): Note
+    + modifyDuration(Function<Float, Float>): Note
+    + modifyVolume(Function<Float, Float>): Note
+}
+record Pitch {
+    + name(): PitchName
+    + octave(): int
+    + toMidi(): int
+    + {static} fromMidi(int,boolen): Pitch
+    + addSemitones(int): Pitch
+    + addSemitones(int, boolean): Pitch
+    + compareTo(Pitch): int
+    + equals(Object): boolean
+    + {static} tryParse(String): Optional<Pitch>
+}
+
+enum PitchName {
+    + next(): PitchName
+    + next(int): PitchName
+    + previous(): PitchName
+    + previous(int): PitchName
+    + isSharp(): boolean
+    + isFlat(): boolean
+    + isNatural(): boolean
+    + getOctaveOffset(): int
+    + toString(): String
+    + {static} tryParse(String): Optional<PitchName>
+}
+
+class Timeline {
+    +iterator(): Iterator<Track>
+    +hasTrack(UUID): boolean
+    +getTrack(UUID): Optional<Track>
+    +addTrack(Track): void
+    +removeTrack(UUID): boolean
+    +isMutable(): boolean
+    +setMutable(boolean): void
+    +copy(boolean): Timeline
+}
+
+class TimelineManager{
+    + get(): Timeline
+    + append(Event<?>): EventResult
+    + undo(): void
+    + redo(): void
+    + getMaxHistory(): int
+
+}
+
+class Track {
+    + getId(): UUID
+    + iterator(): Iterator<Clip>
+    + hasClip(UUID): boolean
+    + getClip(UUID): Optional<Clip>
+    + addClip(Clip): void
+    + removeClip(UUID) boolean
+    + isMutable(): boolean
+    + setMutable(boolean): void
+    + copy(boolean): Track
+
+}
+
+Clip -l-|> PianoRollClip
+
+Clip ..> Note
+PianoRollClip ..> Note
+
+Pitch .l.> PitchName
+Note .l.> Pitch
+
+TimelineEvent -u-|> Event
+TrackEvent -u-|> Event
+ClipEvent -u-|> Event
+
+Event .l.> EventResult
+Event .l.> EventContext
+
+Track -u-* Timeline
+Clip -r-* Track
+
+TimelineManager ..> Timeline
+TimelineManager .l.> Event
+TimelineManager ..> EventContext
+TimelineManager ..> EventResult
+
+@enduml
