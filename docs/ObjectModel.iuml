@@ -115,22 +115,27 @@ class Track {
 
 }
 
+Clip -l-|> PianoRollClip
+
 Clip ..> Note
-Pitch ..> PitchName
-Note ..> Pitch
-Clip --|> PianoRollClip
-TimelineEvent --|> Event
-ClipEvent --|> Event
-TrackEvent --|> Event
-Event ..> EventResult
-Event ..> EventContext
-Track --* Timeline
-TimelineManager ..> Timeline
-TimelineManager ..> Event
-TimelineManager ..> EventContext
-Clip --* Track
-TimelineManager ..> EventResult
 PianoRollClip ..> Note
 
+Pitch .l.> PitchName
+Note .l.> Pitch
+
+TimelineEvent -u-|> Event
+TrackEvent -u-|> Event
+ClipEvent -u-|> Event
+
+Event .l.> EventResult
+Event .l.> EventContext
+
+Track -u-* Timeline
+Clip -r-* Track
+
+TimelineManager ..> Timeline
+TimelineManager .l.> Event
+TimelineManager ..> EventContext
+TimelineManager ..> EventResult
 
 @enduml
