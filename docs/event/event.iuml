@@ -1,7 +1,7 @@
 
 @startuml event object
 abstract class Event {
-
++ apply(EventContext<T>):EventResult
 }
 abstract class TrackEvent{
 +getTrackId(): UUID
@@ -13,14 +13,17 @@ abstract class ClipEvent{
  +getTrackId(): UUID
  +getClipId(): UUID
 }
+record EventContext{
+    target(): T
+    timeline(): Timeline
+    track(): Track
+}
+
 Event <|.. ClipEvent
 Event <|.. TrackEvent
 Event <|.. TimelineEvent
+
 @enduml
 
 
-
-# tack event
-# timeline event
-# clip event
-# main event class
+note: having EventContext<T> breaks the UML
