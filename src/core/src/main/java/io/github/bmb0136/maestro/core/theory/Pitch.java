@@ -1,4 +1,4 @@
-package io.github.bmb0136.maestro.core;
+package io.github.bmb0136.maestro.core.theory;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -74,5 +74,13 @@ public record Pitch(@NotNull PitchName name, int octave) implements Comparable<P
     @Override
     public int compareTo(@NotNull Pitch other) {
         return Integer.compare(toMidi(), other.toMidi());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Pitch other) {
+            return compareTo(other) == 0;
+        }
+        return false;
     }
 }

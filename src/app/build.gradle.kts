@@ -1,6 +1,7 @@
 plugins {
   application
   id("org.openjfx.javafxplugin") version "0.1.0"
+  id("com.gradleup.shadow") version "9.3.1"
 }
 
 repositories {
@@ -19,7 +20,7 @@ tasks.named<Test>("test") {
 }
 
 application {
-  mainClass = "io.github.bmb0136.composer.Main"
+  mainClass = "io.github.bmb0136.maestro.Main"
 }
 
 javafx {
