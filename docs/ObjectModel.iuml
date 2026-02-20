@@ -1,4 +1,5 @@
-@startuml all
+@startuml ObjectModel
+
 abstract class Clip {
     + getDuration(): float
     + getId(): UUID
