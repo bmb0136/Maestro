@@ -12,17 +12,17 @@ record EventContext<T> {
 
 abstract class TimelineEvent {
 }
-Event <|.. TimelineEvent
+Event <|-- TimelineEvent
 
 abstract class TrackEvent {
     + getTrackId(): UUID
 }
-Event <|.. TrackEvent
+Event <|-- TrackEvent
 
 abstract class ClipEvent {
     + getTrackId(): UUID
     + getClipId(): UUID
 }
-Event <|.. ClipEvent
+Event <|-- ClipEvent
 
 @enduml
