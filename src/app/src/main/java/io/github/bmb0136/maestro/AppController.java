@@ -15,6 +15,7 @@ import javafx.scene.SubScene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TitledPane;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.*;
@@ -50,6 +51,8 @@ public class AppController {
     private ScrollPane timeMarkerScrollPane;
     @FXML
     private TilePane timeMarkerList;
+    @FXML
+    private TitledPane editorPane;
     private final TimelineManager manager = new TimelineManager(1024, new Timeline());
     private final SimpleIntegerProperty bpm = new SimpleIntegerProperty(120);
     // TODO: Bind zooming to this property (decrease to zoom in, increase to zoom out)
