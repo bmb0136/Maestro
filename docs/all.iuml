@@ -79,7 +79,7 @@ enum PitchName {
     + {static} tryParse(String): Optional<PitchName>
 }
 
-class Timeline{
+class Timeline {
     +iterator(): Iterator<Track>
     +hasTrack(UUID): boolean
     +getTrack(UUID): Optional<Track>
@@ -90,7 +90,7 @@ class Timeline{
     +copy(boolean): Timeline
 }
 
-class Track{
+class Track {
     + getId(): UUID
     + iterator(): Iterator<Clip>
     + hasClip(UUID): boolean
@@ -112,12 +112,3 @@ Timeline <|.. Track
 Track <|.. Clip
 
 @enduml
-
-refrence to different symbols, delete latter!
-
-Extension 	<|-- 	Specialization of a class in a hierarchy
-Implementation 	<|.. 	Realization of an interface by a class
-Composition 	*-- 	The part cannot exist without the whole
-Aggregation 	o-- 	The part can exist independently of the whole
-Dependency 	--> 	The object uses another object
-Dependency 	..> 	A weaker form of dependency
