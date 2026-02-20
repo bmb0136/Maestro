@@ -1,5 +1,4 @@
 @startuml all
-top to bottom direction
 abstract class Clip {
     + getDuration(): float
     + getId(): UUID
@@ -23,7 +22,10 @@ class PianoRollClip {
 abstract class Event<T> {
     + {abstract} apply(EventContext<T>): EventResult
 }
-enum EventResult
+
+enum EventResult {
+    + isOk(): boolean
+}
 
 record EventContext<T> {
     + target(): T
@@ -38,12 +40,10 @@ abstract class TrackEvent {
     + getTrackId(): UUID
 }
 
-
 abstract class ClipEvent {
     + getTrackId(): UUID
     + getClipId(): UUID
 }
-
 
 
 record Note {
@@ -114,21 +114,22 @@ class Track {
 
 }
 
-Note <..Clip
-PitchName <.. Pitch
-Pitch <.. Note
-PianoRollClip <|-- Clip
-Event <|-- TimelineEvent
-Event <|-- ClipEvent
-Event <|-- TrackEvent
-Event <.. EventResult
-EventContext <.. Event
-Timeline *-- Track
-Timeline <.. TimelineManager 
-Event <.. TimelineManager 
-EventContext <.. TimelineManager 
-Track *-- Clip
-EventResult <.. TimelineManager
-Note<.. PianoRolClip
+Clip ..> Note
+Pitch ..> PitchName
+Note ..> Pitch
+Clip --|> PianoRollClip
+TimelineEvent --|> Event
+ClipEvent --|> Event
+TrackEvent --|> Event
+Event ..> EventResult
+Event ..> EventContext
+Track --* Timeline
+TimelineManager ..> Timeline
+TimelineManager ..> Event
+TimelineManager ..> EventContext
+Clip --* Track
+TimelineManager ..> EventResult
+PianoRollClip ..> Note
+
 
 @enduml
