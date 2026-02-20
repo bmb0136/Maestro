@@ -1,29 +1,28 @@
-
 @startuml event object
-abstract class Event {
-+ apply(EventContext<T>):EventResult
-}
-abstract class TrackEvent{
-+getTrackId(): UUID
-}
-abstract class TimelineEvent{
 
-}
-abstract class ClipEvent{
- +getTrackId(): UUID
- +getClipId(): UUID
-}
-record EventContext{
-    target(): T
-    timeline(): Timeline
-    track(): Track
+abstract class Event<T> {
+    + {abstract} apply(EventContext<T>): EventResult
 }
 
-Event <|.. ClipEvent
-Event <|.. TrackEvent
+record EventContext<T> {
+    + target(): T
+    + timeline(): Timeline
+    + track(): Track
+}
+
+abstract class TimelineEvent {
+}
 Event <|.. TimelineEvent
 
+abstract class TrackEvent {
+    + getTrackId(): UUID
+}
+Event <|.. TrackEvent
+
+abstract class ClipEvent {
+    + getTrackId(): UUID
+    + getClipId(): UUID
+}
+Event <|.. ClipEvent
+
 @enduml
-
-
-note: having EventContext<T> breaks the UML

@@ -1,13 +1,13 @@
 @startuml Pitch object
-record Pitch{
+record Pitch {
+    + name(): PitchName
+    + octave(): int
     + toMidi(): int
-    + fromMidi(int,boolen): Pitch
+    + {static} fromMidi(int,boolen): Pitch
     + addSemitones(int): Pitch
     + addSemitones(int, boolean): Pitch
     + compareTo(Pitch): int
     + equals(Object): boolean
     + {static} tryParse(String): Optional<Pitch>
-    + name(): PitchName
-    + octave(): int
     }
 @enduml

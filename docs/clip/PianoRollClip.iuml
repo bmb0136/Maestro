@@ -1,22 +1,24 @@
 @startuml PianoRoll object
+
+abstract class Clip {
+    + getDuration(): float
+    + getId(): UUID
+    + getPosition(): float
+    + isMutable(): boolean
+    + setDuration(float): void
+    + setMutable(boolean): void
+    + setPosition(float): void
+    + copy(boolean): Clip
+    # {abstract} createCopy(boolean): Clip
+    + iterator(): Iterator<Note>
+}
+
 class PianoRollClip {
     + addNote(Note): boolean
     + removeNote(Pitch, float): boolean
     + {static} create(float, float): PianoRollClip
     + {static} create(float, float, Iterable<Note>): PianoRollClip
-    
-}
-abstract class Clip {
-+copy(boolean): Clip
-#{abstract} createCopy(): Clip
-+getDuration(): float
-+getId(): UUID
-+getPosition(): float
-+isMutable(): boolean
-+setDuration(float): void
-+setMutable(boolean): void
-+setPosition(float): void
-+iterator(): Iterator<Note>
 }
 PianoRollClip <|-- Clip
+
 @enduml

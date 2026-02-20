@@ -1,14 +1,14 @@
 @startuml pitchName object
-enum pitchName{
-+next(): PitchName
-+next(int): PitchName
-+previous(): PitchName
-+previous(int): PitchName
-+isSharp(): boolean
-+isFlat(): boolean
-+isNatural(): boolean
-+getOctaveOffset(): int
-+toString(): String
-+tryParse(String): Optional<PitchName>
+enum PitchName {
+    + next(): PitchName
+    + next(int): PitchName
+    + previous(): PitchName
+    + previous(int): PitchName
+    + isSharp(): boolean
+    + isFlat(): boolean
+    + isNatural(): boolean
+    + getOctaveOffset(): int
+    + toString(): String
+    + {static} tryParse(String): Optional<PitchName>
 }
 @enduml
