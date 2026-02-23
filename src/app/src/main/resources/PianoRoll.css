@@ -1,0 +1,9 @@
+.grid Line {
+    -fx-stroke: #808080;
+}
+
+.note {
+    -fx-fill: LIME;
+    -fx-stroke-width: 2px;
+    -fx-stroke: GREEN;
+}

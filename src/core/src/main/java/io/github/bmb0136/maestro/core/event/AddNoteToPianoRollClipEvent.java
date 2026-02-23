@@ -10,7 +10,7 @@ import java.util.UUID;
 public class AddNoteToPianoRollClipEvent extends ClipEvent {
     private final Note note;
 
-    protected AddNoteToPianoRollClipEvent(UUID trackId, UUID clipId, Note note) {
+    public AddNoteToPianoRollClipEvent(UUID trackId, UUID clipId, Note note) {
         super(trackId, clipId);
         this.note = note;
     }

@@ -114,6 +114,38 @@ public class PianoRollClip extends Clip {
         return false;
     }
 
+    public Optional<Note> getNote(Pitch pitch, float position) {
+        // Find first note whose right side (position + duration) is before position
+        int l = 0;
+        int r = notes.size() - 1;
+        while (l <= r) {
+            int mid = (l + r) / 2;
+            Note other = notes.get(mid);
+            float cmp = other.position() + other.duration() - position;
+            if (cmp < 0) {
+                l = mid + 1;
+            } else {
+                r = mid - 1;
+            }
+        }
+
+        // Scan right to find first note that contains
+        int i = r + 1;
+        while (i < notes.size()) {
+            Note n = notes.get(i);
+            // If note is after position then we didn't find anything
+            if (n.position() >= position) {
+                break;
+            }
+            // Check that we are inside the note
+            if (position < n.position() + n.duration() && n.pitch().equals(pitch)) {
+                return Optional.of(notes.get(i));
+            }
+            i++;
+        }
+        return Optional.empty();
+    }
+
     @Override
     protected Clip createCopy(boolean newId) {
         PianoRollClip copy = new PianoRollClip(newId ? UUID.randomUUID() : getId());
@@ -131,7 +163,7 @@ public class PianoRollClip extends Clip {
         var clip = new PianoRollClip();
         clip.setMutable(true);
         clip.setPosition(position);
-        clip.setPosition(duration);
+        clip.setDuration(duration);
         notes.forEach(clip::addNote);
         clip.setMutable(false);
         return clip;

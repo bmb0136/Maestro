@@ -1,7 +1,8 @@
 package io.github.bmb0136.maestro;
 
-import io.github.bmb0136.maestro.core.event.AddTrackToTimelineEvent;
-import io.github.bmb0136.maestro.core.event.RemoveTrackFromTimelineEvent;
+import io.github.bmb0136.maestro.core.clip.Clip;
+import io.github.bmb0136.maestro.core.clip.PianoRollClip;
+import io.github.bmb0136.maestro.core.event.*;
 import io.github.bmb0136.maestro.core.timeline.Timeline;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import io.github.bmb0136.maestro.core.timeline.Track;
@@ -73,10 +74,6 @@ public class AppController {
             trackScrollBar.setVisibleAmount(trackListScrollPane.getHeight() / trackList.getHeight());
             trackScrollBar.setVisible(trackList.getHeight() > trackListScrollPane.getHeight());
         });
-        trackScrollBar.setVisible(false);
-        // TODO: Auto-resize timeline scroll bar handle based on length of timeline
-        timelineScrollBar.setVisibleAmount(0.1);
-        //timelineScrollBar.setVisible(false);
 
         // Make column span over scroll bar's space when scroll bar is invisible
         // Can't always make this the case since the scroll bar is semi-transparent
@@ -86,6 +83,11 @@ public class AppController {
         timelineScrollBar.visibleProperty().addListener((observable, oldValue, newValue) -> {
             GridPane.setColumnSpan(timelineColumn, newValue ? 2 : 3);
         });
+
+        trackScrollBar.setVisible(false);
+        // TODO: Auto-resize timeline scroll bar handle based on length of timeline
+        timelineScrollBar.setVisibleAmount(0.1);
+        //timelineScrollBar.setVisible(false);
 
         bpmLabel.textProperty().bind(bpm.map(value -> "BPM: " + value));
 
@@ -109,6 +111,8 @@ public class AppController {
                 e.consume();
             }
         });
+
+        editorPane.prefWidthProperty().bind(trackClipListScrollPane.widthProperty());
     }
 
     private void updateTimeMarkers() {
@@ -135,6 +139,18 @@ public class AppController {
 
             timeMarkerList.getChildren().add(pane);
         }
+    }
+
+    private void setupEditorFor(UUID trackId, @NotNull Clip clip) {
+        SubScene scene;
+        switch (clip) {
+            case PianoRollClip c -> scene = PianoRollEditorSubScene.create(manager, trackId, c.getId());
+            default -> throw new IllegalArgumentException("Unknown clip type: " + clip.getClass().getName());
+        }
+
+        scene.widthProperty().bind(editorPane.prefWidthProperty());
+        scene.heightProperty().bind(root.heightProperty().multiply(0.5));
+        editorPane.setContent(scene);
     }
 
     @FXML
