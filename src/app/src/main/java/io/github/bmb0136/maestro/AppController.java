@@ -113,15 +113,6 @@ public class AppController {
         });
 
         editorPane.prefWidthProperty().bind(trackClipListScrollPane.widthProperty());
-
-        // TODO: remove this (testing piano roll editor)
-        Track track = new Track();
-        addTrack(track);
-        PianoRollClip clip = PianoRollClip.create(0, 4);
-        if (!manager.append(new AddClipToTrackEvent(track.getId(), clip)).isOk()) {
-            throw new AssertionError("failed to add test clip");
-        }
-        setupEditorFor(track.getId(), clip);
     }
 
     private void updateTimeMarkers() {
