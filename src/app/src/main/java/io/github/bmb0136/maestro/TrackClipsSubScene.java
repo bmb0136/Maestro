@@ -1,5 +1,6 @@
 package io.github.bmb0136.maestro;
 
+import io.github.bmb0136.maestro.core.clip.PianoRollClip;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.event.ActionEvent;
@@ -14,6 +15,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 
+import java.awt.*;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Objects;
@@ -45,10 +47,44 @@ public class TrackClipsSubScene extends SubScene {
         addMenu.getItems().add(addPianoRoll);
         contextMenu.getItems().add(addMenu);
     }
+    /*
 
+
+     */
+    private void OnPianoRollMouseClicked(MouseEvent event) {
+        root.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+
+        });
+    }
     private void addPianoRollClip(ActionEvent e) {
         float beatPosition = (float) (contextMenuX / pixelsPerBeat.get());
+        //public static final int MOUSE_EXITED; When Mouse click is dropped
         // TODO: add clip
+        PianoRollClip Clip = new PianoRollClip();
+        Pane pane = new Pane();
+        pane.prefHeightProperty().bind(root.heightProperty());
+        root.getChildren().add(pane);
+        //pane.widthProperty().bind(root.heightProperty());
+        //pane.bind(root.heightProperty());
+        //Clip.setPosition(beatPosition);
+
+
+        //pane.setLocation((int)beatPosition,(int) beatPosition);
+        //System.out.println(beatPosition);
+
+        /*
+        var result = manager.append(...);
+        if (!result.isOK()) {
+        new Alert(Alert.AlertType.ERROR, "Error: " + result, ButtonType.OK).showAndWait();
+        return;
+        }
+
+         */
+        Button test_button = new Button("Test");
+        System.out.println(root.getChildren());
+        //root.getChildren().add(pane);
+        //root.getChildren().add(test_button);
+        //root.getChildren().add();
 
     }
 
