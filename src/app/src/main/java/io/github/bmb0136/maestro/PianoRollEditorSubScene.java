@@ -9,19 +9,12 @@ import io.github.bmb0136.maestro.core.theory.Note;
 import io.github.bmb0136.maestro.core.theory.Pitch;
 import io.github.bmb0136.maestro.core.theory.PitchName;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
-import javafx.beans.InvalidationListener;
 import javafx.beans.binding.DoubleExpression;
-import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableDoubleValue;
-import javafx.beans.value.ObservableNumberValue;
-import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.SubScene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -29,7 +22,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.TextAlignment;
 
@@ -37,7 +29,7 @@ import java.util.HashMap;
 import java.util.Objects;
 import java.util.UUID;
 
-public class PianoRollEditorSubscene extends SubScene {
+public class PianoRollEditorSubScene extends SubScene {
 
     private static final double PIXELS_PER_PITCH = 20.0;
     private static final HashMap<Pitch, Double> PITCH_TO_Y = new HashMap<>();
@@ -65,7 +57,7 @@ public class PianoRollEditorSubscene extends SubScene {
     @FXML
     private GridPane gridLines;
 
-    public PianoRollEditorSubscene(TimelineManager manager, UUID trackId, UUID clipId) {
+    public PianoRollEditorSubScene(TimelineManager manager, UUID trackId, UUID clipId) {
         // Dummy node (can't pass null here)
         // Size doesn't matter, it will be automatically resized
         super(new Pane(), 1, 1);
@@ -213,11 +205,11 @@ public class PianoRollEditorSubscene extends SubScene {
         return new RollPosition(Pitch.fromMidi(midi, false), position);
     }
 
-    public static PianoRollEditorSubscene create(TimelineManager manager, UUID trackId, UUID clipId) {
+    public static PianoRollEditorSubScene create(TimelineManager manager, UUID trackId, UUID clipId) {
         var resource = Objects.requireNonNull(App.class.getResource("/PianoRoll.fxml"));
         var loader = new FXMLLoader(resource);
         try {
-            var s = new PianoRollEditorSubscene(manager, trackId, clipId);
+            var s = new PianoRollEditorSubScene(manager, trackId, clipId);
             loader.setController(s);
             s.setRoot(loader.load());
             return s;

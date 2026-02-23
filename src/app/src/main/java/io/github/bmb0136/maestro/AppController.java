@@ -144,7 +144,7 @@ public class AppController {
     private void setupEditorFor(UUID trackId, @NotNull Clip clip) {
         SubScene scene;
         switch (clip) {
-            case PianoRollClip c -> scene = PianoRollEditorSubscene.create(manager, trackId, c.getId());
+            case PianoRollClip c -> scene = PianoRollEditorSubScene.create(manager, trackId, c.getId());
             default -> throw new IllegalArgumentException("Unknown clip type: " + clip.getClass().getName());
         }
 
