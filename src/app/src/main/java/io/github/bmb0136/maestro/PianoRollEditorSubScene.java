@@ -1,6 +1,5 @@
 package io.github.bmb0136.maestro;
 
-import io.github.bmb0136.maestro.core.clip.Clip;
 import io.github.bmb0136.maestro.core.clip.PianoRollClip;
 import io.github.bmb0136.maestro.core.event.AddNoteToPianoRollClipEvent;
 import io.github.bmb0136.maestro.core.event.EventResult;
@@ -11,6 +10,7 @@ import io.github.bmb0136.maestro.core.theory.PitchName;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import javafx.beans.binding.DoubleExpression;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -43,6 +43,7 @@ public class PianoRollEditorSubScene extends ClipEditorSubScene<PianoRollClip> {
     }
 
     private final SimpleDoubleProperty pixelsPerBeat = new SimpleDoubleProperty(120.0);
+    private final SimpleIntegerProperty gridDivisions = new SimpleIntegerProperty(1);
 
     @FXML
     private Region root;
@@ -95,30 +96,19 @@ public class PianoRollEditorSubScene extends ClipEditorSubScene<PianoRollClip> {
         gridLines.prefWidthProperty().bind(notesPane.widthProperty());
         gridLines.prefHeightProperty().bind(notesPane.heightProperty());
         var rc = new RowConstraints();
-        var cc = new ColumnConstraints();
         rc.setPrefHeight(PIXELS_PER_PITCH);
-        cc.prefWidthProperty().bind(pixelsPerBeat);
         gridLines.getRowConstraints().clear();
-        gridLines.getColumnConstraints().clear();
         while (gridLines.getRowCount() < 127) {
             gridLines.getRowConstraints().add(rc);
         }
-        while (gridLines.getColumnCount() < clip.get().getDuration()) {
-            gridLines.getColumnConstraints().add(cc);
-        }
-        clip.addListener((x1, x2, newValue) -> {
-            int count = (int) Math.ceil(newValue.getDuration());
-            if (count < gridLines.getColumnCount()) {
-                gridLines.getColumnConstraints().remove(count, gridLines.getColumnCount());
-                return;
-            }
-            while (gridLines.getColumnCount() < count) {
-                gridLines.getColumnConstraints().add(cc);
-            }
-        });
+
+        // Add updaters for grid lines
+        clip.addListener((x1, x2, newValue) -> updateGridLines(newValue.getDuration()));
+        gridDivisions.addListener(x -> updateGridLines(clip.get().getDuration()));
+        updateGridLines(clip.get().getDuration());
 
         // Setup notes pane size
-        notesPane.prefWidthProperty().bind(pixelsPerBeat.multiply(DoubleExpression.doubleExpression(clip.map(Clip::getDuration))));
+        notesPane.prefWidthProperty().bind(pixelsPerBeat.multiply(DoubleExpression.doubleExpression(clip.map(c -> Math.ceil(c.getDuration())))));
         notesPane.prefHeightProperty().bind(pianoPane.heightProperty());
 
         // Sync scroll panes
@@ -134,7 +124,7 @@ public class PianoRollEditorSubScene extends ClipEditorSubScene<PianoRollClip> {
 
     @FXML
     private void onNotesPaneClicked(MouseEvent e) {
-        RollPosition position = getPosition(e.getX(), e.getY());
+        RollPosition position = mouseToRollPosition(e.getX(), e.getY());
         // Round position
         switch (e.getButton()) {
             case PRIMARY -> {
@@ -187,10 +177,20 @@ public class PianoRollEditorSubScene extends ClipEditorSubScene<PianoRollClip> {
         return r;
     }
 
-    private RollPosition getPosition(double x, double y) {
+    private RollPosition mouseToRollPosition(double x, double y) {
         float position = (float) (x / pixelsPerBeat.get());
         int midi = (int) Math.max(Math.min(127 - Math.floor(y / PIXELS_PER_PITCH), 127), 0);
         return new RollPosition(Pitch.fromMidi(midi, false), position);
+    }
+
+    private void updateGridLines(float duration) {
+        var cc = new ColumnConstraints();
+        int count = gridDivisions.get() * (int) Math.ceil(duration);
+        cc.setPercentWidth(1.0 / count);
+        gridLines.getColumnConstraints().clear();
+        while (gridLines.getColumnCount() < count) {
+            gridLines.getColumnConstraints().add(cc);
+        }
     }
 
     public static PianoRollEditorSubScene create(TimelineManager manager, UUID trackId, UUID clipId) {
