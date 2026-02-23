@@ -141,6 +141,8 @@ public class AppController {
         }
     }
 
+    //Passing TrackID to Track Track (hehe)
+    //Clip to adding in certain Clips
     private void setupEditorFor(UUID trackId, @NotNull Clip clip) {
         SubScene scene;
         switch (clip) {
@@ -162,6 +164,7 @@ public class AppController {
     private void onAddTrackButtonClicked() {
         addTrack(new Track());
     }
+
 
     @FXML
     private void onBpmScrolled(ScrollEvent event) {
@@ -194,6 +197,12 @@ public class AppController {
         trackClips.widthProperty().bind(timeMarkerList.widthProperty());
         trackClipList.getChildren().add(trackClips);
     }
+
+    @FXML
+    private void onAddTimeLineButtonClicked() {
+        
+    }
+
 
     private void trackCallback(UUID trackId, TrackCallbackType type) {
         switch (type) {
