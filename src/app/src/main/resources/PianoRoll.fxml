@@ -22,7 +22,7 @@
                   <AnchorPane fx:id="pianoPane" prefWidth="100.0" />
                </content>
             </ScrollPane>
-            <ScrollPane fx:id="notesScrollPane" style="-fx-background-color: transparent;" HBox.hgrow="ALWAYS">
+            <ScrollPane fx:id="notesScrollPane" onKeyPressed="#onNotesPaneKeyPressed" style="-fx-background-color: transparent;" HBox.hgrow="ALWAYS">
                <content>
                   <StackPane>
                      <children>

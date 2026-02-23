@@ -113,6 +113,13 @@ public class AppController {
         });
 
         editorPane.prefWidthProperty().bind(trackClipListScrollPane.widthProperty());
+
+        // TODO: remove
+        Track track = new Track();
+        PianoRollClip clip = PianoRollClip.create(0, 16);
+        addTrack(track);
+        manager.append(new AddClipToTrackEvent(track.getId(), clip));
+        setupEditorFor(track.getId(), clip);
     }
 
     private void updateTimeMarkers() {

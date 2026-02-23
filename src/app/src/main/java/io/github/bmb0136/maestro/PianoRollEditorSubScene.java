@@ -10,7 +10,6 @@ import io.github.bmb0136.maestro.core.theory.PitchName;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import javafx.beans.binding.DoubleExpression;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -18,6 +17,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.*;
@@ -27,6 +27,7 @@ import javafx.scene.text.TextAlignment;
 
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.OptionalDouble;
 import java.util.UUID;
 
 public class PianoRollEditorSubScene extends ClipEditorSubScene<PianoRollClip> {
@@ -43,7 +44,7 @@ public class PianoRollEditorSubScene extends ClipEditorSubScene<PianoRollClip> {
     }
 
     private final SimpleDoubleProperty pixelsPerBeat = new SimpleDoubleProperty(120.0);
-    private final SimpleIntegerProperty gridDivisions = new SimpleIntegerProperty(1);
+    private final SimpleDoubleProperty gridDivisions = new SimpleDoubleProperty(1);
 
     @FXML
     private Region root;
@@ -128,8 +129,9 @@ public class PianoRollEditorSubScene extends ClipEditorSubScene<PianoRollClip> {
         // Round position
         switch (e.getButton()) {
             case PRIMARY -> {
-                position = new RollPosition(position.pitch, (int) position.position);
-                var note = new Note(position.pitch, position.position, 1f, 1f);
+                var notePos = (float)(Math.floor(position.position * gridDivisions.get()) / gridDivisions.get());
+                position = new RollPosition(position.pitch, notePos);
+                var note = new Note(position.pitch, position.position, 1f / gridDivisions.floatValue(), 1f);
                 var result = manager.append(new AddNoteToPianoRollClipEvent(trackId, clipId, note));
                 if (!result.isOk()) {
                     new Alert(Alert.AlertType.ERROR, "Failed to add note: " + result, ButtonType.OK).showAndWait();
@@ -166,6 +168,19 @@ public class PianoRollEditorSubScene extends ClipEditorSubScene<PianoRollClip> {
         }
     }
 
+    @FXML
+    private void onNotesPaneKeyPressed(KeyEvent e) {
+        OptionalDouble divisions = switch (e.getText()) {
+            case "7" -> OptionalDouble.of(0.25);  // Whole
+            case "6" -> OptionalDouble.of(0.5);   // Half
+            case "5" -> OptionalDouble.of(1);     // Quarter
+            case "4" -> OptionalDouble.of(2);     // Eighth
+            case "3" -> OptionalDouble.of(4);     // Sixteenth
+            default -> OptionalDouble.empty();
+        };
+        divisions.ifPresent(gridDivisions::set);
+    }
+
     private Node createNote(Note note) {
         var r = new Rectangle();
         r.widthProperty().bind(pixelsPerBeat.multiply(note.duration()));
@@ -185,8 +200,8 @@ public class PianoRollEditorSubScene extends ClipEditorSubScene<PianoRollClip> {
 
     private void updateGridLines(float duration) {
         var cc = new ColumnConstraints();
-        int count = gridDivisions.get() * (int) Math.ceil(duration);
-        cc.setPercentWidth(1.0 / count);
+        int count = (int) Math.ceil(gridDivisions.get() * duration);
+        cc.prefWidthProperty().bind(pixelsPerBeat.divide(gridDivisions));
         gridLines.getColumnConstraints().clear();
         while (gridLines.getColumnCount() < count) {
             gridLines.getColumnConstraints().add(cc);
