@@ -11,11 +11,9 @@ import io.github.bmb0136.maestro.core.theory.PitchName;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import javafx.beans.binding.DoubleExpression;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
-import javafx.scene.SubScene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.MouseEvent;
@@ -29,7 +27,7 @@ import java.util.HashMap;
 import java.util.Objects;
 import java.util.UUID;
 
-public class PianoRollEditorSubScene extends SubScene {
+public class PianoRollEditorSubScene extends ClipEditorSubScene<PianoRollClip> {
 
     private static final double PIXELS_PER_PITCH = 20.0;
     private static final HashMap<Pitch, Double> PITCH_TO_Y = new HashMap<>();
@@ -42,11 +40,7 @@ public class PianoRollEditorSubScene extends SubScene {
         }
     }
 
-    private final TimelineManager manager;
-    private final UUID trackId;
-    private final UUID clipId;
     private final SimpleDoubleProperty pixelsPerBeat = new SimpleDoubleProperty(120.0);
-    private final SimpleObjectProperty<PianoRollClip> clip;
 
     @FXML
     private Region root;
@@ -58,13 +52,7 @@ public class PianoRollEditorSubScene extends SubScene {
     private GridPane gridLines;
 
     public PianoRollEditorSubScene(TimelineManager manager, UUID trackId, UUID clipId) {
-        // Dummy node (can't pass null here)
-        // Size doesn't matter, it will be automatically resized
-        super(new Pane(), 1, 1);
-        this.manager = manager;
-        this.trackId = trackId;
-        this.clipId = clipId;
-        clip = new SimpleObjectProperty<>((PianoRollClip) manager.get().getTrack(trackId).flatMap(t -> t.getClip(clipId)).orElseThrow());
+        super(manager, trackId, clipId);
     }
 
     @FXML
