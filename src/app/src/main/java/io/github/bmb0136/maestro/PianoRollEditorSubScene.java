@@ -14,6 +14,8 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.MouseEvent;
@@ -140,8 +142,7 @@ public class PianoRollEditorSubScene extends ClipEditorSubScene<PianoRollClip> {
                 var note = new Note(position.pitch, position.position, 1f, 1f);
                 var result = manager.append(new AddNoteToPianoRollClipEvent(trackId, clipId, note));
                 if (!result.isOk()) {
-                    // TODO: show error
-                    System.err.println("failed to add note");
+                    new Alert(Alert.AlertType.ERROR, "Failed to add note: " + result, ButtonType.OK).showAndWait();
                     return;
                 }
                 if (result == EventResult.NOOP) {
@@ -154,8 +155,7 @@ public class PianoRollEditorSubScene extends ClipEditorSubScene<PianoRollClip> {
                 var toRemove = clip.get().getNote(position.pitch, position.position);
                 var result = manager.append(new RemoveNoteFromPianoRollClipEvent(trackId, clipId, position.pitch, position.position));
                 if (!result.isOk()) {
-                    // TODO: show error
-                    System.err.println("failed to remove note");
+                    new Alert(Alert.AlertType.ERROR, "Failed to remove note: " + result, ButtonType.OK).showAndWait();
                     return;
                 }
                 if (result == EventResult.NOOP) {
