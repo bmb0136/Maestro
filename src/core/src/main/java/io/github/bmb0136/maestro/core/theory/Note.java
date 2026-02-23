@@ -57,4 +57,15 @@ public record Note(Pitch pitch, float position, float duration, float volume) {
     public Note modifyVolume(@NotNull Function<Float, Float> f) {
         return new Note(pitch, position, duration, f.apply(volume));
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Note(var oPitch, var oPos, var oDur, var oVol))) {
+            return false;
+        }
+        return pitch.equals(oPitch)
+                && Math.abs(position - oPos) < 1e-6f
+                && Math.abs(duration - oDur) < 1e-6f
+                && Math.abs(volume - oVol) < 1e-6f;
+    }
 }

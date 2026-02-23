@@ -11,7 +11,7 @@ public class RemoveNoteFromPianoRollClipEvent extends ClipEvent {
     private final Pitch pitch;
     private final float position;
 
-    protected RemoveNoteFromPianoRollClipEvent(UUID trackId, UUID clipId, Pitch pitch, float position) {
+    public RemoveNoteFromPianoRollClipEvent(UUID trackId, UUID clipId, Pitch pitch, float position) {
         super(trackId, clipId);
         this.pitch = pitch;
         this.position = position;
