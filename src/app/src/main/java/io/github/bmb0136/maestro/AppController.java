@@ -196,16 +196,20 @@ public class AppController {
         }
 
         trackList.getChildren().add(TrackSubScene.create(manager, track.getId(), this::trackCallback));
-        SubScene trackClips = TrackClipsSubScene.create(manager, track.getId());
+        SubScene trackClips = TrackClipsSubScene.create(manager, track.getId(), this::trackClipCallback);
         trackClips.widthProperty().bind(timeMarkerList.widthProperty());
         trackClipList.getChildren().add(trackClips);
     }
 
-    @FXML
-    private void onAddTimeLineButtonClicked() {
-        
+    private void trackClipCallback(UUID trackId, UUID clipId, TrackClipsSubScene.CallbackType type) {
+        var clip = manager.get().getTrack(trackId).flatMap(t -> t.getClip(clipId)).orElseThrow();
+        switch (type) {
+            case OPEN_EDITOR -> {
+                setupEditorFor(trackId, clip);
+            }
+            default -> throw new IllegalArgumentException();
+        }
     }
-
 
     private void trackCallback(UUID trackId, TrackCallbackType type) {
         switch (type) {

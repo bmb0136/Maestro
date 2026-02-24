@@ -1,5 +1,6 @@
 package io.github.bmb0136.maestro;
 
+import io.github.bmb0136.maestro.core.clip.Clip;
 import io.github.bmb0136.maestro.core.clip.PianoRollClip;
 import io.github.bmb0136.maestro.core.event.AddClipToTrackEvent;
 import io.github.bmb0136.maestro.core.event.RemoveClipFromTrackEvent;
@@ -13,7 +14,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.SubScene;
 import javafx.scene.control.*;
-import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.Pane;
@@ -28,6 +28,7 @@ import java.util.UUID;
 public class TrackClipsSubScene extends SubScene {
     private final TimelineManager manager;
     private final UUID trackId;
+    private final TrackClipCallback callback;
     private final SimpleDoubleProperty pixelsPerBeat = new SimpleDoubleProperty(60.0); // TODO: propagate from AppController
 
     private final ContextMenu rootContextMenu = new ContextMenu();
@@ -40,11 +41,12 @@ public class TrackClipsSubScene extends SubScene {
     @Nullable
     private Node lastNode = null;
 
-    private TrackClipsSubScene(TimelineManager manager, UUID trackId) {
+    private TrackClipsSubScene(TimelineManager manager, UUID trackId, TrackClipCallback callback) {
         // Dummy node (can't pass null here)
         super(new Pane(), 500, 120);
         this.manager = manager;
         this.trackId = trackId;
+        this.callback = callback;
 
         Menu addMenu = new Menu();
         addMenu.setText("Add");
@@ -68,18 +70,28 @@ public class TrackClipsSubScene extends SubScene {
     private void addPianoRollClip(ActionEvent e) {
         float beatPosition = (float) (contextMenuX / pixelsPerBeat.get());
         PianoRollClip clip = PianoRollClip.create(beatPosition, 4f);
+        var pane = addClip(clip);
+        if (pane == null) {
+            return;
+        }
+        // TODO: render notes inside of clip
+    }
+
+    @Nullable
+    private Pane addClip(Clip clip) {
         var result = manager.append(new AddClipToTrackEvent(trackId, clip));
         if (!result.isOk()) {
             new Alert(Alert.AlertType.ERROR, "Error: " + result, ButtonType.OK).showAndWait();
-            return;
+            return null;
         }
-        Pane pane = new Pane();
+        var pane = new Pane();
         pane.prefHeightProperty().bind(root.heightProperty());
         pane.layoutXProperty().bind(pixelsPerBeat.multiply(clip.getPosition()));
         pane.prefWidthProperty().bind(pixelsPerBeat.multiply(clip.getDuration()));
-        pane.setBackground(Background.fill(Color.GREEN));
+        pane.setBackground(Background.fill(Color.BLUE));
         pane.setUserData(clip.getId());
         root.getChildren().add(pane);
+        return pane;
     }
 
     @FXML
@@ -91,27 +103,37 @@ public class TrackClipsSubScene extends SubScene {
 
     @FXML
     private void onRootClicked(MouseEvent e) {
-        if (e.getButton() != MouseButton.SECONDARY) {
-            return;
-        }
+        switch (e.getButton()) {
+            case PRIMARY -> {
+                if (!(e.getTarget() instanceof Node node && node.getUserData() instanceof UUID clipId)) {
+                    return;
+                }
+                if (e.getClickCount() == 2) {
+                    callback.run(trackId, clipId, CallbackType.OPEN_EDITOR);
+                }
+            }
+            case SECONDARY -> {
+                lastNode = null;
+                if (e.getTarget() == root) {
+                    rootContextMenu.show(root, e.getScreenX(), e.getScreenY());
+                } else if (e.getTarget() instanceof Node node) {
+                    lastNode = node;
+                    clipContextMenu.show(node, e.getScreenX(), e.getScreenY());
+                }
 
-        lastNode = null;
-        if (e.getTarget() == root) {
-            rootContextMenu.show(root, e.getScreenX(), e.getScreenY());
-        } else if (e.getTarget() instanceof Node node) {
-            lastNode = node;
-            clipContextMenu.show(node, e.getScreenX(), e.getScreenY());
+                contextMenuX = e.getX();
+                contextMenuY = e.getY();
+            }
+            case null, default -> {
+            }
         }
-
-        contextMenuX = e.getX();
-        contextMenuY = e.getY();
     }
 
-    public static SubScene create(TimelineManager manager, UUID trackId) {
+    public static SubScene create(TimelineManager manager, UUID trackId, TrackClipCallback callback) {
         URL resource = Objects.requireNonNull(App.class.getResource("/TrackClips.fxml"));
         FXMLLoader loader = new FXMLLoader(resource);
         try {
-            var s = new TrackClipsSubScene(manager, trackId);
+            var s = new TrackClipsSubScene(manager, trackId, callback);
             loader.setController(s);
             s.setRoot(loader.load());
             return s;
@@ -125,5 +147,14 @@ public class TrackClipsSubScene extends SubScene {
         item.setText(name);
         item.setOnAction(onAction);
         items.add(item);
+    }
+
+    @FunctionalInterface
+    public interface TrackClipCallback {
+        void run(UUID trackId, UUID clipId, CallbackType type);
+    }
+
+    public enum CallbackType {
+        OPEN_EDITOR;
     }
 }
