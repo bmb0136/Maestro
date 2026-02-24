@@ -6,6 +6,7 @@ import io.github.bmb0136.maestro.core.event.AddClipToTrackEvent;
 import io.github.bmb0136.maestro.core.event.RemoveClipFromTrackEvent;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.value.ObservableNumberValue;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -29,7 +30,7 @@ public class TrackClipsSubScene extends SubScene {
     private final TimelineManager manager;
     private final UUID trackId;
     private final TrackClipCallback callback;
-    private final SimpleDoubleProperty pixelsPerBeat = new SimpleDoubleProperty(60.0); // TODO: propagate from AppController
+    private final SimpleDoubleProperty pixelsPerBeat = new SimpleDoubleProperty(60.0);
 
     private final ContextMenu rootContextMenu = new ContextMenu();
     private final ContextMenu clipContextMenu = new ContextMenu();
@@ -40,6 +41,10 @@ public class TrackClipsSubScene extends SubScene {
     private double contextMenuX, contextMenuY;
     @Nullable
     private Node lastNode = null;
+
+    public void bindPixelsPerBeat(ObservableNumberValue parent) {
+        pixelsPerBeat.bind(parent);
+    }
 
     private TrackClipsSubScene(TimelineManager manager, UUID trackId, TrackClipCallback callback) {
         // Dummy node (can't pass null here)
@@ -129,7 +134,7 @@ public class TrackClipsSubScene extends SubScene {
         }
     }
 
-    public static SubScene create(TimelineManager manager, UUID trackId, TrackClipCallback callback) {
+    public static TrackClipsSubScene create(TimelineManager manager, UUID trackId, TrackClipCallback callback) {
         URL resource = Objects.requireNonNull(App.class.getResource("/TrackClips.fxml"));
         FXMLLoader loader = new FXMLLoader(resource);
         try {

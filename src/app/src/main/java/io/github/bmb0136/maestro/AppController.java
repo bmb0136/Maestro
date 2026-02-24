@@ -196,7 +196,8 @@ public class AppController {
         }
 
         trackList.getChildren().add(TrackSubScene.create(manager, track.getId(), this::trackCallback));
-        SubScene trackClips = TrackClipsSubScene.create(manager, track.getId(), this::trackClipCallback);
+        var trackClips = TrackClipsSubScene.create(manager, track.getId(), this::trackClipCallback);
+        trackClips.bindPixelsPerBeat(pixelsPerBeat);
         trackClips.widthProperty().bind(timeMarkerList.widthProperty());
         trackClipList.getChildren().add(trackClips);
     }
