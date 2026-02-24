@@ -113,6 +113,9 @@ public class AppController {
         });
 
         editorPane.prefWidthProperty().bind(trackClipListScrollPane.widthProperty());
+
+        // TODO: remove this
+        addTrack(new Track());
     }
 
     private void updateTimeMarkers() {

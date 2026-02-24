@@ -1,21 +1,25 @@
 package io.github.bmb0136.maestro;
 
 import io.github.bmb0136.maestro.core.clip.PianoRollClip;
+import io.github.bmb0136.maestro.core.event.AddClipToTrackEvent;
+import io.github.bmb0136.maestro.core.event.RemoveClipFromTrackEvent;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.SubScene;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuItem;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.Background;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
+import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Objects;
@@ -26,12 +30,15 @@ public class TrackClipsSubScene extends SubScene {
     private final UUID trackId;
     private final SimpleDoubleProperty pixelsPerBeat = new SimpleDoubleProperty(60.0); // TODO: propagate from AppController
 
-    private final ContextMenu contextMenu = new ContextMenu();
+    private final ContextMenu rootContextMenu = new ContextMenu();
+    private final ContextMenu clipContextMenu = new ContextMenu();
 
     @FXML
-    private AnchorPane root;
+    private Pane root;
 
     private double contextMenuX, contextMenuY;
+    @Nullable
+    private Node lastNode = null;
 
     private TrackClipsSubScene(TimelineManager manager, UUID trackId) {
         // Dummy node (can't pass null here)
@@ -41,51 +48,38 @@ public class TrackClipsSubScene extends SubScene {
 
         Menu addMenu = new Menu();
         addMenu.setText("Add");
-        MenuItem addPianoRoll = new MenuItem();
-        addPianoRoll.setText("Piano Roll");
-        addPianoRoll.setOnAction(this::addPianoRollClip);
-        addMenu.getItems().add(addPianoRoll);
-        contextMenu.getItems().add(addMenu);
+        addMenuItem(addMenu.getItems(), "Piano Roll", this::addPianoRollClip);
+        rootContextMenu.getItems().add(addMenu);
+
+        addMenuItem(clipContextMenu.getItems(), "Delete", this::deleteClip);
     }
-    /*
 
-
-     */
-    private void OnPianoRollMouseClicked(MouseEvent event) {
-        root.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
-
-        });
+    private void deleteClip(ActionEvent e) {
+        assert lastNode != null;
+        var clipId = (UUID) lastNode.getUserData();
+        var result = manager.append(new RemoveClipFromTrackEvent(trackId, clipId));
+        if (!result.isOk()) {
+            new Alert(Alert.AlertType.ERROR, "Error: " + result, ButtonType.OK).showAndWait();
+            return;
+        }
+        root.getChildren().remove(lastNode);
     }
+
     private void addPianoRollClip(ActionEvent e) {
         float beatPosition = (float) (contextMenuX / pixelsPerBeat.get());
-        //public static final int MOUSE_EXITED; When Mouse click is dropped
-        // TODO: add clip
-        PianoRollClip Clip = new PianoRollClip();
+        PianoRollClip clip = PianoRollClip.create(beatPosition, 4f);
+        var result = manager.append(new AddClipToTrackEvent(trackId, clip));
+        if (!result.isOk()) {
+            new Alert(Alert.AlertType.ERROR, "Error: " + result, ButtonType.OK).showAndWait();
+            return;
+        }
         Pane pane = new Pane();
         pane.prefHeightProperty().bind(root.heightProperty());
+        pane.layoutXProperty().bind(pixelsPerBeat.multiply(clip.getPosition()));
+        pane.prefWidthProperty().bind(pixelsPerBeat.multiply(clip.getDuration()));
+        pane.setBackground(Background.fill(Color.GREEN));
+        pane.setUserData(clip.getId());
         root.getChildren().add(pane);
-        //pane.widthProperty().bind(root.heightProperty());
-        //pane.bind(root.heightProperty());
-        //Clip.setPosition(beatPosition);
-
-
-        //pane.setLocation((int)beatPosition,(int) beatPosition);
-        //System.out.println(beatPosition);
-
-        /*
-        var result = manager.append(...);
-        if (!result.isOK()) {
-        new Alert(Alert.AlertType.ERROR, "Error: " + result, ButtonType.OK).showAndWait();
-        return;
-        }
-
-         */
-        Button test_button = new Button("Test");
-        System.out.println(root.getChildren());
-        //root.getChildren().add(pane);
-        //root.getChildren().add(test_button);
-        //root.getChildren().add();
-
     }
 
     @FXML
@@ -101,7 +95,14 @@ public class TrackClipsSubScene extends SubScene {
             return;
         }
 
-        contextMenu.show(root, e.getScreenX(), e.getScreenY());
+        lastNode = null;
+        if (e.getTarget() == root) {
+            rootContextMenu.show(root, e.getScreenX(), e.getScreenY());
+        } else if (e.getTarget() instanceof Node node) {
+            lastNode = node;
+            clipContextMenu.show(node, e.getScreenX(), e.getScreenY());
+        }
+
         contextMenuX = e.getX();
         contextMenuY = e.getY();
     }
@@ -117,5 +118,12 @@ public class TrackClipsSubScene extends SubScene {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static void addMenuItem(ObservableList<MenuItem> items, String name, EventHandler<ActionEvent> onAction) {
+        MenuItem item = new MenuItem();
+        item.setText(name);
+        item.setOnAction(onAction);
+        items.add(item);
     }
 }
