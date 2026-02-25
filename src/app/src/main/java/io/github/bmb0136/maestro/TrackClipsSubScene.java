@@ -73,7 +73,7 @@ public class TrackClipsSubScene extends SubScene {
     }
 
     private void addPianoRollClip(ActionEvent e) {
-        float beatPosition = (float) (contextMenuX / pixelsPerBeat.get());
+        float beatPosition = (float) Math.floor(contextMenuX / pixelsPerBeat.get());
         PianoRollClip clip = PianoRollClip.create(beatPosition, 4f);
         var pane = addClip(clip);
         if (pane == null) {
