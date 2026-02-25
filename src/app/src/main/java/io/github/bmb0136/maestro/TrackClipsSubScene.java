@@ -119,6 +119,9 @@ public class TrackClipsSubScene extends SubScene {
             }
             case SECONDARY -> {
                 lastNode = null;
+                rootContextMenu.hide();
+                clipContextMenu.hide();
+
                 if (e.getTarget() == root) {
                     rootContextMenu.show(root, e.getScreenX(), e.getScreenY());
                 } else if (e.getTarget() instanceof Node node) {
