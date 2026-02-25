@@ -70,6 +70,7 @@ public class TrackClipsSubScene extends SubScene {
             return;
         }
         root.getChildren().remove(lastNode);
+        callback.run(trackId, clipId, CallbackType.CLIP_REMOVED);
     }
 
     private void addPianoRollClip(ActionEvent e) {
@@ -96,6 +97,8 @@ public class TrackClipsSubScene extends SubScene {
         pane.setBackground(Background.fill(Color.BLUE));
         pane.setUserData(clip.getId());
         root.getChildren().add(pane);
+
+        callback.run(trackId, clip.getId(), CallbackType.CLIP_ADDED);
         return pane;
     }
 
@@ -163,6 +166,6 @@ public class TrackClipsSubScene extends SubScene {
     }
 
     public enum CallbackType {
-        OPEN_EDITOR;
+        OPEN_EDITOR, CLIP_ADDED, CLIP_REMOVED;
     }
 }

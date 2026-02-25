@@ -2,7 +2,8 @@ package io.github.bmb0136.maestro;
 
 import io.github.bmb0136.maestro.core.clip.Clip;
 import io.github.bmb0136.maestro.core.clip.PianoRollClip;
-import io.github.bmb0136.maestro.core.event.*;
+import io.github.bmb0136.maestro.core.event.AddTrackToTimelineEvent;
+import io.github.bmb0136.maestro.core.event.RemoveTrackFromTimelineEvent;
 import io.github.bmb0136.maestro.core.timeline.Timeline;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import io.github.bmb0136.maestro.core.timeline.Track;
@@ -144,8 +145,6 @@ public class AppController {
         }
     }
 
-    //Passing TrackID to Track Track (hehe)
-    //Clip to adding in certain Clips
     private void setupEditorFor(UUID trackId, @NotNull Clip clip) {
         SubScene scene;
         switch (clip) {
@@ -203,11 +202,13 @@ public class AppController {
     }
 
     private void trackClipCallback(UUID trackId, UUID clipId, TrackClipsSubScene.CallbackType type) {
-        var clip = manager.get().getTrack(trackId).flatMap(t -> t.getClip(clipId)).orElseThrow();
+        var clip = manager.get().getTrack(trackId).flatMap(t -> t.getClip(clipId));
         switch (type) {
             case OPEN_EDITOR -> {
-                setupEditorFor(trackId, clip);
+                assert clip.isPresent();
+                setupEditorFor(trackId, clip.get());
             }
+            case CLIP_ADDED, CLIP_REMOVED -> updateTimeMarkers();
             default -> throw new IllegalArgumentException();
         }
     }
