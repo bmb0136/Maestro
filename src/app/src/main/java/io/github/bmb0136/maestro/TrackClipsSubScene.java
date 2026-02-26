@@ -6,6 +6,7 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.SubScene;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
@@ -14,6 +15,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
+
 
 import java.awt.*;
 import java.io.IOException;
@@ -30,6 +32,8 @@ public class TrackClipsSubScene extends SubScene {
 
     @FXML
     private AnchorPane root;
+    @FXML
+    private Pane ClipLine;
 
     private double contextMenuX, contextMenuY;
 
@@ -38,6 +42,7 @@ public class TrackClipsSubScene extends SubScene {
         super(new Pane(), 500, 120);
         this.manager = manager;
         this.trackId = trackId;
+
 
         Menu addMenu = new Menu();
         addMenu.setText("Add");
@@ -48,43 +53,41 @@ public class TrackClipsSubScene extends SubScene {
         contextMenu.getItems().add(addMenu);
     }
     /*
-
-
+    Might be required to record the MouseEvent, Regardless of the beatPosition.
      */
     private void OnPianoRollMouseClicked(MouseEvent event) {
-        root.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+        root.addEventHandler(MouseEvent.MOUSE_EXITED, e -> {
 
         });
     }
+    /*
+     */
     private void addPianoRollClip(ActionEvent e) {
         float beatPosition = (float) (contextMenuX / pixelsPerBeat.get());
         //public static final int MOUSE_EXITED; When Mouse click is dropped
         // TODO: add clip
-        PianoRollClip Clip = new PianoRollClip();
-        Pane pane = new Pane();
-        pane.prefHeightProperty().bind(root.heightProperty());
-        root.getChildren().add(pane);
-        //pane.widthProperty().bind(root.heightProperty());
-        //pane.bind(root.heightProperty());
-        //Clip.setPosition(beatPosition);
 
 
-        //pane.setLocation((int)beatPosition,(int) beatPosition);
-        //System.out.println(beatPosition);
+        try {
+            URL resource = Objects.requireNonNull(App.class.getResource("/Clipper.fxml"));
+            FXMLLoader loader = new FXMLLoader(resource);
+            loader.setController(root);
+            Parent loads = loader.load();
 
-        /*
-        var result = manager.append(...);
-        if (!result.isOK()) {
-        new Alert(Alert.AlertType.ERROR, "Error: " + result, ButtonType.OK).showAndWait();
-        return;
+            loads.setLayoutX(beatPosition);
+            root.getChildren().add(loads);
+
+            //loads.scaleYProperty().bind(root.heightProperty());
+            //root.getChildren().add(loads);
+            System.out.println("got here");
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            System.out.println("PianoRoll clip could not be loaded");
         }
 
-         */
-        Button test_button = new Button("Test");
+        root.getChildren();
         System.out.println(root.getChildren());
-        //root.getChildren().add(pane);
-        //root.getChildren().add(test_button);
-        //root.getChildren().add();
+
 
     }
 
@@ -117,5 +120,6 @@ public class TrackClipsSubScene extends SubScene {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        //return s;
     }
 }
