@@ -31,7 +31,7 @@ public class TrackClipsSubScene extends SubScene {
     private final ContextMenu contextMenu = new ContextMenu();
 
     @FXML
-    private AnchorPane root;
+    private Pane root;
     @FXML
     private Pane ClipLine;
 
@@ -60,8 +60,7 @@ public class TrackClipsSubScene extends SubScene {
 
         });
     }
-    /*
-     */
+
     private void addPianoRollClip(ActionEvent e) {
         float beatPosition = (float) (contextMenuX / pixelsPerBeat.get());
         //public static final int MOUSE_EXITED; When Mouse click is dropped
@@ -73,11 +72,11 @@ public class TrackClipsSubScene extends SubScene {
             FXMLLoader loader = new FXMLLoader(resource);
             loader.setController(root);
             Parent loads = loader.load();
-
-            loads.setLayoutX(beatPosition);
-            root.getChildren().add(loads);
-
-            //loads.scaleYProperty().bind(root.heightProperty());
+            loads.getStylesheets().add("/Clipper.css");
+            loads.layoutXProperty().bind(pixelsPerBeat.multiply(beatPosition));
+            //
+            // loads.scaleYProperty().bind(root.heightProperty());
+            root.getChildren().add( loads);
             //root.getChildren().add(loads);
             System.out.println("got here");
         } catch (IOException ex) {
