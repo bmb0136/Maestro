@@ -2,7 +2,8 @@ package io.github.bmb0136.maestro;
 
 import io.github.bmb0136.maestro.core.clip.Clip;
 import io.github.bmb0136.maestro.core.clip.PianoRollClip;
-import io.github.bmb0136.maestro.core.event.*;
+import io.github.bmb0136.maestro.core.event.AddTrackToTimelineEvent;
+import io.github.bmb0136.maestro.core.event.RemoveTrackFromTimelineEvent;
 import io.github.bmb0136.maestro.core.timeline.Timeline;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import io.github.bmb0136.maestro.core.timeline.Track;
@@ -113,6 +114,9 @@ public class AppController {
         });
 
         editorPane.prefWidthProperty().bind(trackClipListScrollPane.widthProperty());
+
+        // TODO: remove this
+        addTrack(new Track());
     }
 
     private void updateTimeMarkers() {
@@ -163,6 +167,7 @@ public class AppController {
         addTrack(new Track());
     }
 
+
     @FXML
     private void onBpmScrolled(ScrollEvent event) {
         if (Math.abs(event.getDeltaY()) < 1e-6) {
@@ -190,9 +195,22 @@ public class AppController {
         }
 
         trackList.getChildren().add(TrackSubScene.create(manager, track.getId(), this::trackCallback));
-        SubScene trackClips = TrackClipsSubScene.create(manager, track.getId());
+        var trackClips = TrackClipsSubScene.create(manager, track.getId(), this::trackClipCallback);
+        trackClips.bindPixelsPerBeat(pixelsPerBeat);
         trackClips.widthProperty().bind(timeMarkerList.widthProperty());
         trackClipList.getChildren().add(trackClips);
+    }
+
+    private void trackClipCallback(UUID trackId, UUID clipId, TrackClipsSubScene.CallbackType type) {
+        var clip = manager.get().getTrack(trackId).flatMap(t -> t.getClip(clipId));
+        switch (type) {
+            case OPEN_EDITOR -> {
+                assert clip.isPresent();
+                setupEditorFor(trackId, clip.get());
+            }
+            case CLIP_ADDED, CLIP_REMOVED -> updateTimeMarkers();
+            default -> throw new IllegalArgumentException();
+        }
     }
 
     private void trackCallback(UUID trackId, TrackCallbackType type) {
