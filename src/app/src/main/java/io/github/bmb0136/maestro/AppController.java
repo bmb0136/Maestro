@@ -53,20 +53,21 @@ public class AppController {
     private final SimpleIntegerProperty bpm = new SimpleIntegerProperty(120);
     // TODO: Bind zooming to this property (decrease to zoom in, increase to zoom out)
     private final SimpleDoubleProperty pixelsPerBeat = new SimpleDoubleProperty(60.0);
-    private TimelineRenderer renderer;
+    private TimelineRenderer timelineRenderer;
 
     @FXML
     private void initialize() {
         root.getStylesheets().add("/DarkMode.css");
 
         // Init timeline renderer
-        renderer = new TimelineRenderer(manager, timelineCanvas, pixelsPerBeat);
-        renderer.scrollbarBoundsProperty().bind(timelineScrollBar.boundsInParentProperty());
+        timelineRenderer = new TimelineRenderer(manager, timelineCanvas, pixelsPerBeat);
+        timelineRenderer.scrollbarBoundsProperty().bind(timelineScrollBar.boundsInParentProperty());
         timelineCanvas.widthProperty().bind(timelineParent.widthProperty());
         timelineCanvas.heightProperty().bind(root.heightProperty());
 
         // Sync scroll bars with relevant scroll panes
         trackScrollBar.valueProperty().bindBidirectional(trackListScrollPane.vvalueProperty());
+        trackScrollBar.valueProperty().bindBidirectional(timelineRenderer.scrollYProperty());
 
         // Auto-resize track scroll bar handle based on track count
         trackList.getChildren().addListener((ListChangeListener<Node>) change -> {
@@ -150,7 +151,7 @@ public class AppController {
         }
 
         trackList.getChildren().add(TrackSubScene.create(manager, track.getId(), this::trackCallback));
-        // TODO: update timeline
+        timelineRenderer.draw();
     }
 
     private void trackCallback(UUID trackId, TrackCallbackType type) {
@@ -161,7 +162,7 @@ public class AppController {
                     return;
                 }
                 trackList.getChildren().remove(index);
-                // TODO: update timeline
+                timelineRenderer.draw();
             }
             case null, default -> throw new IllegalArgumentException();
         }

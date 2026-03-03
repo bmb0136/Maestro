@@ -1,10 +1,9 @@
 package io.github.bmb0136.maestro;
 
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleFloatProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.DoubleExpression;
+import javafx.beans.property.*;
 import javafx.geometry.Bounds;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -18,13 +17,21 @@ public class TimelineRenderer {
     private final TimelineManager manager;
     private final Canvas canvas;
     private final SimpleDoubleProperty pixelsPerBeat;
-    // The position of the left side of the timeline view in beats
-    private final SimpleFloatProperty scrollXBeats = new SimpleFloatProperty(0);
-    // The position of the top side of the timeline view in tracks (fraction represents between)
-    private final SimpleDoubleProperty scrollYTracks = new SimpleDoubleProperty(0);
+    // Position of the top-left corner of the view
+    // X uses beats and Y uses tracks (fractional tracks means the view is scrolled between tracks)
+    private final SimpleFloatProperty scrollXBeats = new SimpleFloatProperty();
+    private final SimpleDoubleProperty scrollYTracks = new SimpleDoubleProperty();
     // The position of the playback head in beats
-    private final SimpleFloatProperty playbackHeadXBeats = new SimpleFloatProperty(0);
+    private final SimpleFloatProperty playbackHeadXBeats = new SimpleFloatProperty();
+    // Needed to discriminate between the area above and below the timeline scrollbar (see main window)
+    // Also used for some calculations
     private final SimpleObjectProperty<Bounds> scrollbarBounds = new SimpleObjectProperty<>();
+    // TODO: hook into system for #19 to get .size() as bindable value
+    private final SimpleIntegerProperty timelineSize = new SimpleIntegerProperty();
+    private final SimpleDoubleProperty maxScrollY = new SimpleDoubleProperty();
+    // Needed to convert tracks/beats <-> percent (scrollbar in main window uses 0-1 range)
+    private final SimpleDoubleProperty scrollYPercent = new SimpleDoubleProperty();
+    private final SimpleDoubleProperty scrollXPercent = new SimpleDoubleProperty();
 
     public TimelineRenderer(@NotNull TimelineManager manager, @NotNull Canvas canvas, @NotNull SimpleDoubleProperty pixelsPerBeat) {
         this.manager = manager;
@@ -38,6 +45,14 @@ public class TimelineRenderer {
         scrollYTracks.addListener(ignored -> draw());
         playbackHeadXBeats.addListener(ignored -> draw());
 
+        scrollYPercent.addListener((ignored1, ignored2, newValue) -> scrollYTracks.set(newValue.doubleValue() * maxScrollY.get()));
+        scrollYTracks.addListener((ignored1, ignored2, newValue) -> scrollYPercent.set(newValue.doubleValue() / maxScrollY.get()));
+
+        var canvasHeightTracks = localYToTracks(canvas.heightProperty()).subtract(localYToTracks(DoubleExpression.doubleExpression(scrollbarBounds.map(Bounds::getMaxY))));
+        maxScrollY.bind(Bindings.max(0, timelineSize.subtract(canvasHeightTracks)));
+        // Clamp view automatically
+        maxScrollY.addListener((ignored1, ignored2, newValue) -> scrollYTracks.set(Math.min(scrollYTracks.get(), newValue.doubleValue())));
+
         canvas.setOnScroll(this::onScroll);
         canvas.setOnMouseClicked(this::onClick);
 
@@ -48,13 +63,22 @@ public class TimelineRenderer {
         return scrollbarBounds;
     }
 
+    public DoubleProperty scrollYProperty() {
+        return scrollYPercent;
+    }
+
     public void draw() {
         var gc = canvas.getGraphicsContext2D();
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+        gc.setGlobalAlpha(1);
 
+        gc.save();
         drawMarkers(gc);
+        gc.restore();
 
+        gc.save();
         drawClips(gc);
+        gc.restore();
 
         gc.setStroke(Color.RED);
         var playbackHeadX = beatsToLocalX(playbackHeadXBeats.get());
@@ -62,7 +86,36 @@ public class TimelineRenderer {
     }
 
     private void drawClips(GraphicsContext gc) {
-        // TODO
+        var bounds = scrollbarBoundsProperty().get();
+        gc.beginPath();
+        gc.rect(0, bounds.getMaxY(), canvas.getWidth(), canvas.getHeight() - bounds.getMaxY());
+        gc.clip();
+
+        gc.setFill(Color.BLUE);
+        int trackIndex = 0;
+        for (var iterator = manager.get().iterator(); iterator.hasNext(); trackIndex++) {
+            var track = iterator.next();
+            if (tracksToLocalY(trackIndex + 1) < bounds.getMaxY()) {
+                continue;
+            }
+
+            // Draw line for each track
+            gc.setStroke(Color.gray(1.0, 0.5));
+            double trackLineY = tracksToLocalY(trackIndex + 1);
+            gc.strokeLine(0, trackLineY, canvas.getWidth(), trackLineY);
+
+            for (var clip : track) {
+                double startX = beatsToLocalX(clip.getPosition());
+                double endX = beatsToLocalX(clip.getPosition() + clip.getDuration());
+
+                // Skip if outside view
+                if (endX < 0 || startX > canvas.getWidth()) {
+                    continue;
+                }
+
+                gc.fillRect(startX, tracksToLocalY(trackIndex), endX - startX, TrackSubScene.HEIGHT);
+            }
+        }
     }
 
     private void drawMarkers(GraphicsContext gc) {
@@ -83,7 +136,10 @@ public class TimelineRenderer {
     }
 
     private void onScroll(ScrollEvent e) {
-        scrollXBeats.set((float)Math.max(0, ((e.getDeltaX() / e.getMultiplierX() * -0.25f) + scrollXBeats.get())));
+        timelineSize.set(manager.get().size()); // TODO: remove when #19 gets fixed
+
+        scrollXBeats.set((float) Math.max(0, (e.getDeltaX() / e.getMultiplierX() * -0.25f) + scrollXBeats.get()));
+        scrollYTracks.set((float) Math.max(0, Math.min(maxScrollY.get(), (e.getDeltaY() / e.getMultiplierY() * -0.1f) + scrollYTracks.get())));
     }
 
     private void onClick(MouseEvent e) {
@@ -102,5 +158,17 @@ public class TimelineRenderer {
 
     private float localXToBeats(double x) {
         return (float) (x / pixelsPerBeat.get()) + scrollXBeats.get();
+    }
+
+    private double tracksToLocalY(double tracks) {
+        return ((tracks - scrollYTracks.get()) * TrackSubScene.HEIGHT) + scrollbarBoundsProperty().get().getMaxY();
+    }
+
+    private double localYToTracks(double y) {
+        return ((y - scrollbarBounds.get().getMaxY()) / TrackSubScene.HEIGHT) + scrollYTracks.get();
+    }
+
+    private DoubleExpression localYToTracks(DoubleExpression y) {
+        return y.subtract(DoubleExpression.doubleExpression(scrollbarBounds.map(Bounds::getMaxY))).divide(TrackSubScene.HEIGHT).add(scrollYTracks);
     }
 }

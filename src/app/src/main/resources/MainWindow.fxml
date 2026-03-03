@@ -126,7 +126,7 @@
                   <ScrollBar fx:id="trackScrollBar" blockIncrement="0.2" max="1.0" orientation="VERTICAL" visibleAmount="1.0" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="2" />
                   <Separator fx:id="timelineColumn" prefWidth="200.0" GridPane.columnSpan="2147483647" GridPane.rowIndex="1" />
                   <ScrollBar fx:id="timelineScrollBar" blockIncrement="0.2" max="1.0" visibleAmount="1.0" GridPane.columnIndex="2" GridPane.rowIndex="1" />
-                  <TitledPane fx:id="editorPane" animated="false" text="Editor" GridPane.columnIndex="2" GridPane.rowIndex="2" GridPane.valignment="BOTTOM" />
+                  <TitledPane fx:id="editorPane" animated="false" text="Editor" visible="false" GridPane.columnIndex="2" GridPane.rowIndex="2" GridPane.valignment="BOTTOM" />
                </children>
             </GridPane>
             <Separator maxWidth="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefWidth="0.0" />
