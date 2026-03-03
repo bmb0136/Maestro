@@ -11,18 +11,18 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.SubScene;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TitledPane;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
-import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Line;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
@@ -38,37 +38,35 @@ public class AppController {
     @FXML
     private ScrollPane trackListScrollPane;
     @FXML
-    private ScrollPane trackClipListScrollPane;
-    @FXML
     private VBox trackList;
-    @FXML
-    private VBox trackClipList;
     @FXML
     private Region root;
     @FXML
     private Label bpmLabel;
     @FXML
-    private Line playbackHead;
-    @FXML
-    private ScrollPane timeMarkerScrollPane;
-    @FXML
-    private TilePane timeMarkerList;
-    @FXML
     private TitledPane editorPane;
+    @FXML
+    private Canvas timelineCanvas;
+    @FXML
+    private Region timelineParent;
     private final TimelineManager manager = new TimelineManager(1024, new Timeline());
     private final SimpleIntegerProperty bpm = new SimpleIntegerProperty(120);
     // TODO: Bind zooming to this property (decrease to zoom in, increase to zoom out)
     private final SimpleDoubleProperty pixelsPerBeat = new SimpleDoubleProperty(60.0);
+    private TimelineRenderer renderer;
 
     @FXML
     private void initialize() {
         root.getStylesheets().add("/DarkMode.css");
 
+        // Init timeline renderer
+        renderer = new TimelineRenderer(manager, timelineCanvas, pixelsPerBeat);
+        renderer.scrollbarBoundsProperty().bind(timelineScrollBar.boundsInParentProperty());
+        timelineCanvas.widthProperty().bind(timelineParent.widthProperty());
+        timelineCanvas.heightProperty().bind(root.heightProperty());
+
         // Sync scroll bars with relevant scroll panes
         trackScrollBar.valueProperty().bindBidirectional(trackListScrollPane.vvalueProperty());
-        trackScrollBar.valueProperty().bindBidirectional(trackClipListScrollPane.vvalueProperty());
-        timelineScrollBar.valueProperty().bindBidirectional(trackClipListScrollPane.hvalueProperty());
-        timelineScrollBar.valueProperty().bindBidirectional(timeMarkerScrollPane.hvalueProperty());
 
         // Auto-resize track scroll bar handle based on track count
         trackList.getChildren().addListener((ListChangeListener<Node>) change -> {
@@ -92,57 +90,19 @@ public class AppController {
 
         bpmLabel.textProperty().bind(bpm.map(value -> "BPM: " + value));
 
-        // Make playback head span entire window
-        playbackHead.endYProperty().bind(root.heightProperty());
-
-        // Resize based on pixels per beat
-        timeMarkerList.prefTileWidthProperty().bind(pixelsPerBeat);
         // TODO: propagate pixelsPerBeat to subscenes
 
-        updateTimeMarkers();
-
         // Prevent incorrect scrolling
-        timeMarkerScrollPane.addEventFilter(ScrollEvent.SCROLL, e -> {
-            if (Math.abs(e.getDeltaY()) > 1e-6) {
-                e.consume();
-            }
-        });
         trackListScrollPane.addEventFilter(ScrollEvent.SCROLL, e -> {
             if (Math.abs(e.getDeltaX()) > 1e-6) {
                 e.consume();
             }
         });
 
-        editorPane.prefWidthProperty().bind(trackClipListScrollPane.widthProperty());
+        editorPane.prefWidthProperty().bind(timelineCanvas.widthProperty());
 
         // TODO: remove this
         addTrack(new Track());
-    }
-
-    private void updateTimeMarkers() {
-        int numMarkers = (int)Math.max(MIN_TIMELINE_LENGTH, manager.get().getDuration());
-        timeMarkerList.setPrefColumns(numMarkers);
-        for (int i = timeMarkerList.getChildren().size(); i < numMarkers; i++) {
-            var pane = new Pane();
-            pane.setMouseTransparent(true);
-
-            Label label = new Label();
-            // TODO: add measure number
-            label.setText(String.valueOf(i + 1));
-            label.setPadding(new Insets(8, 0, 4, 0));
-            label.layoutXProperty().bind(label.widthProperty().multiply(-0.5));
-            pane.getChildren().add(label);
-
-            Line line = new Line();
-            line.setStartX(0);
-            line.startYProperty().bind(label.heightProperty());
-            line.setEndX(0);
-            line.endYProperty().bind(root.heightProperty());
-            line.setStroke(Color.GRAY);
-            pane.getChildren().add(line);
-
-            timeMarkerList.getChildren().add(pane);
-        }
     }
 
     private void setupEditorFor(UUID trackId, @NotNull Clip clip) {
@@ -155,11 +115,6 @@ public class AppController {
         scene.widthProperty().bind(editorPane.prefWidthProperty());
         scene.heightProperty().bind(root.heightProperty().multiply(0.5));
         editorPane.setContent(scene);
-    }
-
-    @FXML
-    private void onTimeMarkerListClicked(MouseEvent e) {
-        playbackHead.setLayoutX(e.getX());
     }
 
     @FXML
@@ -195,22 +150,7 @@ public class AppController {
         }
 
         trackList.getChildren().add(TrackSubScene.create(manager, track.getId(), this::trackCallback));
-        var trackClips = TrackClipsSubScene.create(manager, track.getId(), this::trackClipCallback);
-        trackClips.bindPixelsPerBeat(pixelsPerBeat);
-        trackClips.widthProperty().bind(timeMarkerList.widthProperty());
-        trackClipList.getChildren().add(trackClips);
-    }
-
-    private void trackClipCallback(UUID trackId, UUID clipId, TrackClipsSubScene.CallbackType type) {
-        var clip = manager.get().getTrack(trackId).flatMap(t -> t.getClip(clipId));
-        switch (type) {
-            case OPEN_EDITOR -> {
-                assert clip.isPresent();
-                setupEditorFor(trackId, clip.get());
-            }
-            case CLIP_ADDED, CLIP_REMOVED -> updateTimeMarkers();
-            default -> throw new IllegalArgumentException();
-        }
+        // TODO: update timeline
     }
 
     private void trackCallback(UUID trackId, TrackCallbackType type) {
@@ -221,7 +161,7 @@ public class AppController {
                     return;
                 }
                 trackList.getChildren().remove(index);
-                trackClipList.getChildren().remove(index);
+                // TODO: update timeline
             }
             case null, default -> throw new IllegalArgumentException();
         }
