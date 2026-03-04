@@ -2,7 +2,6 @@ package io.github.bmb0136.maestro;
 
 import io.github.bmb0136.maestro.core.clip.PianoRollClip;
 import io.github.bmb0136.maestro.core.event.AddNoteToPianoRollClipEvent;
-import io.github.bmb0136.maestro.core.event.EventResult;
 import io.github.bmb0136.maestro.core.event.RemoveNoteFromPianoRollClipEvent;
 import io.github.bmb0136.maestro.core.theory.Note;
 import io.github.bmb0136.maestro.core.theory.Pitch;
@@ -70,6 +69,12 @@ public class PianoRollEditorSubScene extends ClipEditorSubScene<PianoRollClip> {
         for (Note note : clip.get()) {
             notesPane.getChildren().add(createNote(note));
         }
+        clip.addListener(ignored -> {
+            notesPane.getChildren().clear();
+            for (Note note : clip.get()) {
+                notesPane.getChildren().add(createNote(note));
+            }
+        });
 
         // Init piano display
         for (int midi = 127; midi >= 0; midi--) {
@@ -135,32 +140,12 @@ public class PianoRollEditorSubScene extends ClipEditorSubScene<PianoRollClip> {
                 var result = manager.append(new AddNoteToPianoRollClipEvent(trackId, clipId, note));
                 if (!result.isOk()) {
                     new Alert(Alert.AlertType.ERROR, "Failed to add note: " + result, ButtonType.OK).showAndWait();
-                    return;
                 }
-                if (result == EventResult.NOOP) {
-                    return;
-                }
-                Node node = createNote(note);
-                notesPane.getChildren().add(node);
             }
             case SECONDARY -> {
-                var toRemove = clip.get().getNote(position.pitch, position.position);
                 var result = manager.append(new RemoveNoteFromPianoRollClipEvent(trackId, clipId, position.pitch, position.position));
                 if (!result.isOk()) {
                     new Alert(Alert.AlertType.ERROR, "Failed to remove note: " + result, ButtonType.OK).showAndWait();
-                    return;
-                }
-                if (result == EventResult.NOOP) {
-                    return;
-                }
-                assert toRemove.isPresent();
-                for (int i = 0; i < notesPane.getChildren().size(); i++) {
-                    Node node = notesPane.getChildren().get(i);
-                    var note = (Note) node.getUserData();
-                    if (note.equals(toRemove.get())) {
-                        notesPane.getChildren().remove(i);
-                        break;
-                    }
                 }
             }
             default -> {

@@ -10,7 +10,8 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public final class TimelineManagerUtil {
-    private TimelineManagerUtil() {}
+    private TimelineManagerUtil() {
+    }
 
     public static TimelineManager createEmpty() {
         return new TimelineManager(1024, new Timeline());
@@ -26,7 +27,8 @@ public final class TimelineManagerUtil {
     }
 
     public static <T extends Clip> ClipData createWithClip(Supplier<T> factory) {
-        return createWithClip(factory, ignored -> {});
+        return createWithClip(factory, ignored -> {
+        });
     }
 
     public static <T extends Clip> ClipData createWithClip(Supplier<T> factory, Consumer<T> mutate) {
@@ -48,6 +50,9 @@ public final class TimelineManagerUtil {
         return new ClipData(new TimelineManager(1024, tl), track.getId(), clip.getId());
     }
 
-    public record TrackData(TimelineManager manager, UUID trackId) {}
-    public record ClipData(TimelineManager manager, UUID trackId, UUID clipId) {}
+    public record TrackData(TimelineManager manager, UUID trackId) {
+    }
+
+    public record ClipData(TimelineManager manager, UUID trackId, UUID clipId) {
+    }
 }
