@@ -60,7 +60,7 @@ public class EventTarget {
             case Timeline ignored -> timeline();
             case Track track -> track(track.getId());
             case Clip clip -> clip(Objects.requireNonNull(context.track()).getId(), clip.getId());
-            default -> throw new IllegalArgumentException("Unknown EventContext.target() value: " + context.target().getClass().getName())
+            default -> throw new IllegalArgumentException("Unknown EventContext.target() value: " + context.target().getClass().getName());
         };
     }
 
