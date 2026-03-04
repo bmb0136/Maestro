@@ -26,7 +26,6 @@ public class TimelineRenderer {
     // Needed to discriminate between the area above and below the timeline scrollbar (see main window)
     // Also used for some calculations
     private final SimpleObjectProperty<Bounds> scrollbarBounds = new SimpleObjectProperty<>();
-    // TODO: hook into system for #19 to get .size() as bindable value
     private final SimpleIntegerProperty timelineSize = new SimpleIntegerProperty();
     private final SimpleDoubleProperty maxScrollY = new SimpleDoubleProperty();
     // Needed to convert tracks/beats <-> percent (scrollbar in main window uses 0-1 range)
@@ -37,6 +36,14 @@ public class TimelineRenderer {
         this.manager = manager;
         this.canvas = canvas;
         this.pixelsPerBeat = pixelsPerBeat;
+
+        // This object lives as long as the application, no need to close callback
+        //noinspection resource
+        manager.registerChangeCallback(target -> {
+            if (target.isTimeline()) {
+                timelineSize.set(target.getTimeline().size());
+            }
+        });
 
         canvas.widthProperty().addListener(ignored -> draw());
         canvas.heightProperty().addListener(ignored -> draw());
@@ -136,8 +143,6 @@ public class TimelineRenderer {
     }
 
     private void onScroll(ScrollEvent e) {
-        timelineSize.set(manager.get().size()); // TODO: remove when #19 gets fixed
-
         scrollXBeats.set((float) Math.max(0, (e.getDeltaX() / e.getMultiplierX() * -0.25f) + scrollXBeats.get()));
         scrollYTracks.set((float) Math.max(0, Math.min(maxScrollY.get(), (e.getDeltaY() / e.getMultiplierY() * -0.1f) + scrollYTracks.get())));
     }
