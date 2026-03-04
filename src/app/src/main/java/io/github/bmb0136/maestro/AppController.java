@@ -154,6 +154,16 @@ public class AppController {
 
         scene.widthProperty().bind(editorPane.prefWidthProperty());
         scene.heightProperty().bind(root.heightProperty().multiply(0.5));
+
+        // ClipEditorSubscene implements AutoClosable, make sure to call close() on it!
+        if (editorPane.getContent() instanceof AutoCloseable closeable) {
+            try {
+                closeable.close();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         editorPane.setContent(scene);
     }
 
