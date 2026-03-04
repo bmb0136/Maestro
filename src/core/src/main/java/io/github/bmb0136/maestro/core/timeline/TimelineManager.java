@@ -3,10 +3,8 @@ package io.github.bmb0136.maestro.core.timeline;
 import io.github.bmb0136.maestro.core.event.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.function.Consumer;
 
 public class TimelineManager {
     private final int maxHistory;
@@ -15,6 +13,7 @@ public class TimelineManager {
     private Timeline current;
     private int undoOffset = 0;
     private boolean currentDirty = true;
+    private final HashMap<UUID, Consumer<EventTarget>> changeCallbacks = new HashMap<>();
 
     public TimelineManager(int maxHistory, @NotNull Timeline referencePoint) {
         this.maxHistory = maxHistory;
@@ -25,11 +24,18 @@ public class TimelineManager {
     public Timeline get() {
         if (currentDirty) {
             current = referencePoint.copy(false);
+
+            // Apply all but last `undoOffset` events
             var toApply = List.copyOf(events);
             for (int i = 0; i < undoOffset; i++) {
                 toApply.removeLast();
             }
-            applyEvents(current, toApply, true);
+            var result = applyEvents(current, toApply, true);
+
+            // Run change callbacks
+            changeCallbacks.values().forEach(result.getTargets()::forEach);
+
+            // Remove dirty flag
             currentDirty = false;
         }
         return current;
@@ -57,10 +63,19 @@ public class TimelineManager {
             return res;
         }
 
+        // Run change callbacks
+        changeCallbacks.values().forEach(res.getTargets()::forEach);
+
         while (events.size() > maxHistory) {
             applyEvents(referencePoint, Collections.singletonList(events.removeFirst()), true);
         }
         return res;
+    }
+
+    public AutoCloseable registerChangeCallback(Consumer<EventTarget> func) {
+        UUID id = UUID.randomUUID();
+        changeCallbacks.put(id, func);
+        return new ChangeCallbackClosable(this, id);
     }
 
     public void undo() {
@@ -104,7 +119,7 @@ public class TimelineManager {
                     target.get().setMutable(true);
                     result = e.apply(context);
                     target.get().setMutable(false);
-                    if (result != EventResult.NOOP) {
+                    if (!result.equals(EventResult.NOOP)) {
                         allTargets.add(EventTarget.fromEventContext(context));
                     }
                 }
@@ -118,7 +133,7 @@ public class TimelineManager {
                     target.get().setMutable(true);
                     result = e.apply(context);
                     target.get().setMutable(false);
-                    if (result != EventResult.NOOP) {
+                    if (!result.equals(EventResult.NOOP)) {
                         allTargets.add(EventTarget.fromEventContext(context));
                     }
                 }
@@ -127,7 +142,7 @@ public class TimelineManager {
                     timeline.setMutable(true);
                     result = e.apply(context);
                     timeline.setMutable(false);
-                    if (result != EventResult.NOOP) {
+                    if (!result.equals(EventResult.NOOP)) {
                         allTargets.add(EventTarget.fromEventContext(context));
                     }
                 }
@@ -143,5 +158,12 @@ public class TimelineManager {
             }
         }
         return result.withTargets(allTargets);
+    }
+
+    private record ChangeCallbackClosable(TimelineManager manager, UUID id) implements AutoCloseable {
+        @Override
+        public void close() throws Exception {
+            manager.changeCallbacks.remove(id);
+        }
     }
 }

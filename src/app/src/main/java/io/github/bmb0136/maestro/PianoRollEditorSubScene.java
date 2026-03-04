@@ -137,7 +137,7 @@ public class PianoRollEditorSubScene extends ClipEditorSubScene<PianoRollClip> {
                     new Alert(Alert.AlertType.ERROR, "Failed to add note: " + result, ButtonType.OK).showAndWait();
                     return;
                 }
-                if (result == EventResult.NOOP) {
+                if (result.equals(EventResult.NOOP)) {
                     return;
                 }
                 Node node = createNote(note);
@@ -150,7 +150,7 @@ public class PianoRollEditorSubScene extends ClipEditorSubScene<PianoRollClip> {
                     new Alert(Alert.AlertType.ERROR, "Failed to remove note: " + result, ButtonType.OK).showAndWait();
                     return;
                 }
-                if (result == EventResult.NOOP) {
+                if (result.equals(EventResult.NOOP)) {
                     return;
                 }
                 assert toRemove.isPresent();
