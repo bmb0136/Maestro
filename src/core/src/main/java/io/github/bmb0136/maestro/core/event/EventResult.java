@@ -1,5 +1,10 @@
 package io.github.bmb0136.maestro.core.event;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
+
 public class EventResult {
     public static final EventResult OK = new EventResult("OK", true);
     public static final EventResult NOOP = new EventResult("NOOP", true);
@@ -13,23 +18,48 @@ public class EventResult {
     public static final EventResult WRONG_CLIP_TYPE = new EventResult("WRONG_CLIP_TYPE");
     public static final EventResult NOTE_OUTSIDE_CLIP = new EventResult("NOTE_OUTSIDE_CLIP");
 
+    @NotNull
     private final String name;
     private final boolean ok;
+    private final List<EventTarget> targets;
 
-    private EventResult(String name, boolean ok) {
+    private EventResult(@NotNull String name, boolean ok, List<EventTarget> targets) {
         this.name = name;
         this.ok = ok;
+        this.targets = targets;
     }
 
-    private EventResult(String name) {
-        this(name, false);
+    private EventResult(@NotNull String name, boolean ok) {
+        this(name, ok, Collections.emptyList());
+    }
+
+    private EventResult(@NotNull String name, List<EventTarget> targets) {
+        this(name, false, targets);
+    }
+
+    private EventResult(@NotNull String name) {
+        this(name, Collections.emptyList());
     }
 
     public boolean isOk() {
         return ok;
     }
 
+    @NotNull
     public String getName() {
         return name;
+    }
+
+    public List<EventTarget> getTargets() {
+        return targets;
+    }
+
+    public EventResult withTargets(List<EventTarget> targets) {
+        return new EventResult(name, ok, Collections.unmodifiableList(targets));
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof EventResult other && name.equals(other.getName());
     }
 }

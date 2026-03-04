@@ -4,6 +4,7 @@ import io.github.bmb0136.maestro.core.event.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -84,6 +85,7 @@ public class TimelineManager {
     }
 
     private static EventResult applyEvents(Timeline timeline, Iterable<Event<?>> events, boolean checkResults) {
+        ArrayList<EventTarget> allTargets = new ArrayList<>();
         var result = EventResult.OK;
         for (Event<?> event : events) {
             switch (event) {
@@ -102,6 +104,9 @@ public class TimelineManager {
                     target.get().setMutable(true);
                     result = e.apply(context);
                     target.get().setMutable(false);
+                    if (result != EventResult.NOOP) {
+                        allTargets.add(EventTarget.fromEventContext(context));
+                    }
                 }
                 case TrackEvent e -> {
                     var target = timeline.getTrack(e.getTrackId());
@@ -113,12 +118,18 @@ public class TimelineManager {
                     target.get().setMutable(true);
                     result = e.apply(context);
                     target.get().setMutable(false);
+                    if (result != EventResult.NOOP) {
+                        allTargets.add(EventTarget.fromEventContext(context));
+                    }
                 }
                 case TimelineEvent e -> {
                     var context = new EventContext<>(timeline);
                     timeline.setMutable(true);
                     result = e.apply(context);
                     timeline.setMutable(false);
+                    if (result != EventResult.NOOP) {
+                        allTargets.add(EventTarget.fromEventContext(context));
+                    }
                 }
                 // If you got this error, make sure the event extends one of the above and not Event<T> directly
                 default -> throw new IllegalArgumentException("Unknown event type: " + event.getClass().getName());
@@ -131,6 +142,6 @@ public class TimelineManager {
                 throw new IllegalStateException("Failed to apply events to Timeline. An intermediate event failed to apply (%s returned %s)".formatted(event.getClass().getSimpleName(), result.getName()));
             }
         }
-        return result;
+        return result.withTargets(allTargets);
     }
 }
