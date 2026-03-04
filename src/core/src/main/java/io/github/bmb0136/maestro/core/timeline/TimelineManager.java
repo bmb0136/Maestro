@@ -3,9 +3,8 @@ package io.github.bmb0136.maestro.core.timeline;
 import io.github.bmb0136.maestro.core.event.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayDeque;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.function.Consumer;
 
 public class TimelineManager {
     private final int maxHistory;
@@ -14,6 +13,7 @@ public class TimelineManager {
     private Timeline current;
     private int undoOffset = 0;
     private boolean currentDirty = true;
+    private final HashMap<UUID, Consumer<EventTarget>> changeCallbacks = new HashMap<>();
 
     public TimelineManager(int maxHistory, @NotNull Timeline referencePoint) {
         this.maxHistory = maxHistory;
@@ -24,11 +24,18 @@ public class TimelineManager {
     public Timeline get() {
         if (currentDirty) {
             current = referencePoint.copy(false);
+
+            // Apply all but last `undoOffset` events
             var toApply = List.copyOf(events);
             for (int i = 0; i < undoOffset; i++) {
                 toApply.removeLast();
             }
-            applyEvents(current, toApply, true);
+            var result = applyEvents(current, toApply, true);
+
+            // Run change callbacks
+            changeCallbacks.values().forEach(result.getTargets()::forEach);
+
+            // Remove dirty flag
             currentDirty = false;
         }
         return current;
@@ -56,10 +63,19 @@ public class TimelineManager {
             return res;
         }
 
+        // Run change callbacks
+        changeCallbacks.values().forEach(res.getTargets()::forEach);
+
         while (events.size() > maxHistory) {
             applyEvents(referencePoint, Collections.singletonList(events.removeFirst()), true);
         }
         return res;
+    }
+
+    public AutoCloseable registerChangeCallback(Consumer<EventTarget> func) {
+        UUID id = UUID.randomUUID();
+        changeCallbacks.put(id, func);
+        return new ChangeCallbackClosable(this, id);
     }
 
     public void undo() {
@@ -84,6 +100,7 @@ public class TimelineManager {
     }
 
     private static EventResult applyEvents(Timeline timeline, Iterable<Event<?>> events, boolean checkResults) {
+        ArrayList<EventTarget> allTargets = new ArrayList<>();
         var result = EventResult.OK;
         for (Event<?> event : events) {
             switch (event) {
@@ -102,6 +119,9 @@ public class TimelineManager {
                     target.get().setMutable(true);
                     result = e.apply(context);
                     target.get().setMutable(false);
+                    if (!result.equals(EventResult.NOOP)) {
+                        allTargets.add(EventTarget.fromEventContext(context));
+                    }
                 }
                 case TrackEvent e -> {
                     var target = timeline.getTrack(e.getTrackId());
@@ -113,12 +133,18 @@ public class TimelineManager {
                     target.get().setMutable(true);
                     result = e.apply(context);
                     target.get().setMutable(false);
+                    if (!result.equals(EventResult.NOOP)) {
+                        allTargets.add(EventTarget.fromEventContext(context));
+                    }
                 }
                 case TimelineEvent e -> {
                     var context = new EventContext<>(timeline);
                     timeline.setMutable(true);
                     result = e.apply(context);
                     timeline.setMutable(false);
+                    if (!result.equals(EventResult.NOOP)) {
+                        allTargets.add(EventTarget.fromEventContext(context));
+                    }
                 }
                 // If you got this error, make sure the event extends one of the above and not Event<T> directly
                 default -> throw new IllegalArgumentException("Unknown event type: " + event.getClass().getName());
@@ -128,9 +154,16 @@ public class TimelineManager {
                 // If this happens then there was an event that put the Timeline into an invalid state
                 // The purpose of the event system is to make that impossible
                 // If you do get this error, something has gone horribly wrong
-                throw new IllegalStateException("Failed to apply events to Timeline. An intermediate event failed to apply (%s returned %s)".formatted(event.getClass().getSimpleName(), result.name()));
+                throw new IllegalStateException("Failed to apply events to Timeline. An intermediate event failed to apply (%s returned %s)".formatted(event.getClass().getSimpleName(), result.getName()));
             }
         }
-        return result;
+        return result.withTargets(allTargets);
+    }
+
+    private record ChangeCallbackClosable(TimelineManager manager, UUID id) implements AutoCloseable {
+        @Override
+        public void close() throws Exception {
+            manager.changeCallbacks.remove(id);
+        }
     }
 }
