@@ -1,13 +1,13 @@
 package io.github.bmb0136.maestro.core.theory;
 
-import javafx.util.Pair;
+import io.github.bmb0136.maestro.core.util.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 
 public final class ScaleFactory {
     // Scale objects are immutable, so we can just preload all of them
-    private static final HashMap<Pair<ScaleType, PitchName>, Scale> CACHE = new HashMap<>();
+    private static final HashMap<Tuple2<ScaleType, PitchName>, Scale> CACHE = new HashMap<>();
 
     static {
         for (ScaleType type : ScaleType.values()) {
@@ -28,7 +28,7 @@ public final class ScaleFactory {
                     case WHOLE_TONE -> fromIntervals(root, 2, 2, 2, 2, 2);
                     case HARMONIC_MINOR -> fromIntervals(root, 2, 1, 2, 2, 1, 3);
                 };
-                CACHE.put(new Pair<>(type, root), scale);
+                CACHE.put(new Tuple2<>(type, root), scale);
             }
         }
     }
@@ -46,6 +46,6 @@ public final class ScaleFactory {
     }
 
     public static Scale create(@NotNull ScaleType type, @NotNull PitchName root) {
-        return CACHE.get(new Pair<>(type, root));
+        return CACHE.get(new Tuple2<>(type, root));
     }
 }
