@@ -40,7 +40,7 @@ public final class ScaleFactory {
         var pitches = new PitchName[intervals.length + 1];
         pitches[0] = root;
         for (int i = 1; i < pitches.length; i++) {
-            pitches[i] = pitches[i - 1].next(intervals[i]);
+            pitches[i] = pitches[i - 1].next(intervals[i]).convertToKey(root);
         }
         return new Scale(pitches);
     }
