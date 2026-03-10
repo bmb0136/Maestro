@@ -6,9 +6,12 @@ import java.util.Iterator;
 import java.util.List;
 
 public class Scale implements Iterable<PitchName> {
+    private final PitchName keySignature;
     private final List<PitchName> pitches;
 
-    public Scale(@NotNull PitchName... pitches) {
+    // Note: do not call this directly, use `ScaleFactory` instead
+    public Scale(PitchName keySignature, @NotNull PitchName... pitches) {
+        this.keySignature = keySignature;
         this.pitches = List.of(pitches);
     }
 
@@ -21,5 +24,9 @@ public class Scale implements Iterable<PitchName> {
     @Override
     public @NotNull Iterator<PitchName> iterator() {
         return pitches.iterator();
+    }
+
+    public PitchName getKeySignature() {
+        return keySignature;
     }
 }
