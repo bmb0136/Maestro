@@ -15,10 +15,12 @@ public class ChordBuilder {
     private ChordQuality quality = ChordQuality.MAJOR;
     private final TreeSet<Pitch> pitches = new TreeSet<>(Comparator.comparingInt(Pitch::toMidi));
     private int baseOctave = 4;
+    private final View view = new View();
 
-    public @NotNull PitchName getRootNote() {
-        return rootNote;
+    public View getView() {
+        return view;
     }
+
 
     public ChordBuilder setRootNote(@NotNull PitchName pitch) {
         rootNote = pitch;
@@ -54,30 +56,16 @@ public class ChordBuilder {
         return this;
     }
 
-    public int getInversionNumber() {
-        return inversionNumber;
-    }
-
-    public @Nullable PitchName getBassNote() {
-        return bassNote;
-    }
-
-    public @NotNull ChordQuality getQuality() {
-        return quality;
-    }
-
     public ChordBuilder setQuality(@NotNull ChordQuality quality) {
         this.quality = quality;
         recalculatePitches();
         return this;
     }
 
-    public int getBaseOctave() {
-        return baseOctave;
-    }
-
-    public void setBaseOctave(int baseOctave) {
+    public ChordBuilder setBaseOctave(int baseOctave) {
         this.baseOctave = baseOctave;
+        recalculatePitches();
+        return this;
     }
 
     private void recalculatePitches() {
@@ -112,6 +100,16 @@ public class ChordBuilder {
         }
     }
 
+    public ChordBuilder copy() {
+        var b = new ChordBuilder();
+        b.rootNote = rootNote;
+        b.quality = quality;
+        b.inversionNumber = inversionNumber;
+        b.bassNote = bassNote;
+        b.baseOctave = baseOctave;
+        return b;
+    }
+
     public Chord build() {
         Pitch[] pitches = new Pitch[this.pitches.size()];
         int i = 0;
@@ -140,23 +138,47 @@ public class ChordBuilder {
         });
 
         // Get slash note (either bass note or inversion) and append
-        PitchName slashNote = null;
-        if (bassNote != null) {
-            slashNote = bassNote;
-        } else if (inversionNumber != 0) {
-            int i = inversionNumber;
-            for (var p : pitches) {
-                slashNote = p.name();
-                if (i-- < 0) {
-                    break;
-                }
-            }
-        }
+        PitchName slashNote = view.getSlashNote();
         if (slashNote != null) {
             sb.append('/');
             sb.append(slashNote);
         }
 
         return sb.toString();
+    }
+
+    // A read-only wrapper around this builder
+    public class View {
+        public PitchName getRootNote() {
+            return rootNote;
+        }
+
+        public ChordQuality getQuality() {
+            return quality;
+        }
+
+        public int getBaseOctave() {
+            return baseOctave;
+        }
+
+        public PitchName getSlashNote() {
+            PitchName slashNote = null;
+            if (bassNote != null) {
+                slashNote = bassNote;
+            } else if (inversionNumber != 0) {
+                int i = inversionNumber;
+                for (var p : pitches) {
+                    slashNote = p.name();
+                    if (i-- < 0) {
+                        break;
+                    }
+                }
+            }
+            return slashNote;
+        }
+
+        public String getChordName() {
+            return ChordBuilder.this.getChordName();
+        }
     }
 }
