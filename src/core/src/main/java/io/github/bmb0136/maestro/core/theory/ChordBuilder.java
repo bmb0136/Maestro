@@ -21,6 +21,7 @@ public class ChordBuilder {
         return view;
     }
 
+
     public ChordBuilder setRootNote(@NotNull PitchName pitch) {
         rootNote = pitch;
         recalculatePitches();
