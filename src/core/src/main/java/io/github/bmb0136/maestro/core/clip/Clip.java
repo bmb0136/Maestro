@@ -1,20 +1,29 @@
 package io.github.bmb0136.maestro.core.clip;
 
+import io.github.bmb0136.maestro.core.modifier.ModifierList;
 import io.github.bmb0136.maestro.core.theory.Note;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
 public abstract class Clip implements Iterable<Note> {
+    @NotNull
     private final UUID id;
     private float position, duration;
     private boolean mutable;
+    @NotNull
+    private ModifierList modifiers = new ModifierList();
 
     public Clip() {
         this(UUID.randomUUID());
     }
 
-    protected Clip(UUID id) {
+    protected Clip(@NotNull UUID id) {
         this.id = id;
+    }
+
+    public @NotNull ModifierList getModifiers() {
+        return modifiers;
     }
 
     public float getPosition() {
@@ -39,7 +48,7 @@ public abstract class Clip implements Iterable<Note> {
         this.duration = duration;
     }
 
-    public UUID getId() {
+    public @NotNull UUID getId() {
         return id;
     }
 
@@ -58,6 +67,7 @@ public abstract class Clip implements Iterable<Note> {
         copy.setPosition(position);
         copy.setDuration(duration);
         copy.setMutable(false);
+        copy.modifiers = modifiers.copy(newId);
         return copy;
     }
 
