@@ -22,6 +22,7 @@ public abstract class Modifier {
 
     public Modifier copy(boolean newId) {
         Modifier copy = createCopy(newId);
+        assert newId == (!id.equals(copy.id));
         copy.setMutable(false);
         return copy;
     }
