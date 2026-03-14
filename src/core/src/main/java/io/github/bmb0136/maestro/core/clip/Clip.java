@@ -1,5 +1,6 @@
 package io.github.bmb0136.maestro.core.clip;
 
+import io.github.bmb0136.maestro.core.modifier.Modifier;
 import io.github.bmb0136.maestro.core.modifier.ModifierList;
 import io.github.bmb0136.maestro.core.theory.Note;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +13,7 @@ public abstract class Clip implements Iterable<Note> {
     private float position, duration;
     private boolean mutable;
     @NotNull
-    private ModifierList modifiers = new ModifierList();
+    private final ModifierList modifiers = new ModifierList(this::isMutable);
 
     public Clip() {
         this(UUID.randomUUID());
@@ -66,8 +67,10 @@ public abstract class Clip implements Iterable<Note> {
         copy.setMutable(true);
         copy.setPosition(position);
         copy.setDuration(duration);
+        for (Modifier m : modifiers) {
+            copy.modifiers.addModifier(m);
+        }
         copy.setMutable(false);
-        copy.modifiers = modifiers.copy(newId);
         return copy;
     }
 

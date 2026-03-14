@@ -1,15 +1,26 @@
 package io.github.bmb0136.maestro.core.modifier;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.BooleanSupplier;
 
 public class ModifierList implements Iterable<Modifier> {
     private final ArrayList<Modifier> modifiers = new ArrayList<>();
-    private boolean isMutable;
+    @Nullable
+    private final BooleanSupplier mutabilityCheck;
+
+    public ModifierList() {
+        this(null);
+    }
+
+    public ModifierList(@Nullable BooleanSupplier mutabilityCheck) {
+        this.mutabilityCheck = mutabilityCheck;
+    }
 
     public Optional<Modifier> getModifier(UUID id) {
         for (Modifier m : modifiers) {
@@ -28,6 +39,9 @@ public class ModifierList implements Iterable<Modifier> {
     }
 
     public boolean removeModifier(UUID id) {
+        if (mutabilityCheck != null && !mutabilityCheck.getAsBoolean()) {
+            throw new IllegalStateException("ModifierList is immutable");
+        }
         for (int i = 0; i < modifiers.size(); i++) {
             if (modifiers.get(i).getId().equals(id)) {
                 modifiers.remove(i);
@@ -38,6 +52,9 @@ public class ModifierList implements Iterable<Modifier> {
     }
 
     public boolean removeModifier(int index) {
+        if (mutabilityCheck != null && !mutabilityCheck.getAsBoolean()) {
+            throw new IllegalStateException("ModifierList is immutable");
+        }
         if (index < 0 || index >= modifiers.size()) {
             return false;
         }
@@ -46,10 +63,16 @@ public class ModifierList implements Iterable<Modifier> {
     }
 
     public void addModifier(@NotNull Modifier modifier) {
+        if (mutabilityCheck != null && !mutabilityCheck.getAsBoolean()) {
+            throw new IllegalStateException("ModifierList is immutable");
+        }
         modifiers.add(modifier);
     }
 
     public boolean moveNext(int index) {
+        if (mutabilityCheck != null && !mutabilityCheck.getAsBoolean()) {
+            throw new IllegalStateException("ModifierList is immutable");
+        }
         if (index < 0 || index + 1 >= modifiers.size()) {
             return false;
         }
@@ -60,6 +83,9 @@ public class ModifierList implements Iterable<Modifier> {
     }
 
     public boolean movePrevious(int index) {
+        if (mutabilityCheck != null && !mutabilityCheck.getAsBoolean()) {
+            throw new IllegalStateException("ModifierList is immutable");
+        }
         if (index < 1 || index >= modifiers.size()) {
             return false;
         }
@@ -71,22 +97,6 @@ public class ModifierList implements Iterable<Modifier> {
 
     public int size() {
         return modifiers.size();
-    }
-
-    public boolean isMutable() {
-        return isMutable;
-    }
-
-    public void setMutable(boolean mutable) {
-        isMutable = mutable;
-    }
-
-    public ModifierList copy(boolean newId) {
-        ModifierList copy = new ModifierList();
-        for (Modifier m : modifiers) {
-            copy.modifiers.add(m.copy(newId));
-        }
-        return copy;
     }
 
     @Override
