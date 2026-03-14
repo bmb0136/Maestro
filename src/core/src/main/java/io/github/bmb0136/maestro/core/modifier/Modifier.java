@@ -1,7 +1,9 @@
 package io.github.bmb0136.maestro.core.modifier;
 
+import io.github.bmb0136.maestro.core.theory.Note;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.UUID;
 
 public abstract class Modifier {
@@ -20,6 +22,14 @@ public abstract class Modifier {
         return id;
     }
 
+    public boolean isMutable() {
+        return isMutable;
+    }
+
+    public void setMutable(boolean mutable) {
+        isMutable = mutable;
+    }
+
     public Modifier copy(boolean newId) {
         Modifier copy = createCopy(newId);
         assert newId == (!id.equals(copy.id));
@@ -29,11 +39,5 @@ public abstract class Modifier {
 
     protected abstract Modifier createCopy(boolean newId);
 
-    public boolean isMutable() {
-        return isMutable;
-    }
-
-    public void setMutable(boolean mutable) {
-        isMutable = mutable;
-    }
+    public abstract void applyTo(@NotNull List<Note> notes);
 }
