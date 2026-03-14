@@ -1,12 +1,10 @@
 package io.github.bmb0136.maestro.core.modifier;
 
+import io.github.bmb0136.maestro.core.theory.Note;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.BooleanSupplier;
 
 public class ModifierList implements Iterable<Modifier> {
@@ -97,6 +95,10 @@ public class ModifierList implements Iterable<Modifier> {
 
     public int size() {
         return modifiers.size();
+    }
+
+    public void applyTo(@NotNull List<Note> notes) {
+        modifiers.forEach(m -> m.applyTo(notes));
     }
 
     @Override
