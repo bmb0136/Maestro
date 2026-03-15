@@ -9,7 +9,7 @@ import java.util.UUID;
 public class AddModifierToClipEvent extends ClipEvent {
     private final Modifier modifier;
 
-    protected AddModifierToClipEvent(UUID trackId, UUID clipId, @NotNull Modifier modifier) {
+    public AddModifierToClipEvent(UUID trackId, UUID clipId, @NotNull Modifier modifier) {
         super(trackId, clipId);
         this.modifier = modifier;
     }

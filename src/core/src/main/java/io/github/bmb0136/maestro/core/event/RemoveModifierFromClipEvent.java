@@ -8,7 +8,7 @@ import java.util.UUID;
 public class RemoveModifierFromClipEvent extends ClipEvent {
     private final UUID modifierId;
 
-    protected RemoveModifierFromClipEvent(UUID trackId, UUID clipId, UUID modifierId) {
+    public RemoveModifierFromClipEvent(UUID trackId, UUID clipId, UUID modifierId) {
         super(trackId, clipId);
         this.modifierId = modifierId;
     }
