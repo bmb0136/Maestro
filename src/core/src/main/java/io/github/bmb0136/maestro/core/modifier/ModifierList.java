@@ -36,6 +36,15 @@ public class ModifierList implements Iterable<Modifier> {
         return Optional.ofNullable(modifiers.get(index));
     }
 
+    public OptionalInt indexOf(UUID id) {
+        for (int i = 0; i < modifiers.size(); i++) {
+            if (modifiers.get(i).getId().equals(id)) {
+                return OptionalInt.of(i);
+            }
+        }
+        return OptionalInt.empty();
+    }
+
     public boolean removeModifier(UUID id) {
         if (mutabilityCheck != null && !mutabilityCheck.getAsBoolean()) {
             throw new IllegalStateException("ModifierList is immutable");
