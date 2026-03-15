@@ -2,6 +2,7 @@ package io.github.bmb0136.maestro.core.clip;
 
 import io.github.bmb0136.maestro.core.theory.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -34,7 +35,7 @@ public class ChordClip extends Clip {
         builder.setQuality(quality);
     }
 
-    public void setSlashNote(@NotNull PitchName slashNote) {
+    public void setSlashNote(@Nullable PitchName slashNote) {
         if (!isMutable()) {
             throw new IllegalStateException("ChordClip is immutable");
         }

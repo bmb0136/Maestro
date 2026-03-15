@@ -104,6 +104,30 @@ public class TimelineManager {
         var result = EventResult.OK;
         for (Event<?> event : events) {
             switch (event) {
+                case ModifierEvent e -> {
+                    var track = timeline.getTrack(e.getTrackId());
+                    if (track.isEmpty()) {
+                        result = EventResult.UNKNOWN_TRACK;
+                        break;
+                    }
+                    var clip = track.get().getClip(e.getClipId());
+                    if (clip.isEmpty()) {
+                        result = EventResult.UNKNOWN_CLIP;
+                        break;
+                    }
+                    var target = clip.get().getModifiers().getModifier(e.getModifierId());
+                    if (target.isEmpty()) {
+                        result = EventResult.UNKNOWN_MODIFIER;
+                        break;
+                    }
+                    var context = new EventContext<>(target.get(), timeline, track.get(), clip.get());
+                    target.get().setMutable(true);
+                    result = e.apply(context);
+                    target.get().setMutable(false);
+                    if (!result.equals(EventResult.NOOP)) {
+                        allTargets.add(EventTarget.fromEventContext(context));
+                    }
+                }
                 case ClipEvent e -> {
                     var track = timeline.getTrack(e.getTrackId());
                     if (track.isEmpty()) {
