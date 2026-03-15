@@ -21,7 +21,7 @@ public class AddModifierToClipEvent extends ClipEvent {
             return EventResult.MODIFIER_ALREADY_ON_CLIP;
         }
         // TODO: Should we allow "linking" modifiers between clips, or should be error if the same modifier is added to multiple clips?
-        target.getModifiers().addModifier(modifier);
+        target.getModifiers().addModifier(modifier.copy(false));
         return EventResult.OK;
     }
 }
