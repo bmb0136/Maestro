@@ -161,6 +161,7 @@ public class ChordBuilder {
             return baseOctave;
         }
 
+        @Nullable
         public PitchName getSlashNote() {
             PitchName slashNote = null;
             if (bassNote != null) {
