@@ -46,7 +46,7 @@ public class TimelineRenderer {
     private final SimpleDoubleProperty maxScrollY = new SimpleDoubleProperty();
     // Needed to convert tracks/beats <-> percent (scrollbar in main window uses 0-1 range)
     private final SimpleDoubleProperty scrollYPercent = new SimpleDoubleProperty();
-    private final SimpleDoubleProperty scrollXPercent = new SimpleDoubleProperty();
+    private final ReadOnlyDoubleWrapper scrollXPercent = new ReadOnlyDoubleWrapper();
     // Context menus
     private final ContextMenu trackContextMenu = new ContextMenu();
     private final ContextMenu clipContextMenu = new ContextMenu();
@@ -81,6 +81,7 @@ public class TimelineRenderer {
         canvas.heightProperty().addListener(ignored -> draw());
         scrollbarBoundsProperty().addListener(ignored -> draw());
         scrollXBeats.addListener(ignored -> draw());
+        scrollXPercent.bind(scrollXBeats.divide(timelineSize));
         scrollYTracks.addListener(ignored -> draw());
         playbackHeadXBeats.addListener(ignored -> draw());
         selectedClip.addListener(ignored -> draw());
@@ -95,8 +96,11 @@ public class TimelineRenderer {
         // Clamp view automatically
         maxScrollY.addListener((ignored1, ignored2, newValue) -> scrollYTracks.set(Math.min(scrollYTracks.get(), newValue.doubleValue())));
 
+        // Setup event handlers
         canvas.setOnScroll(this::onScroll);
         canvas.setOnMouseClicked(this::onClick);
+        canvas.setOnMouseDragged(this::onMouseDragged);
+        canvas.setOnMousePressed(this::onMouseDragged);
 
         // Setup context menus
         Menu addClipMenu = new Menu("Add Clip");
@@ -230,6 +234,34 @@ public class TimelineRenderer {
     private void onScroll(ScrollEvent e) {
         scrollXBeats.set((float) Math.max(0, (e.getDeltaX() / e.getMultiplierX() * -0.25f) + scrollXBeats.get()));
         scrollYTracks.set((float) Math.max(0, Math.min(maxScrollY.get(), (e.getDeltaY() / e.getMultiplierY() * -0.1f) + scrollYTracks.get())));
+    }
+
+    private double timelineDragLastX, timelineDragLastY;
+    private void onMouseDragged(MouseEvent e) {
+        if (e.getButton() != MouseButton.MIDDLE) {
+            return;
+        }
+
+        if (e.getEventType() == MouseEvent.MOUSE_PRESSED) {
+            timelineDragLastX = e.getX();
+            timelineDragLastY = e.getY();
+            return;
+        }
+
+        if (e.getEventType() != MouseEvent.MOUSE_DRAGGED) {
+            return;
+        }
+
+        var currentX = e.getX();
+        var currentY = e.getY();
+
+        var scrollX = scrollXBeats.get() - ((currentX - timelineDragLastX) / pixelsPerBeat.get());
+        var scrollY = scrollYTracks.get() - ((currentY - timelineDragLastY) / TrackSubScene.HEIGHT);
+        scrollXBeats.set((float) Math.max(0, scrollX));
+        scrollYTracks.set(Math.max(0, Math.min(maxScrollY.get(), scrollY)));
+
+        timelineDragLastX = currentX;
+        timelineDragLastY = currentY;
     }
 
     private void onClick(MouseEvent e) {
