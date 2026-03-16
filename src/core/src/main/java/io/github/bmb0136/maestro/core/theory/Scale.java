@@ -15,6 +15,10 @@ public class Scale implements Iterable<PitchName> {
         this.pitches = List.of(pitches);
     }
 
+    public PitchName getDegree(int degreeIndex) {
+        return pitches.get(Math.floorMod(degreeIndex, pitches.size()));
+    }
+
     public Pitch getPitch(int degreeIndex, int baseOctave) {
         int octaveOffset = Math.floorDiv(degreeIndex, pitches.size());
         int pitchIndex = Math.floorMod(degreeIndex, pitches.size());
