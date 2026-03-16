@@ -30,7 +30,7 @@ public class TimelineManager {
             for (int i = 0; i < undoOffset; i++) {
                 toApply.removeLast();
             }
-            var result = applyEvents(current, toApply, true);
+            var result = applyEvents(current, toApply, ResultCheckMode.THROW_IF_ERROR);
 
             // Run change callbacks
             changeCallbacks.values().forEach(result.getTargets()::forEach);
@@ -41,7 +41,17 @@ public class TimelineManager {
         return current;
     }
 
-    public EventResult append(@NotNull Event<?> event) {
+    public EventResult append(@NotNull Event<?>... events) {
+        if (events.length == 0) {
+            return EventResult.NOOP;
+        }
+        if (events.length == 1) {
+            return appendSingle(events[0]);
+        }
+        return appendSingle(new EventGroup(events));
+    }
+
+    private EventResult appendSingle(@NotNull Event<?> event) {
         // Clear future events if we had undone any events (no branching histories)
         if (undoOffset > 0) {
             while (undoOffset-- > 0) {
@@ -56,7 +66,7 @@ public class TimelineManager {
         }
 
         events.addLast(event);
-        var res = applyEvents(current, Collections.singletonList(event), false);
+        var res = applyEvents(current, Collections.singletonList(event), ResultCheckMode.BAIL_IF_ERROR);
         if (!res.isOk() || res.equals(EventResult.NOOP)) {
             events.removeLast();
             currentDirty = !res.isOk();
@@ -67,7 +77,7 @@ public class TimelineManager {
         changeCallbacks.values().forEach(res.getTargets()::forEach);
 
         while (events.size() > maxHistory) {
-            applyEvents(referencePoint, Collections.singletonList(events.removeFirst()), true);
+            applyEvents(referencePoint, Collections.singletonList(events.removeFirst()), ResultCheckMode.THROW_IF_ERROR);
         }
         return res;
     }
@@ -99,7 +109,7 @@ public class TimelineManager {
         return maxHistory;
     }
 
-    private static EventResult applyEvents(Timeline timeline, Iterable<Event<?>> events, boolean checkResults) {
+    private static EventResult applyEvents(Timeline timeline, Iterable<Event<?>> events, ResultCheckMode mode) {
         ArrayList<EventTarget> allTargets = new ArrayList<>();
         var result = EventResult.OK;
         for (Event<?> event : events) {
@@ -170,15 +180,31 @@ public class TimelineManager {
                         allTargets.add(EventTarget.fromEventContext(context));
                     }
                 }
+                case EventGroup e -> {
+                    // Never ignore errors within a group, always bail or throw (depending on mode)
+                    result = applyEvents(timeline, e, switch (mode) {
+                        case IGNORE_RESULTS, BAIL_IF_ERROR -> ResultCheckMode.BAIL_IF_ERROR;
+                        case THROW_IF_ERROR -> ResultCheckMode.THROW_IF_ERROR;
+                    });
+                    if (!result.equals(EventResult.NOOP)) {
+                        allTargets.addAll(result.getTargets());
+                    }
+                }
                 // If you got this error, make sure the event extends one of the above and not Event<T> directly
                 default -> throw new IllegalArgumentException("Unknown event type: " + event.getClass().getName());
             }
 
-            if (checkResults && !result.isOk()) {
-                // If this happens then there was an event that put the Timeline into an invalid state
-                // The purpose of the event system is to make that impossible
-                // If you do get this error, something has gone horribly wrong
-                throw new IllegalStateException("Failed to apply events to Timeline. An intermediate event failed to apply (%s returned %s)".formatted(event.getClass().getSimpleName(), result.getName()));
+            if (!result.isOk()) {
+                switch (mode) {
+                    case THROW_IF_ERROR ->
+                            // If this happens then there was an event that put the Timeline into an invalid state
+                            // The purpose of the event system is to make that impossible
+                            // If you do get this error, something has gone horribly wrong
+                            throw new IllegalStateException("Failed to apply events to Timeline. An intermediate event failed to apply (%s returned %s)".formatted(event.getClass().getSimpleName(), result.getName()));
+                    case BAIL_IF_ERROR -> {
+                        return result.withTargets(allTargets);
+                    }
+                }
             }
         }
         return result.withTargets(allTargets);
@@ -186,8 +212,14 @@ public class TimelineManager {
 
     private record ChangeCallbackClosable(TimelineManager manager, UUID id) implements AutoCloseable {
         @Override
-        public void close() throws Exception {
+        public void close() {
             manager.changeCallbacks.remove(id);
         }
+    }
+
+    private enum ResultCheckMode {
+        IGNORE_RESULTS,
+        THROW_IF_ERROR,
+        BAIL_IF_ERROR
     }
 }
