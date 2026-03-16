@@ -194,11 +194,6 @@ public class TimelineManager {
                 default -> throw new IllegalArgumentException("Unknown event type: " + event.getClass().getName());
             }
 
-            if (checkResults && !result.isOk()) {
-                // If this happens then there was an event that put the Timeline into an invalid state
-                // The purpose of the event system is to make that impossible
-                // If you do get this error, something has gone horribly wrong
-                throw new IllegalStateException("Failed to apply events to Timeline. An intermediate event failed to apply (%s returned %s)".formatted(event.getClass().getSimpleName(), result.getName()));
             if (!result.isOk()) {
                 switch (mode) {
                     case THROW_IF_ERROR ->
