@@ -41,17 +41,17 @@ public class TimelineManager {
         return current;
     }
 
-    public EventResult append(@NotNull Event<?>... events) {
+    public EventResult appendGroup(@NotNull Event<?>... events) {
         if (events.length == 0) {
             return EventResult.NOOP;
         }
         if (events.length == 1) {
-            return appendSingle(events[0]);
+            return append(events[0]);
         }
-        return appendSingle(new EventGroup(events));
+        return append(new EventGroup(events));
     }
 
-    private EventResult appendSingle(@NotNull Event<?> event) {
+    public EventResult append(@NotNull Event<?> event) {
         // Clear future events if we had undone any events (no branching histories)
         if (undoOffset > 0) {
             while (undoOffset-- > 0) {
