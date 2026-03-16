@@ -225,6 +225,9 @@ public class TimelineRenderer {
     }
 
     private void onClick(MouseEvent e) {
+        clipContextMenu.hide();
+        trackContextMenu.hide();
+
         if (e.getY() < scrollbarBounds.get().getMinY()) {
             if (e.getButton() == MouseButton.PRIMARY) {
                 playbackHeadXBeats.set(localXToBeats(e.getX()));
@@ -239,9 +242,6 @@ public class TimelineRenderer {
                     }
                 }, () -> selectedClip.set(null));
                 case SECONDARY -> {
-                    clipContextMenu.hide();
-                    trackContextMenu.hide();
-
                     contextMenuX = e.getX();
                     contextMenuY = e.getY();
 
