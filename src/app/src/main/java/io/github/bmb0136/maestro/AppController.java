@@ -50,7 +50,6 @@ public class AppController {
     private Region timelineParent;
     private final TimelineManager manager = new TimelineManager(1024, new Timeline());
     private final SimpleIntegerProperty bpm = new SimpleIntegerProperty(120);
-    // TODO: Bind zooming to this property (decrease to zoom in, increase to zoom out)
     private final SimpleDoubleProperty pixelsPerBeat = new SimpleDoubleProperty(60.0);
     private TimelineRenderer timelineRenderer;
 

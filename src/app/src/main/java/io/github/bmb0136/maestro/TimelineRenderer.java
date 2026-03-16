@@ -89,6 +89,7 @@ public class TimelineRenderer {
         clipBeingEdited.addListener(ignored -> draw());
         timelineSize.addListener(ignored -> draw());
         timelineLength.addListener(ignored -> draw());
+        pixelsPerBeat.addListener(ignored -> draw());
 
         scrollYPercent.addListener((ignored1, ignored2, newValue) -> scrollYTracks.set(newValue.doubleValue() * maxScrollY.get()));
         scrollYTracks.addListener((ignored1, ignored2, newValue) -> scrollYPercent.set(newValue.doubleValue() / maxScrollY.get()));
@@ -252,6 +253,10 @@ public class TimelineRenderer {
     }
 
     private void onScroll(ScrollEvent e) {
+        if (e.isControlDown()) {
+            pixelsPerBeat.set(Math.max(30, pixelsPerBeat.get() + (e.getDeltaY() / e.getMultiplierY() * 5.0)));
+        }
+
         scrollXBeats.set((float) Math.max(0, (e.getDeltaX() / e.getMultiplierX() * -0.25f) + scrollXBeats.get()));
         scrollYTracks.set((float) Math.max(0, Math.min(maxScrollY.get(), (e.getDeltaY() / e.getMultiplierY() * -0.1f) + scrollYTracks.get())));
     }
