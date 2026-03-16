@@ -21,6 +21,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.paint.Color;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,6 +32,7 @@ public class TimelineRenderer {
     private final TimelineManager manager;
     private final Canvas canvas;
     private final SimpleDoubleProperty pixelsPerBeat;
+    private final Callback callback;
     // Position of the top-left corner of the view
     // X uses beats and Y uses tracks (fractional tracks means the view is scrolled between tracks)
     private final SimpleFloatProperty scrollXBeats = new SimpleFloatProperty();
@@ -51,14 +53,16 @@ public class TimelineRenderer {
     private double contextMenuX, contextMenuY;
     // Selection related fields
     private final SimpleObjectProperty<UUID> selectedClip = new SimpleObjectProperty<>(null);
+    private final SimpleObjectProperty<UUID> clipBeingEdited = new SimpleObjectProperty<>(null);
     // Cache of visible elements
     private final HashMap<UUID, Rectangle2D> visibleClips = new HashMap<>();
     private final HashSet<UUID> visibleTracks = new HashSet<>();
 
-    public TimelineRenderer(@NotNull TimelineManager manager, @NotNull Canvas canvas, @NotNull SimpleDoubleProperty pixelsPerBeat) {
+    public TimelineRenderer(@NotNull TimelineManager manager, @NotNull Canvas canvas, @NotNull SimpleDoubleProperty pixelsPerBeat, Callback callback) {
         this.manager = manager;
         this.canvas = canvas;
         this.pixelsPerBeat = pixelsPerBeat;
+        this.callback = callback;
 
         // This object lives as long as the application, no need to close callback
         //noinspection resource
@@ -80,6 +84,7 @@ public class TimelineRenderer {
         scrollYTracks.addListener(ignored -> draw());
         playbackHeadXBeats.addListener(ignored -> draw());
         selectedClip.addListener(ignored -> draw());
+        clipBeingEdited.addListener(ignored -> draw());
         timelineSize.addListener(ignored -> draw());
 
         scrollYPercent.addListener((ignored1, ignored2, newValue) -> scrollYTracks.set(newValue.doubleValue() * maxScrollY.get()));
@@ -121,7 +126,7 @@ public class TimelineRenderer {
     }
 
     private void rootContextMenuOnAddClipHandler(ActionEvent e, ClipFactory<?> factory) {
-        float position = localXToBeats(contextMenuX);
+        float position = (int)localXToBeats(contextMenuX);
         float duration = 4;
         var track = manager.get().getTrack((int) localYToTracks(contextMenuY));
         var result = manager.append(new AddClipToTrackEvent(track.getId(), factory.create(position, duration)));
@@ -165,7 +170,6 @@ public class TimelineRenderer {
         visibleClips.clear();
         visibleTracks.clear();
 
-        gc.setFill(Color.BLUE);
         int trackIndex = 0;
         for (var iterator = manager.get().iterator(); iterator.hasNext(); trackIndex++) {
             var track = iterator.next();
@@ -192,11 +196,14 @@ public class TimelineRenderer {
 
                 var rect = new Rectangle2D(startX, tracksToLocalY(trackIndex), endX - startX, TrackSubScene.HEIGHT);
                 visibleClips.put(clip.getId(), rect);
+
+                gc.setFill(clip.getId().equals(clipBeingEdited.get()) ? Color.ORANGE : Color.BLUE);
+
                 gc.fillRect(rect.getMinX(), rect.getMinY(), rect.getWidth(), rect.getHeight());
 
+                gc.setLineWidth(3);
                 if (clip.getId().equals(selectedClip.get())) {
-                    gc.setStroke(Color.RED);
-                    gc.setLineWidth(3);
+                    gc.setStroke(Color.LIGHTBLUE);
                     gc.strokeRect(rect.getMinX(), rect.getMinY(), rect.getWidth(), rect.getHeight());
                 }
             }
@@ -235,11 +242,12 @@ public class TimelineRenderer {
             }
         } else if (e.getY() > scrollbarBounds.get().getMaxY()) {
             switch (e.getButton()) {
-                case PRIMARY -> getClipAt(e.getX(), e.getY()).ifPresentOrElse(id -> {
-                    selectedClip.set(id);
+                case PRIMARY -> getClipAt(e.getX(), e.getY()).ifPresentOrElse(clipId -> {
+                    selectedClip.set(clipId);
                     if (e.getClickCount() == 2) {
-                        // TODO: call AppController::setupEditorFor somehow
-                        System.out.println("open editor for clip " + id);
+                        var trackId = manager.get().getTrackForClip(clipId).orElseThrow();
+                        clipBeingEdited.set(clipId);
+                        callback.run(trackId, clipId, CallbackType.OPEN_EDITOR);
                     }
                 }, () -> selectedClip.set(null));
                 case SECONDARY -> {
@@ -287,5 +295,14 @@ public class TimelineRenderer {
 
     private DoubleExpression localYToTracks(DoubleExpression y) {
         return y.subtract(DoubleExpression.doubleExpression(scrollbarBounds.map(Bounds::getMaxY))).divide(TrackSubScene.HEIGHT).add(scrollYTracks);
+    }
+
+    public enum CallbackType {
+        OPEN_EDITOR
+    }
+
+    @FunctionalInterface
+    public interface Callback {
+        void run(@Nullable UUID trackId, @Nullable UUID clipId, CallbackType type);
     }
 }

@@ -24,6 +24,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
@@ -60,7 +61,7 @@ public class AppController {
         root.getStylesheets().add("/DarkMode.css");
 
         // Init timeline renderer
-        timelineRenderer = new TimelineRenderer(manager, timelineCanvas, pixelsPerBeat);
+        timelineRenderer = new TimelineRenderer(manager, timelineCanvas, pixelsPerBeat, this::timelineCallback);
         timelineRenderer.scrollbarBoundsProperty().bind(timelineScrollBar.boundsInParentProperty());
         timelineCanvas.widthProperty().bind(timelineParent.widthProperty());
         timelineCanvas.heightProperty().bind(root.heightProperty());
@@ -101,9 +102,6 @@ public class AppController {
         });
 
         editorPane.prefWidthProperty().bind(timelineCanvas.widthProperty());
-
-        // TODO: remove this
-        addTrack(new Track());
     }
 
     private void setupEditorFor(UUID trackId, @NotNull Clip clip) {
@@ -116,6 +114,7 @@ public class AppController {
         scene.widthProperty().bind(editorPane.prefWidthProperty());
         scene.heightProperty().bind(root.heightProperty().multiply(0.5));
         editorPane.setContent(scene);
+        editorPane.setVisible(true);
     }
 
     @FXML
@@ -161,6 +160,17 @@ public class AppController {
                     return;
                 }
                 trackList.getChildren().remove(index);
+            }
+            case null, default -> throw new IllegalArgumentException();
+        }
+    }
+
+    private void timelineCallback(@Nullable UUID trackId, @Nullable UUID clipId, TimelineRenderer.CallbackType type) {
+        switch (type) {
+            case OPEN_EDITOR -> {
+                assert trackId != null;
+                assert clipId != null;
+                setupEditorFor(trackId, manager.get().getClip(clipId).orElseThrow());
             }
             case null, default -> throw new IllegalArgumentException();
         }
