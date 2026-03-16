@@ -80,6 +80,7 @@ public class TimelineRenderer {
         scrollYTracks.addListener(ignored -> draw());
         playbackHeadXBeats.addListener(ignored -> draw());
         selectedClip.addListener(ignored -> draw());
+        timelineSize.addListener(ignored -> draw());
 
         scrollYPercent.addListener((ignored1, ignored2, newValue) -> scrollYTracks.set(newValue.doubleValue() * maxScrollY.get()));
         scrollYTracks.addListener((ignored1, ignored2, newValue) -> scrollYPercent.set(newValue.doubleValue() / maxScrollY.get()));

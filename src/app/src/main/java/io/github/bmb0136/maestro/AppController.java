@@ -151,7 +151,6 @@ public class AppController {
         }
 
         trackList.getChildren().add(TrackSubScene.create(manager, track.getId(), this::trackCallback));
-        timelineRenderer.draw();
     }
 
     private void trackCallback(UUID trackId, TrackCallbackType type) {
@@ -162,7 +161,6 @@ public class AppController {
                     return;
                 }
                 trackList.getChildren().remove(index);
-                timelineRenderer.draw();
             }
             case null, default -> throw new IllegalArgumentException();
         }
