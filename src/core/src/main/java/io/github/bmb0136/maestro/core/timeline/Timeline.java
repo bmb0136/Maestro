@@ -34,6 +34,19 @@ public class Timeline implements Iterable<Track> {
         return Optional.empty();
     }
 
+    public Track getTrack(int index) {
+        return tracks.get(index);
+    }
+
+    public Optional<UUID> getTrackForClip(UUID id) {
+        for (Track track : tracks) {
+            if (track.getClip(id).isPresent()) {
+                return Optional.of(track.getId());
+            }
+        }
+        return Optional.empty();
+    }
+
     public void addTrack(@NotNull Track track) {
         if (!mutable) {
             throw new IllegalStateException("Timeline is immutable");

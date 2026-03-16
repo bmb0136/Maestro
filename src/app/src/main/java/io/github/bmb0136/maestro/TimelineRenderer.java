@@ -1,17 +1,31 @@
 package io.github.bmb0136.maestro;
 
+import io.github.bmb0136.maestro.core.clip.ClipFactory;
+import io.github.bmb0136.maestro.core.clip.PianoRollClip;
+import io.github.bmb0136.maestro.core.event.AddClipToTrackEvent;
+import io.github.bmb0136.maestro.core.event.RemoveClipFromTrackEvent;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleExpression;
 import javafx.beans.property.*;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.paint.Color;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.UUID;
 
 public class TimelineRenderer {
     private final TimelineManager manager;
@@ -31,6 +45,15 @@ public class TimelineRenderer {
     // Needed to convert tracks/beats <-> percent (scrollbar in main window uses 0-1 range)
     private final SimpleDoubleProperty scrollYPercent = new SimpleDoubleProperty();
     private final SimpleDoubleProperty scrollXPercent = new SimpleDoubleProperty();
+    // Context menus
+    private final ContextMenu trackContextMenu = new ContextMenu();
+    private final ContextMenu clipContextMenu = new ContextMenu();
+    private double contextMenuX, contextMenuY;
+    // Selection related fields
+    private final SimpleObjectProperty<UUID> selectedClip = new SimpleObjectProperty<>(null);
+    // Cache of visible elements
+    private final HashMap<UUID, Rectangle2D> visibleClips = new HashMap<>();
+    private final HashSet<UUID> visibleTracks = new HashSet<>();
 
     public TimelineRenderer(@NotNull TimelineManager manager, @NotNull Canvas canvas, @NotNull SimpleDoubleProperty pixelsPerBeat) {
         this.manager = manager;
@@ -43,6 +66,11 @@ public class TimelineRenderer {
             if (target.isTimeline()) {
                 timelineSize.set(target.getTimeline().size());
             }
+            // If an on-screen track/clip changes, redraw
+            if (target.getTrackId().map(visibleTracks::contains).orElse(false)
+                    || target.getClipId().map(visibleClips::containsKey).orElse(false)) {
+                draw();
+            }
         });
 
         canvas.widthProperty().addListener(ignored -> draw());
@@ -51,6 +79,7 @@ public class TimelineRenderer {
         scrollXBeats.addListener(ignored -> draw());
         scrollYTracks.addListener(ignored -> draw());
         playbackHeadXBeats.addListener(ignored -> draw());
+        selectedClip.addListener(ignored -> draw());
 
         scrollYPercent.addListener((ignored1, ignored2, newValue) -> scrollYTracks.set(newValue.doubleValue() * maxScrollY.get()));
         scrollYTracks.addListener((ignored1, ignored2, newValue) -> scrollYPercent.set(newValue.doubleValue() / maxScrollY.get()));
@@ -63,7 +92,41 @@ public class TimelineRenderer {
         canvas.setOnScroll(this::onScroll);
         canvas.setOnMouseClicked(this::onClick);
 
-        // TODO: context menu
+        // Setup context menus
+        Menu addClipMenu = new Menu("Add Clip");
+        addMenuItem(addClipMenu.getItems(), "Piano Roll", e -> rootContextMenuOnAddClipHandler(e, PianoRollClip::create));
+        trackContextMenu.getItems().add(addClipMenu);
+
+        addMenuItem(clipContextMenu.getItems(), "Delete", this::clipContextMenuOnDeleteHandler);
+    }
+
+    private static void addMenuItem(ObservableList<MenuItem> menuItems, String text, EventHandler<ActionEvent> onAction) {
+        var item = new MenuItem();
+        item.setText(text);
+        item.setOnAction(onAction);
+        menuItems.add(item);
+    }
+
+    private void clipContextMenuOnDeleteHandler(ActionEvent e) {
+        if (!(clipContextMenu.getUserData() instanceof UUID clipId)) {
+            throw new IllegalStateException("TimelineRenderer.clipContextMenu: missing clip ID in getUserData()");
+        }
+        manager.get().getTrackForClip(clipId).ifPresent(trackId -> {
+            var result = manager.append(new RemoveClipFromTrackEvent(trackId, clipId));
+            if (!result.isOk()) {
+                new Alert(Alert.AlertType.ERROR, "Failed to delete clip: " + result, ButtonType.OK).showAndWait();
+            }
+        });
+    }
+
+    private void rootContextMenuOnAddClipHandler(ActionEvent e, ClipFactory<?> factory) {
+        float position = localXToBeats(contextMenuX);
+        float duration = 4;
+        var track = manager.get().getTrack((int) localYToTracks(contextMenuY));
+        var result = manager.append(new AddClipToTrackEvent(track.getId(), factory.create(position, duration)));
+        if (!result.isOk()) {
+            new Alert(Alert.AlertType.ERROR, "Failed to add clip: " + result, ButtonType.OK).showAndWait();
+        }
     }
 
     public ObjectProperty<Bounds> scrollbarBoundsProperty() {
@@ -98,6 +161,9 @@ public class TimelineRenderer {
         gc.rect(0, bounds.getMaxY(), canvas.getWidth(), canvas.getHeight() - bounds.getMaxY());
         gc.clip();
 
+        visibleClips.clear();
+        visibleTracks.clear();
+
         gc.setFill(Color.BLUE);
         int trackIndex = 0;
         for (var iterator = manager.get().iterator(); iterator.hasNext(); trackIndex++) {
@@ -106,8 +172,11 @@ public class TimelineRenderer {
                 continue;
             }
 
+            visibleTracks.add(track.getId());
+
             // Draw line for each track
             gc.setStroke(Color.gray(1.0, 0.5));
+            gc.setLineWidth(1);
             double trackLineY = tracksToLocalY(trackIndex + 1);
             gc.strokeLine(0, trackLineY, canvas.getWidth(), trackLineY);
 
@@ -120,7 +189,15 @@ public class TimelineRenderer {
                     continue;
                 }
 
-                gc.fillRect(startX, tracksToLocalY(trackIndex), endX - startX, TrackSubScene.HEIGHT);
+                var rect = new Rectangle2D(startX, tracksToLocalY(trackIndex), endX - startX, TrackSubScene.HEIGHT);
+                visibleClips.put(clip.getId(), rect);
+                gc.fillRect(rect.getMinX(), rect.getMinY(), rect.getWidth(), rect.getHeight());
+
+                if (clip.getId().equals(selectedClip.get())) {
+                    gc.setStroke(Color.RED);
+                    gc.setLineWidth(3);
+                    gc.strokeRect(rect.getMinX(), rect.getMinY(), rect.getWidth(), rect.getHeight());
+                }
             }
         }
     }
@@ -153,8 +230,42 @@ public class TimelineRenderer {
                 playbackHeadXBeats.set(localXToBeats(e.getX()));
             }
         } else if (e.getY() > scrollbarBounds.get().getMaxY()) {
-            System.out.println("bottom part");
+            switch (e.getButton()) {
+                case PRIMARY -> getClipAt(e.getX(), e.getY()).ifPresentOrElse(id -> {
+                    selectedClip.set(id);
+                    if (e.getClickCount() == 2) {
+                        // TODO: call AppController::setupEditorFor somehow
+                        System.out.println("open editor for clip " + id);
+                    }
+                }, () -> selectedClip.set(null));
+                case SECONDARY -> {
+                    clipContextMenu.hide();
+                    trackContextMenu.hide();
+
+                    contextMenuX = e.getX();
+                    contextMenuY = e.getY();
+
+                    // TODO: maybe add another context menu for this?
+                    if (localYToTracks(contextMenuY) >= timelineSize.get()) {
+                        return;
+                    }
+
+                    getClipAt(contextMenuX, contextMenuY).ifPresentOrElse(id -> {
+                        clipContextMenu.setUserData(id);
+                        clipContextMenu.show(canvas, e.getScreenX(), e.getScreenY());
+                    }, () -> trackContextMenu.show(canvas, e.getScreenX(), e.getScreenY()));
+                }
+            }
         }
+    }
+
+    private Optional<UUID> getClipAt(double x, double y) {
+        for (var entry : visibleClips.entrySet()) {
+            if (entry.getValue().contains(x, y)) {
+                return Optional.of(entry.getKey());
+            }
+        }
+        return Optional.empty();
     }
 
     private double beatsToLocalX(float beats) {
