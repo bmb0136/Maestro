@@ -36,6 +36,7 @@ public class TimelineRenderer {
     // Position of the top-left corner of the view
     // X uses beats and Y uses tracks (fractional tracks means the view is scrolled between tracks)
     private final SimpleFloatProperty scrollXBeats = new SimpleFloatProperty();
+    private final SimpleDoubleProperty scrollXExternal = new SimpleDoubleProperty();
     private final SimpleDoubleProperty scrollYTracks = new SimpleDoubleProperty();
     // The position of the playback head in beats
     private final SimpleFloatProperty playbackHeadXBeats = new SimpleFloatProperty();
@@ -43,10 +44,10 @@ public class TimelineRenderer {
     // Also used for some calculations
     private final SimpleObjectProperty<Bounds> scrollbarBounds = new SimpleObjectProperty<>();
     private final SimpleIntegerProperty timelineSize = new SimpleIntegerProperty();
+    private final ReadOnlyFloatWrapper timelineLength = new ReadOnlyFloatWrapper();
     private final SimpleDoubleProperty maxScrollY = new SimpleDoubleProperty();
     // Needed to convert tracks/beats <-> percent (scrollbar in main window uses 0-1 range)
     private final SimpleDoubleProperty scrollYPercent = new SimpleDoubleProperty();
-    private final ReadOnlyDoubleWrapper scrollXPercent = new ReadOnlyDoubleWrapper();
     // Context menus
     private final ContextMenu trackContextMenu = new ContextMenu();
     private final ContextMenu clipContextMenu = new ContextMenu();
@@ -75,21 +76,32 @@ public class TimelineRenderer {
                     || target.getClipId().map(visibleClips::containsKey).orElse(false)) {
                 draw();
             }
+            timelineLength.set(target.getTimeline().getDuration());
         });
 
         canvas.widthProperty().addListener(ignored -> draw());
         canvas.heightProperty().addListener(ignored -> draw());
         scrollbarBoundsProperty().addListener(ignored -> draw());
         scrollXBeats.addListener(ignored -> draw());
-        scrollXPercent.bind(scrollXBeats.divide(timelineSize));
         scrollYTracks.addListener(ignored -> draw());
         playbackHeadXBeats.addListener(ignored -> draw());
         selectedClip.addListener(ignored -> draw());
         clipBeingEdited.addListener(ignored -> draw());
         timelineSize.addListener(ignored -> draw());
+        timelineLength.addListener(ignored -> draw());
 
         scrollYPercent.addListener((ignored1, ignored2, newValue) -> scrollYTracks.set(newValue.doubleValue() * maxScrollY.get()));
         scrollYTracks.addListener((ignored1, ignored2, newValue) -> scrollYPercent.set(newValue.doubleValue() / maxScrollY.get()));
+
+        scrollXExternal.addListener((ignored1, ignored2, newValue) -> scrollXBeats.set(newValue.floatValue() * timelineLength.get()));
+        scrollXBeats.addListener((ignored1, ignored2, newValue) -> {
+            float length = timelineLength.get();
+            if (length < 1e-6) {
+                scrollXExternal.set(0);
+            } else {
+                scrollXExternal.set(newValue.floatValue() / length);
+            }
+        });
 
         var canvasHeightTracks = localYToTracks(canvas.heightProperty()).subtract(localYToTracks(DoubleExpression.doubleExpression(scrollbarBounds.map(Bounds::getMaxY))));
         maxScrollY.bind(Bindings.max(0, timelineSize.subtract(canvasHeightTracks)));
@@ -145,6 +157,14 @@ public class TimelineRenderer {
 
     public DoubleProperty scrollYProperty() {
         return scrollYPercent;
+    }
+
+    public DoubleProperty scrollXProperty() {
+        return scrollXExternal;
+    }
+
+    public ReadOnlyFloatProperty timelineLengthProperty() {
+        return timelineLength.getReadOnlyProperty();
     }
 
     public void draw() {

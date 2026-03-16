@@ -30,12 +30,10 @@ import java.util.UUID;
 
 public class AppController {
 
-    private static final float MIN_TIMELINE_LENGTH = 32.0f;
-
     @FXML
     private ScrollBar trackScrollBar, timelineScrollBar;
     @FXML
-    private Node trackColumn, timelineColumn;
+    private Node trackColumn;
     @FXML
     private ScrollPane trackListScrollPane;
     @FXML
@@ -66,9 +64,11 @@ public class AppController {
         timelineCanvas.widthProperty().bind(timelineParent.widthProperty());
         timelineCanvas.heightProperty().bind(root.heightProperty());
 
-        // Sync scroll bars with relevant scroll panes
+        // Sync scroll bars
         trackScrollBar.valueProperty().bindBidirectional(trackListScrollPane.vvalueProperty());
         trackScrollBar.valueProperty().bindBidirectional(timelineRenderer.scrollYProperty());
+        timelineScrollBar.valueProperty().bindBidirectional(timelineRenderer.scrollXProperty());
+        timelineScrollBar.visibleAmountProperty().bind(timelineRenderer.timelineLengthProperty().map(x -> Math.max(0.1, 1 / x.floatValue())));
 
         // Auto-resize track scroll bar handle based on track count
         trackList.getChildren().addListener((ListChangeListener<Node>) change -> {
@@ -81,13 +81,8 @@ public class AppController {
         trackScrollBar.visibleProperty().addListener((observableValue, oldValue, newValue) -> {
             GridPane.setRowSpan(trackColumn, newValue ? 2 : 3);
         });
-        timelineScrollBar.visibleProperty().addListener((observable, oldValue, newValue) -> {
-            GridPane.setColumnSpan(timelineColumn, newValue ? 2 : 3);
-        });
 
         trackScrollBar.setVisible(false);
-        // TODO: Auto-resize timeline scroll bar handle based on length of timeline
-        timelineScrollBar.setVisibleAmount(0.1);
         //timelineScrollBar.setVisible(false);
 
         bpmLabel.textProperty().bind(bpm.map(value -> "BPM: " + value));
