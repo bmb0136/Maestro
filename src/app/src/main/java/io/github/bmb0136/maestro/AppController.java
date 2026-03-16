@@ -86,8 +86,6 @@ public class AppController {
 
         bpmLabel.textProperty().bind(bpm.map(value -> "BPM: " + value));
 
-        // TODO: propagate pixelsPerBeat to subscenes
-
         // Prevent incorrect scrolling
         trackListScrollPane.addEventFilter(ScrollEvent.SCROLL, e -> {
             if (Math.abs(e.getDeltaX()) > 1e-6) {
