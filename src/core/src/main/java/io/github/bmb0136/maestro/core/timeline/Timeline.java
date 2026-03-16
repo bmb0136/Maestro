@@ -1,5 +1,6 @@
 package io.github.bmb0136.maestro.core.timeline;
 
+import io.github.bmb0136.maestro.core.clip.Clip;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -29,6 +30,29 @@ public class Timeline implements Iterable<Track> {
         for (Track track : tracks) {
             if (track.getId().equals(id)) {
                 return Optional.of(track);
+            }
+        }
+        return Optional.empty();
+    }
+
+    public Track getTrack(int index) {
+        return tracks.get(index);
+    }
+
+    public Optional<UUID> getTrackForClip(UUID id) {
+        for (Track track : tracks) {
+            if (track.getClip(id).isPresent()) {
+                return Optional.of(track.getId());
+            }
+        }
+        return Optional.empty();
+    }
+
+    public Optional<Clip> getClip(UUID id) {
+        for (Track track : tracks) {
+            var opt = track.getClip(id);
+            if (opt.isPresent()) {
+                return opt;
             }
         }
         return Optional.empty();

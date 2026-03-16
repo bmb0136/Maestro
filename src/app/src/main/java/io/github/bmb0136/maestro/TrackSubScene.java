@@ -19,6 +19,9 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 
 public class TrackSubScene extends SubScene {
+
+    public static final int HEIGHT = 120;
+
     private final TimelineManager manager;
     private final UUID trackId;
     private final BiConsumer<UUID, TrackCallbackType> callback;
@@ -32,7 +35,7 @@ public class TrackSubScene extends SubScene {
 
     private TrackSubScene(TimelineManager manager, UUID trackId, BiConsumer<UUID, TrackCallbackType> callback) {
         // Dummy node (can't pass null here)
-        super(new Pane(), 240, 120);
+        super(new Pane(), 240, HEIGHT);
         this.manager = manager;
         this.trackId = trackId;
         this.callback = callback;
