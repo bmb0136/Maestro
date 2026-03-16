@@ -1,5 +1,7 @@
 package io.github.bmb0136.maestro.core.theory;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Optional;
 
 public enum PitchName {
@@ -117,6 +119,84 @@ public enum PitchName {
             case A_SHARP, B_FLAT -> 10;
             case B, C_FLAT -> 11;
         };
+    }
+
+    /**
+     * Determines if two {@link PitchName}s are equal using enharmonic equivalents. E.g, C_SHARP == D_FLAT
+     *
+     * @param other The other {@link PitchName} to compare {@code this} to
+     * @return Whether the two pitches are equal enharmonically
+     */
+    public boolean isEnharmonicallyEquivalentTo(@NotNull PitchName other) {
+        return getOctaveOffset() == other.getOctaveOffset();
+    }
+
+    public boolean isSharpKey() {
+        return getKeySignatureAccidentals() > 0;
+    }
+
+    public boolean isFlatKey() {
+        return getKeySignatureAccidentals() <= 0;
+    }
+
+    /**
+     * @return The number of sharps in the key for this {@link PitchName}
+     * @implNote Positive == sharp, negative == flat
+     */
+    public int getKeySignatureAccidentals() {
+        return switch (this) {
+            case F_FLAT -> -8;
+            case C_FLAT -> -7;
+            case G_FLAT -> -6;
+            case D_FLAT -> -5;
+            case A_FLAT -> -4;
+            case E_FLAT -> -3;
+            case B_FLAT -> -2;
+            case F -> -1;
+            case C -> 0;
+            case G -> 1;
+            case D -> 2;
+            case A -> 3;
+            case E -> 4;
+            case B -> 5;
+            case F_SHARP -> 6;
+            case C_SHARP -> 7;
+            case G_SHARP -> 8;
+            case D_SHARP -> 9;
+            case A_SHARP -> 10;
+            case E_SHARP -> 11;
+            case B_SHARP -> 12;
+        };
+    }
+
+    public PitchName convertAccidental(boolean toSharp) {
+        if (toSharp) {
+            return switch (this) {
+                case A_FLAT -> G_SHARP;
+                case B_FLAT -> A_SHARP;
+                case C_FLAT -> B;
+                case D_FLAT -> C_SHARP;
+                case E_FLAT -> D_SHARP;
+                case F_FLAT -> E;
+                case G_FLAT -> F_SHARP;
+                default -> this;
+            };
+        } else {
+            return switch (this) {
+                case A_SHARP -> B_FLAT;
+                case B_SHARP -> C;
+                case C_SHARP -> D_FLAT;
+                case D_SHARP -> E_FLAT;
+                case E_SHARP -> F;
+                case F_SHARP -> G_FLAT;
+                case G_SHARP -> A_FLAT;
+                default -> this;
+            };
+        }
+    }
+
+    public PitchName convertToKey(@NotNull PitchName key) {
+        return convertAccidental(key.isSharpKey());
     }
 
     @Override

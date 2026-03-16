@@ -17,6 +17,9 @@ public class EventResult {
     public static final EventResult CLIP_OVERLAP = new EventResult("CLIP_OVERLAP");
     public static final EventResult WRONG_CLIP_TYPE = new EventResult("WRONG_CLIP_TYPE");
     public static final EventResult NOTE_OUTSIDE_CLIP = new EventResult("NOTE_OUTSIDE_CLIP");
+    public static final EventResult UNKNOWN_MODIFIER = new EventResult("UNKNOWN_MODIFIER");
+    public static final EventResult MODIFIER_ALREADY_ON_CLIP = new EventResult("MODIFIER_ALREADY_ON_CLIP");
+    public static final EventResult WRONG_MODIFIER_TYPE = new EventResult("WRONG_MODIFIER_TYPE");
 
     @NotNull
     private final String name;
