@@ -112,6 +112,7 @@ public class PlaybackEngine {
         }
     }
     public void assignTrackstoChannels(Timeline timeline){
+        //To Make sure The Mapping is clear
         trackChannelMap.clear();
         int channel = 0;
         Iterator<Track> Tracks = timeline.iterator();
