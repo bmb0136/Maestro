@@ -78,6 +78,18 @@ public class PlaybackEngine {
         channels[0].noteOff(60);
         synth.close();
     }
+    private final void playTimeline(Timeline timeline){
+        for (Track track : timeline){
+            for (Clip clip : track){
+                //for Note note in Clip
+                    //Collect notes in a list; Need to know when to start/end.
+                    //Also, not Seconds to Millis, but Beats to Millis! (Based on the BPM)
+                long startMS = SecondstoMillis(clip.getPosition());
+                long endMS = SecondstoMillis((clip.getDuration()));
+
+            }
+        }
+    }
     /*
     Creation Notes: (Not Finished)
         Point of playTrack:
@@ -86,11 +98,21 @@ public class PlaybackEngine {
             -Since The Tracks are Clips, we can just use Clips (I'm writing poorly)
      */
     private final void playTrack(Track track){
-        for (Clip clip : track){
-            //Executes Clip
-            clip.getPosition();
-            clip.getDuration();
-        }
+       try {
+           for (Clip clip : track) {
+               //Executes Clip
+               long startMS = SecondstoMillis(clip.getPosition());
+               long endMS = SecondstoMillis(clip.getDuration());
+               MidiChannel[] channels = synth.getChannels();
+               int testnote = 60;
+               channels[0].noteOn(testnote, 127);
+               Thread.sleep(endMS);
+               channels[0].noteOff(testnote);
+
+           }
+       } catch (Exception e) {
+           e.printStackTrace();
+       }
     }
     /*
     Purpose: Starting the Playback of the current Timeline
