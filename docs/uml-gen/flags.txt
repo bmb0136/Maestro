@@ -1,0 +1,14 @@
+-l JAVA_21
+-sort
+-fdef
+-fpub
+-mdef
+-mpub
+-suses
+-fprot
+-mpro
+-e Iterable
+-ec io.github.bmb0136.maestro.core.event.TimelineEvent
+-ec io.github.bmb0136.maestro.core.event.TrackEvent
+-ec io.github.bmb0136.maestro.core.event.ClipEvent
+-ec io.github.bmb0136.maestro.core.event.ModifierEvent

@@ -1,0 +1,1338 @@
+diff --git a/.gitignore b/.gitignore
+index 090a905..4c25b21 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,5 +1,8 @@
+ .DS_Store
+ 
++# nix builds
++result
++
+ .idea
+ .gradle
+ /build/
+diff --git a/default.nix b/default.nix
+new file mode 100644
+index 0000000..626a774
+--- /dev/null
++++ b/default.nix
+@@ -0,0 +1,48 @@
++{
++  pkgs ? import <nixpkgs> { },
++  lib ? pkgs.lib,
++  stdenvNoCC ? pkgs.stdenvNoCC,
++  gradle ? pkgs.gradle,
++  javaPackages ? pkgs.javaPackages,
++  makeWrapper ? pkgs.makeWrapper,
++  ...
++}:
++let
++  jdk = javaPackages.compiler.openjdk17;
++in
++stdenvNoCC.mkDerivation (finalAttrs: {
++  pname = "plantuml-parser-cli";
++  version = "1.0.0";
++
++  # TODO: use patches on https://github.com/samuelroland/plantuml-parser.git
++  src = ./.;
++
++  mitmCache = gradle.fetchDeps {
++    pkg = finalAttrs.finalPackage;
++    data = ./deps.json;
++  };
++
++  nativeBuildInputs = [
++    gradle
++    makeWrapper
++  ];
++
++  gradleFlags = [
++    "-Dorg.gradle.java.home=${jdk}"
++  ];
++
++  gradleBuildTask = "plantuml-parser-cli:uberJar";
++
++  installPhase = ''
++    mkdir -p $out/bin
++    mkdir -p $out/share/java
++    cp ./plantuml-parser-cli/build/libs/*-uber.jar $out/share/java/${finalAttrs.pname}.jar
++    makeWrapper ${jdk}/bin/java $out/bin/${finalAttrs.pname} \
++      --add-flags "-jar $out/share/java/${finalAttrs.pname}.jar"
++  '';
++
++  meta.sourceProvenance = with lib.sourceTypes; [
++    fromSource
++    binaryBytecode # mitm cache
++  ];
++})
+diff --git a/deps.json b/deps.json
+new file mode 100644
+index 0000000..753e10a
+--- /dev/null
++++ b/deps.json
+@@ -0,0 +1,240 @@
++{
++ "!comment": "This is a nixpkgs Gradle dependency lockfile. For more details, refer to the Gradle section in the nixpkgs manual.",
++ "!version": 1,
++ "https://plugins.gradle.org/m2/org/jetbrains": {
++  "intellij/deps#trove4j/1.0.20200330": {
++   "jar": "sha256-xf1yW/+rUYRr88d9sTg8YKquv+G3/i8A0j/ht98KQ50=",
++   "pom": "sha256-h3IcuqZaPJfYsbqdIHhA8WTJ/jh1n8nqEP/iZWX40+k="
++  },
++  "kotlin#kotlin-android-extensions/1.9.10": {
++   "jar": "sha256-T8+CZcQTyNZAfF1t4AnTX9Vl7lkZGJW0N/pnAy0MlC0=",
++   "pom": "sha256-mrEkM3It1waAPo6u/+4silA++cXvKsY5DD2Y5dWicoY="
++  },
++  "kotlin#kotlin-build-tools-api/1.9.10": {
++   "jar": "sha256-VeZhN5kL6MDRVZkuJfQ3rDojXLGNHHuIZUNm32hMjUE=",
++   "pom": "sha256-MoB0KSHnKT4vPf+MZfBQtTM0phzb5VtzyMay2imMoQg="
++  },
++  "kotlin#kotlin-compiler-embeddable/1.9.10": {
++   "jar": "sha256-ttOWX9s/wqX42WVoHCFcN1UrKK5a0Z/K28FWjJtl2rQ=",
++   "pom": "sha256-xUVrHIKj7yFTuZOfcdGQIV9uU6gZLSbo127sIzJVVr0="
++  },
++  "kotlin#kotlin-compiler-runner/1.9.10": {
++   "jar": "sha256-D/5mCzxxUSA7Tu5iCfe3hXZDusw3QEZaHwg/DiIYUe4=",
++   "pom": "sha256-96Vb5s3ps1xAsmsg8+EvTBOl4x6Q1ij9vT8nyEk1sJI="
++  },
++  "kotlin#kotlin-daemon-client/1.9.10": {
++   "jar": "sha256-344+kPMIg8BJhjH4VvogOv5kQu+vYNH08pPjwDxNmWY=",
++   "pom": "sha256-T9zvgVUwuSddrDd5xkIoLqtDFzGKnTgSwLD2Og04BpE="
++  },
++  "kotlin#kotlin-daemon-embeddable/1.9.10": {
++   "jar": "sha256-eb1L84jaRDCwqb6G0vcqEREQlBll7dR46Z864IMVYRY=",
++   "pom": "sha256-xzNJPeX3vx4ILOwO30dLNNkLB0dAw7PQ04PPgbdSLyk="
++  },
++  "kotlin#kotlin-gradle-plugin-annotations/1.9.10": {
++   "jar": "sha256-mcbHnob3fJ/E/fIe1TwA6JmC8qn73VSGne/loshvGUM=",
++   "pom": "sha256-4nSF7WnLxNaDio8bIPYGkeJ7ALGQjnW+yap84MpDcw4="
++  },
++  "kotlin#kotlin-gradle-plugin-api/1.9.10": {
++   "jar": "sha256-D9jmpLm876hQhrSjrZqcFCm1dTZ1FLin/wPbhLHCYHA=",
++   "module": "sha256-eQrXIMX4HKJJGxnieuXGDKPoTct0i61OUFNovvorKxY=",
++   "pom": "sha256-Y/bTH6+kClkaI8x5B5kmQPMHtLOGrwkAxrPyzZmKVno="
++  },
++  "kotlin#kotlin-gradle-plugin-api/1.9.10/gradle81": {
++   "jar": "sha256-D9jmpLm876hQhrSjrZqcFCm1dTZ1FLin/wPbhLHCYHA="
++  },
++  "kotlin#kotlin-gradle-plugin-idea-proto/1.9.10": {
++   "jar": "sha256-12+5S4vz3RE8R24piwotF5cqvzSYh80Vm/TSm0vn5p0=",
++   "pom": "sha256-9aQYugfivPpdXZ4JkI23InJc/c4jR2ZK8FOeQ03Db3I="
++  },
++  "kotlin#kotlin-gradle-plugin-idea/1.9.10": {
++   "jar": "sha256-C7JszuNyr7m1hPKFfofMLz9TK2Kk9/pFdVjzr8Or6ZU=",
++   "module": "sha256-JsWo0jSqXnzzlF1lhRs28rOWcMvmSTWcRAiUQUjVM0A=",
++   "pom": "sha256-Vg52m3/Byl6PR46qTRqjiJ/KJ1Yg58Cqh0JrPGlUhA0="
++  },
++  "kotlin#kotlin-gradle-plugin-model/1.9.10": {
++   "jar": "sha256-fb6sbaPLw7dpdy6MvK3Xy53byrThrDrYdQ1qRmj1Duc=",
++   "module": "sha256-ksVkFYZZb5sg4j7oBua8O+Ln8EAH/2U4M3tpLx/1gNg=",
++   "pom": "sha256-CZijRjkLkJAew29Hj5Wc8QX4loDVCKvrZPwFAIbqByE="
++  },
++  "kotlin#kotlin-gradle-plugin/1.9.10": {
++   "module": "sha256-OklsoR/blu92eG/ZdR/QjO6Ns678AbiatAekBVys8bc=",
++   "pom": "sha256-ghsPEg7cN8jNKjpUh9M16Qu9cVl9UtwkMnMnUgr62+M="
++  },
++  "kotlin#kotlin-gradle-plugin/1.9.10/gradle81": {
++   "jar": "sha256-Auie31wMXHZFiUX3zSxpIVHwBDkkZnguj3wPg5VLAx0="
++  },
++  "kotlin#kotlin-gradle-plugins-bom/1.9.10": {
++   "module": "sha256-XhN2CEczVcsQgMwtsgmqanBgQXIBAY/MxbNtJwmIvDw=",
++   "pom": "sha256-Yp//5MbRw/ZlXedVAfSBqCS3grFV/trA330gUCMXIP8="
++  },
++  "kotlin#kotlin-klib-commonizer-api/1.9.10": {
++   "jar": "sha256-669KTsrSzvj/3+wgpecsmhtvYDb9oISfOkUkM5FmPlo=",
++   "pom": "sha256-CBtSTOUrcldXVGaAq4v+8GO+TlwhC8WgbRrcdwE9NHU="
++  },
++  "kotlin#kotlin-native-utils/1.9.10": {
++   "jar": "sha256-pdgXBVsaYIUnSdFIVpfNtk/dl7+NGkilWp5fyr+J6kk=",
++   "pom": "sha256-1zdvQbjRWRvur0/aGaWDGO1sMroCfy6VRXBIj3jz1lI="
++  },
++  "kotlin#kotlin-project-model/1.9.10": {
++   "jar": "sha256-CVAdx8Zx1MzxvTkiUxzBHxB/zMsDzV/L6s1jL0ML5Xw=",
++   "pom": "sha256-Puf8jJq0M4ZCl+MtkSNXOOd/M52KdcLwlJTZoHjTFdM="
++  },
++  "kotlin#kotlin-scripting-common/1.9.10": {
++   "jar": "sha256-J8+aMbISSGL61HhynnkOM1By0KueNswh44b71alCp68=",
++   "pom": "sha256-+gjkLp0xdojcipimevc0KtEWfHjzdcBmoB0+aE4+w5s="
++  },
++  "kotlin#kotlin-scripting-compiler-embeddable/1.9.10": {
++   "jar": "sha256-nnPHkiCIL5LR2oH4Slaw9O3VClHtUBdSQKx2/gNUEUk=",
++   "pom": "sha256-YwNooYnmg55XIqFK1N1P+Na8H5wSvlZNuG/YUVVLZIg="
++  },
++  "kotlin#kotlin-scripting-compiler-impl-embeddable/1.9.10": {
++   "jar": "sha256-Lx7Vg0LgU+klrBGXz7lU0qhWNnoqlxAOz6QpceDuO7w=",
++   "pom": "sha256-TRWwlm00wuEw72BAfQayli4oDaw25wd1Wnnvxzpzhhw="
++  },
++  "kotlin#kotlin-scripting-jvm/1.9.10": {
++   "jar": "sha256-N+s+INrgVduFBzUZSrbNZsL2eZmJAJkDt5Pt6rZU6Xk=",
++   "pom": "sha256-+ZU5Q/dx0hxJG4Oo/Y9c0YG4YGd+tNpQP/k27iZbpbw="
++  },
++  "kotlin#kotlin-tooling-core/1.9.10": {
++   "jar": "sha256-5TmiJCi5ysZ/dbLWHytuKnGDUNe7MYI8fcqJB/kJma4=",
++   "pom": "sha256-2Cz8n1YatkbZJz9xoygf8h1sYHeH8+PIEvbkUACnwDY="
++  },
++  "kotlin#kotlin-util-io/1.9.10": {
++   "jar": "sha256-+nxCE+qB5xUVTVH5tRze6qzMPzM6P/eUx1071m0swEg=",
++   "pom": "sha256-T1V9mBvutCRiFFfBifoLsT7/vuNFYhkdXkBbX/5/s5w="
++  },
++  "kotlin#kotlin-util-klib/1.9.10": {
++   "jar": "sha256-1y807Sp70c8QwAqDLekPYYYSmb8I0eAXRQ7n1b4BU0k=",
++   "pom": "sha256-IPjVfRzqio+lPUYzztDjWCSYT1rxh2dBOZ1k1J5MyUU="
++  },
++  "kotlin/jvm#org.jetbrains.kotlin.jvm.gradle.plugin/1.9.10": {
++   "pom": "sha256-j+tTUsp5OJCL+syYfbfsNTYaKSt6qATHg2XXHpRq5yo="
++  },
++  "kotlinx#kotlinx-coroutines-core-jvm/1.5.0": {
++   "jar": "sha256-eNbMcTX4TWkv83Uvz9H6G74JQNffcGUuTx6u7Ax4r7s=",
++   "module": "sha256-yIXdAoEHbFhDgm3jF+PLzcPYhZ2+71OuHPrNG5xg+W4=",
++   "pom": "sha256-U2IuA3eN+EQPwBIgGjW7S9/kAWTv7GErvvze7LL/wqs="
++  }
++ },
++ "https://repo.maven.apache.org/maven2": {
++  "com/github/javaparser#javaparser-core/3.28.0": {
++   "jar": "sha256-04UteEYcAmAuub/BXp/CGtfHZeYBOhttWAml0OfbUwk=",
++   "pom": "sha256-AT3fG+ys6FufJLgMmS7rbxAh+3V7cL/DTR7DfXhMLXc="
++  },
++  "com/github/javaparser#javaparser-parent/3.28.0": {
++   "pom": "sha256-+VPXzvj60JpPGaC/ZedxYZK0gm9yV8E5NDpolMyadaI="
++  },
++  "commons-cli#commons-cli/1.5.0": {
++   "jar": "sha256-vIuwH8D60lA4VwbiD5J93P9hc/Yzmzh9yHkjd1JWesY=",
++   "pom": "sha256-TuxDxPwoBMvrQ2mcq/qC+gYocfzB3P0QkCpdglIGdMA="
++  },
++  "commons-io#commons-io/2.8.0": {
++   "jar": "sha256-AvKR5dEkPcFDSW48u7QKHO1Hqljy1jPT44eAzQaNUHQ=",
++   "pom": "sha256-18hkGjfW5282+56B/BQg4moJ1j+jLwD3R2TeBnyoNH0="
++  },
++  "org/apache#apache/23": {
++   "pom": "sha256-vBBiTgYj82V3+sVjnKKTbTJA7RUvttjVM6tNJwVDSRw="
++  },
++  "org/apache/commons#commons-parent/52": {
++   "pom": "sha256-ddvo806Y5MP/QtquSi+etMvNO18QR9VEYKzpBtu0UC4="
++  },
++  "org/jetbrains#annotations/13.0": {
++   "jar": "sha256-rOKhDcji1f00kl7KwD5JiLLA+FFlDJS4zvSbob0RFHg=",
++   "pom": "sha256-llrrK+3/NpgZvd4b96CzuJuCR91pyIuGN112Fju4w5c="
++  },
++  "org/jetbrains/intellij/deps#trove4j/1.0.20200330": {
++   "jar": "sha256-xf1yW/+rUYRr88d9sTg8YKquv+G3/i8A0j/ht98KQ50=",
++   "pom": "sha256-h3IcuqZaPJfYsbqdIHhA8WTJ/jh1n8nqEP/iZWX40+k="
++  },
++  "org/jetbrains/kotlin#kotlin-build-tools-api/1.9.10": {
++   "jar": "sha256-VeZhN5kL6MDRVZkuJfQ3rDojXLGNHHuIZUNm32hMjUE=",
++   "pom": "sha256-MoB0KSHnKT4vPf+MZfBQtTM0phzb5VtzyMay2imMoQg="
++  },
++  "org/jetbrains/kotlin#kotlin-build-tools-impl/1.9.10": {
++   "jar": "sha256-LCj6XXxH4BxOrOInbgXo0Rmp8LJszphyB4HfNreSyCE=",
++   "pom": "sha256-lgPCs0Ha/ob6WviNmrLCCtBCunE9JRmwGpdsDHUthzE="
++  },
++  "org/jetbrains/kotlin#kotlin-compiler-embeddable/1.9.10": {
++   "jar": "sha256-ttOWX9s/wqX42WVoHCFcN1UrKK5a0Z/K28FWjJtl2rQ=",
++   "pom": "sha256-xUVrHIKj7yFTuZOfcdGQIV9uU6gZLSbo127sIzJVVr0="
++  },
++  "org/jetbrains/kotlin#kotlin-compiler/1.9.10": {
++   "jar": "sha256-onGNdfuQB1+0AdkkATRT6peFmuxuGJ67nmyDxjDv5/c=",
++   "pom": "sha256-rwqpz4ccO8zHfiTfVSMEb0ELk0oHS4dv+EAgrZbqRTA="
++  },
++  "org/jetbrains/kotlin#kotlin-daemon-embeddable/1.9.10": {
++   "jar": "sha256-eb1L84jaRDCwqb6G0vcqEREQlBll7dR46Z864IMVYRY=",
++   "pom": "sha256-xzNJPeX3vx4ILOwO30dLNNkLB0dAw7PQ04PPgbdSLyk="
++  },
++  "org/jetbrains/kotlin#kotlin-klib-commonizer-embeddable/1.9.10": {
++   "jar": "sha256-eOO4mSYXyhxZX4SRYNiuF4heqS7y0mxo2Es4oUFmWXk=",
++   "pom": "sha256-Qj2WtP6SDvtdkisIMI+gD9JcFqA3Yc3N4Kqy2cUslfQ="
++  },
++  "org/jetbrains/kotlin#kotlin-reflect/1.6.10": {
++   "jar": "sha256-MnesECrheq0QpVq+x1/1aWyNEJeQOWQ0tJbnUIeFQgM=",
++   "pom": "sha256-V5BVJCdKAK4CiqzMJyg/a8WSWpNKBGwcxdBsjuTW1ak="
++  },
++  "org/jetbrains/kotlin#kotlin-script-runtime/1.9.10": {
++   "jar": "sha256-KmCHN1vpvfqq20ukvpgzu6DejtqxJVyRZkKsqr/SCTI=",
++   "pom": "sha256-V0i+WJXtfcMBVOiS+OFbAjZZnonlAMLaC7ZUnjOF0sc="
++  },
++  "org/jetbrains/kotlin#kotlin-scripting-common/1.9.10": {
++   "jar": "sha256-J8+aMbISSGL61HhynnkOM1By0KueNswh44b71alCp68=",
++   "pom": "sha256-+gjkLp0xdojcipimevc0KtEWfHjzdcBmoB0+aE4+w5s="
++  },
++  "org/jetbrains/kotlin#kotlin-scripting-compiler-embeddable/1.9.10": {
++   "jar": "sha256-nnPHkiCIL5LR2oH4Slaw9O3VClHtUBdSQKx2/gNUEUk=",
++   "pom": "sha256-YwNooYnmg55XIqFK1N1P+Na8H5wSvlZNuG/YUVVLZIg="
++  },
++  "org/jetbrains/kotlin#kotlin-scripting-compiler-impl-embeddable/1.9.10": {
++   "jar": "sha256-Lx7Vg0LgU+klrBGXz7lU0qhWNnoqlxAOz6QpceDuO7w=",
++   "pom": "sha256-TRWwlm00wuEw72BAfQayli4oDaw25wd1Wnnvxzpzhhw="
++  },
++  "org/jetbrains/kotlin#kotlin-scripting-jvm/1.9.10": {
++   "jar": "sha256-N+s+INrgVduFBzUZSrbNZsL2eZmJAJkDt5Pt6rZU6Xk=",
++   "pom": "sha256-+ZU5Q/dx0hxJG4Oo/Y9c0YG4YGd+tNpQP/k27iZbpbw="
++  },
++  "org/jetbrains/kotlin#kotlin-stdlib-common/1.5.0": {
++   "pom": "sha256-04UhhLLDvSbYaB74/Dl3wqMBFT0nhx8R344sEV3n8QQ="
++  },
++  "org/jetbrains/kotlin#kotlin-stdlib-common/1.9.10": {
++   "jar": "sha256-zeM0G6GKK6JisLfPbFWyDJDo1DTkLJoT5qP3cNuWWog=",
++   "pom": "sha256-fUtwVHkQZ2s738iSWojztr+yRYLJeEVCgFVEzu9JCpI="
++  },
++  "org/jetbrains/kotlin#kotlin-stdlib-jdk7/1.9.10": {
++   "jar": "sha256-rGNhv5rR7TgsIQPZcSxHzewWYjK0kD7VluiHawaBybc=",
++   "pom": "sha256-x/pnx5YTILidhaPKWaLhjCxlhQhFWV3K5LRq9pRe3NU="
++  },
++  "org/jetbrains/kotlin#kotlin-stdlib-jdk8/1.9.10": {
++   "jar": "sha256-pMdNlNZM4avlN2D+A4ndlB9vxVjQ2rNeR8CFoR7IDyg=",
++   "pom": "sha256-X0uU3TBlp3ZMN/oV3irW2B9A1Z+Msz8X0YHGOE+3py4="
++  },
++  "org/jetbrains/kotlin#kotlin-stdlib/1.9.10": {
++   "jar": "sha256-VemJxRK4CQd5n4VDCfO8d4LFs9E5MkQtA3nVxHJxFQQ=",
++   "pom": "sha256-fin79z/fceBnnT3ufmgP1XNGT6AWRKT1irgZ0sCI09I="
++  },
++  "org/jetbrains/kotlinx#atomicfu/0.16.1": {
++   "module": "sha256-/c8E/CX2pD9VfzQe4AU8qiXnWfWRFpyGVm8drTf8d6Y=",
++   "pom": "sha256-EUPiRizoR6P5kzTEplwPKKQasv+3vjaA1EMgJ505hJk="
++  },
++  "org/jetbrains/kotlinx#atomicfu/0.16.1/all": {
++   "jar": "sha256-njw3Jp+dT/w+29T2Z+Qv4n6SsGu5jmgV2m8Z5jUnVlQ="
++  },
++  "org/jetbrains/kotlinx#kotlinx-coroutines-core-jvm/1.5.0": {
++   "jar": "sha256-eNbMcTX4TWkv83Uvz9H6G74JQNffcGUuTx6u7Ax4r7s=",
++   "module": "sha256-yIXdAoEHbFhDgm3jF+PLzcPYhZ2+71OuHPrNG5xg+W4=",
++   "pom": "sha256-U2IuA3eN+EQPwBIgGjW7S9/kAWTv7GErvvze7LL/wqs="
++  },
++  "org/jetbrains/kotlinx#kotlinx-coroutines-core/1.5.0": {
++   "module": "sha256-2KJqiW2jL7H4w/E/5By3mKYSocHd86VV2C7h/xbvE9M=",
++   "pom": "sha256-/8k2P3ybw40mHJOM23+kXO5WiU1xq7Kd+/23CzVY1FI="
++  },
++  "org/jetbrains/kotlinx#kotlinx-coroutines-core/1.5.0/all": {
++   "jar": "sha256-/Vj3LwJaoESwm4sYKZAS8NVxBjKDS8+rOu4y07Hyaog="
++  },
++  "org/junit#junit-bom/5.14.2": {
++   "module": "sha256-XSb0RAOSMm3SSDz0kBQ+6hSV1QlUWaC5ZRp7GzjiTr8=",
++   "pom": "sha256-7S3MeFW9RgvMyTob8Mli5jtWb/fY8d7Q8fJZO6gYOq8="
++  }
++ }
++}
+diff --git a/plantuml-parser-cli/src/main/java/com/shuzijun/plantumlparser/cli/options/CliOptionsHolder.java b/plantuml-parser-cli/src/main/java/com/shuzijun/plantumlparser/cli/options/CliOptionsHolder.java
+index 558ed1f..bd68bc2 100644
+--- a/plantuml-parser-cli/src/main/java/com/shuzijun/plantumlparser/cli/options/CliOptionsHolder.java
++++ b/plantuml-parser-cli/src/main/java/com/shuzijun/plantumlparser/cli/options/CliOptionsHolder.java
+@@ -1,5 +1,7 @@
+ package com.shuzijun.plantumlparser.cli.options;
+ 
++import com.shuzijun.plantumlparser.cli.options.exclude.AddExcludeOption;
++import com.shuzijun.plantumlparser.cli.options.excludechildren.AddExcludeChildrenOption;
+ import com.shuzijun.plantumlparser.cli.options.fieldmodifier.FieldDefaultModifier;
+ import com.shuzijun.plantumlparser.cli.options.fieldmodifier.FieldPrivateModifier;
+ import com.shuzijun.plantumlparser.cli.options.fieldmodifier.FieldProtectedModifier;
+@@ -15,7 +17,10 @@ import com.shuzijun.plantumlparser.cli.options.outfilepath.OutfilePathOption;
+ import com.shuzijun.plantumlparser.cli.options.showcomment.ShowCommentOption;
+ import com.shuzijun.plantumlparser.cli.options.showconstructors.ShowConstructorsOption;
+ import com.shuzijun.plantumlparser.cli.options.showdefaultconstructors.ShowDefaultConstructorsOption;
++import com.shuzijun.plantumlparser.cli.options.shownested.ShowNestedTypesOption;
+ import com.shuzijun.plantumlparser.cli.options.showpackage.ShowPackageOption;
++import com.shuzijun.plantumlparser.cli.options.showusages.ShowUsesOption;
++import com.shuzijun.plantumlparser.cli.options.sortmembers.SortMembersOption;
+ import org.apache.commons.cli.Options;
+ 
+ import java.util.ArrayList;
+@@ -48,6 +53,11 @@ public class CliOptionsHolder {
+         cliOptions.add(new ShowConstructorsOption());
+         cliOptions.add(new ShowDefaultConstructorsOption());
+         cliOptions.add(new ShowPackageOption());
++        cliOptions.add(new ShowNestedTypesOption());
++        cliOptions.add(new SortMembersOption());
++        cliOptions.add(new ShowUsesOption());
++        cliOptions.add(new AddExcludeOption());
++        cliOptions.add(new AddExcludeChildrenOption());
+ 
+         // This is a special cli option for displaying the help
+         cliOptions.add(new HelpOption(cliOptions));
+diff --git a/plantuml-parser-cli/src/main/java/com/shuzijun/plantumlparser/cli/options/exclude/AddExcludeOption.java b/plantuml-parser-cli/src/main/java/com/shuzijun/plantumlparser/cli/options/exclude/AddExcludeOption.java
+new file mode 100644
+index 0000000..eb4c28a
+--- /dev/null
++++ b/plantuml-parser-cli/src/main/java/com/shuzijun/plantumlparser/cli/options/exclude/AddExcludeOption.java
+@@ -0,0 +1,40 @@
++package com.shuzijun.plantumlparser.cli.options.exclude;
++
++import com.shuzijun.plantumlparser.cli.options.CliOption;
++import com.shuzijun.plantumlparser.core.ParserConfig;
++import org.apache.commons.cli.CommandLine;
++import org.apache.commons.cli.Option;
++
++import java.util.Arrays;
++
++public class AddExcludeOption implements CliOption {
++
++    private static final String NAME = "e";
++    private static final String LONG_NAME = "exclude";
++    private static final String DESCRIPTION = "Regex to exclude specific classes";
++
++    private final Option option;
++
++    public AddExcludeOption() {
++        option = new Option(NAME, LONG_NAME, true, DESCRIPTION);
++    }
++
++    @Override
++    public Option getOption() {
++        return option;
++    }
++
++    @Override
++    public ParserConfig updateConfig(ParserConfig parserConfig, CommandLine cmd) {
++        return Arrays.stream(cmd.getOptions())
++                .filter(option -> option.getOpt().equalsIgnoreCase(NAME))
++                .findAny()
++                .map(option -> {
++                    for (String val : cmd.getOptionValues(option)) {
++                        parserConfig.addExcludeClassRegex(val);
++                    }
++                    return parserConfig;
++                })
++                .orElse(parserConfig);
++    }
++}
+diff --git a/plantuml-parser-cli/src/main/java/com/shuzijun/plantumlparser/cli/options/excludechildren/AddExcludeChildrenOption.java b/plantuml-parser-cli/src/main/java/com/shuzijun/plantumlparser/cli/options/excludechildren/AddExcludeChildrenOption.java
+new file mode 100644
+index 0000000..94e6642
+--- /dev/null
++++ b/plantuml-parser-cli/src/main/java/com/shuzijun/plantumlparser/cli/options/excludechildren/AddExcludeChildrenOption.java
+@@ -0,0 +1,39 @@
++package com.shuzijun.plantumlparser.cli.options.excludechildren;
++
++import com.shuzijun.plantumlparser.cli.options.CliOption;
++import com.shuzijun.plantumlparser.core.ParserConfig;
++import org.apache.commons.cli.CommandLine;
++import org.apache.commons.cli.Option;
++
++import java.util.Arrays;
++
++public class AddExcludeChildrenOption implements CliOption {
++    private static final String NAME = "ec";
++    private static final String LONG_NAME = "exclude_children";
++    private static final String DESCRIPTION = "Full names of classes whose children should be excluded";
++
++    private final Option option;
++
++    public AddExcludeChildrenOption() {
++        option = new Option(NAME, LONG_NAME, true, DESCRIPTION);
++    }
++
++    @Override
++    public Option getOption() {
++        return option;
++    }
++
++    @Override
++    public ParserConfig updateConfig(ParserConfig parserConfig, CommandLine cmd) {
++        return Arrays.stream(cmd.getOptions())
++                .filter(option -> option.getOpt().equalsIgnoreCase(NAME))
++                .findAny()
++                .map(option -> {
++                    for (String val : cmd.getOptionValues(option)) {
++                        parserConfig.addExcludeChildName(val);
++                    }
++                    return parserConfig;
++                })
++                .orElse(parserConfig);
++    }
++}
+diff --git a/plantuml-parser-cli/src/main/java/com/shuzijun/plantumlparser/cli/options/shownested/ShowNestedTypesOption.java b/plantuml-parser-cli/src/main/java/com/shuzijun/plantumlparser/cli/options/shownested/ShowNestedTypesOption.java
+new file mode 100644
+index 0000000..8a82a39
+--- /dev/null
++++ b/plantuml-parser-cli/src/main/java/com/shuzijun/plantumlparser/cli/options/shownested/ShowNestedTypesOption.java
+@@ -0,0 +1,40 @@
++package com.shuzijun.plantumlparser.cli.options.shownested;
++
++import com.shuzijun.plantumlparser.cli.options.CliOption;
++import com.shuzijun.plantumlparser.core.ParserConfig;
++import org.apache.commons.cli.CommandLine;
++import org.apache.commons.cli.Option;
++
++import java.util.Arrays;
++
++public class ShowNestedTypesOption implements CliOption {
++    private static final String NAME = "snest";
++    private static final String LONG_NAME = "show_nested";
++    private static final String DESCRIPTION = "Show nested types";
++
++    private final Option option;
++
++    public ShowNestedTypesOption() {
++        option = new Option(NAME, LONG_NAME, false, DESCRIPTION);
++    }
++
++    @Override
++    public Option getOption() {
++        return option;
++    }
++
++    @Override
++    public ParserConfig updateConfig(ParserConfig parserConfig, CommandLine cmd) {
++        return Arrays.stream(cmd.getOptions()).map(Option::getOpt)
++                .filter(option -> option.equalsIgnoreCase(NAME))
++                .findAny()
++                .map(option -> {
++                    parserConfig.setShowNestedTypes(true);
++                    return parserConfig;
++                })
++                .orElseGet(() -> {
++                    parserConfig.setShowNestedTypes(false);
++                    return parserConfig;
++                });
++    }
++}
+diff --git a/plantuml-parser-cli/src/main/java/com/shuzijun/plantumlparser/cli/options/showusages/ShowUsesOption.java b/plantuml-parser-cli/src/main/java/com/shuzijun/plantumlparser/cli/options/showusages/ShowUsesOption.java
+new file mode 100644
+index 0000000..6b3f6e2
+--- /dev/null
++++ b/plantuml-parser-cli/src/main/java/com/shuzijun/plantumlparser/cli/options/showusages/ShowUsesOption.java
+@@ -0,0 +1,40 @@
++package com.shuzijun.plantumlparser.cli.options.showusages;
++
++import com.shuzijun.plantumlparser.cli.options.CliOption;
++import com.shuzijun.plantumlparser.core.ParserConfig;
++import org.apache.commons.cli.CommandLine;
++import org.apache.commons.cli.Option;
++
++import java.util.Arrays;
++
++public class ShowUsesOption implements CliOption {
++    private static final String NAME = "suses";
++    private static final String LONG_NAME = "show_uses";
++    private static final String DESCRIPTION = "Show which classes use each other";
++
++    private final Option option;
++
++    public ShowUsesOption() {
++        option = new Option(NAME, LONG_NAME, false, DESCRIPTION);
++    }
++
++    @Override
++    public Option getOption() {
++        return option;
++    }
++
++    @Override
++    public ParserConfig updateConfig(ParserConfig parserConfig, CommandLine cmd) {
++        return Arrays.stream(cmd.getOptions()).map(Option::getOpt)
++                .filter(option -> option.equalsIgnoreCase(NAME))
++                .findAny()
++                .map(option -> {
++                    parserConfig.setShowUsages(true);
++                    return parserConfig;
++                })
++                .orElseGet(() -> {
++                    parserConfig.setShowUsages(false);
++                    return parserConfig;
++                });
++    }
++}
+diff --git a/plantuml-parser-cli/src/main/java/com/shuzijun/plantumlparser/cli/options/sortmembers/SortMembersOption.java b/plantuml-parser-cli/src/main/java/com/shuzijun/plantumlparser/cli/options/sortmembers/SortMembersOption.java
+new file mode 100644
+index 0000000..140407b
+--- /dev/null
++++ b/plantuml-parser-cli/src/main/java/com/shuzijun/plantumlparser/cli/options/sortmembers/SortMembersOption.java
+@@ -0,0 +1,40 @@
++package com.shuzijun.plantumlparser.cli.options.sortmembers;
++
++import com.shuzijun.plantumlparser.cli.options.CliOption;
++import com.shuzijun.plantumlparser.core.ParserConfig;
++import org.apache.commons.cli.CommandLine;
++import org.apache.commons.cli.Option;
++
++import java.util.Arrays;
++
++public class SortMembersOption implements CliOption {
++    private static final String NAME = "sort";
++    private static final String LONG_NAME = "sort_members";
++    private static final String DESCRIPTION = "Sort Members";
++
++    private final Option option;
++
++    public SortMembersOption() {
++        option = new Option(NAME, LONG_NAME, false, DESCRIPTION);
++    }
++
++    @Override
++    public Option getOption() {
++        return option;
++    }
++
++    @Override
++    public ParserConfig updateConfig(ParserConfig parserConfig, CommandLine cmd) {
++        return Arrays.stream(cmd.getOptions()).map(Option::getOpt)
++                .filter(option -> option.equalsIgnoreCase(NAME))
++                .findAny()
++                .map(option -> {
++                    parserConfig.setSortMembers(true);
++                    return parserConfig;
++                })
++                .orElseGet(() -> {
++                    parserConfig.setSortMembers(false);
++                    return parserConfig;
++                });
++    }
++}
+diff --git a/plantuml-parser-core/build.gradle b/plantuml-parser-core/build.gradle
+index 277eee5..74c39bc 100644
+--- a/plantuml-parser-core/build.gradle
++++ b/plantuml-parser-core/build.gradle
+@@ -13,7 +13,7 @@ repositories {
+ }
+ 
+ dependencies {
+-    api "com.github.javaparser:javaparser-core:3.27.1"
++    api "com.github.javaparser:javaparser-core:3.28.0"
+ 
+     api "commons-io:commons-io:2.8.0"
+     api "org.jetbrains.kotlin:kotlin-compiler"
+diff --git a/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/ClassVoidVisitor.java b/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/ClassVoidVisitor.java
+index 47379b5..9ce12db 100644
+--- a/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/ClassVoidVisitor.java
++++ b/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/ClassVoidVisitor.java
+@@ -5,7 +5,6 @@ import com.github.javaparser.ast.body.*;
+ import com.github.javaparser.ast.type.ClassOrInterfaceType;
+ import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
+ 
+-import java.util.EnumSet;
+ import java.util.HashMap;
+ import java.util.HashSet;
+ import java.util.Map;
+@@ -18,6 +17,9 @@ import java.util.Set;
+  */
+ public class ClassVoidVisitor extends VoidVisitorAdapter<PUml> implements MyVisitor {
+ 
++    private final DataKey<Object> IS_REQUIRED_CTOR = new DataKey<>() {
++    };
++
+     private final String packageName;
+ 
+     private final ParserConfig parserConfig;
+@@ -36,6 +38,9 @@ public class ClassVoidVisitor extends VoidVisitorAdapter<PUml> implements MyVisi
+         if (parserConfig.isExcludeClass(cORid.getNameAsString())){
+             return;
+         }
++        if (cORid.isNestedType() && !parserConfig.isShowNestedTypes()) {
++            return;
++        }
+         PUmlView pUmlView = (PUmlView) pUml;
+         PUmlClass pUmlClass = createUmlClass();
+ 
+@@ -84,7 +89,7 @@ public class ClassVoidVisitor extends VoidVisitorAdapter<PUml> implements MyVisi
+         if (cORid.getImplementedTypes().size() != 0) {
+             for (ClassOrInterfaceType implementedType : cORid.getImplementedTypes()) {
+                 PUmlRelation pUmlRelation = new PUmlRelation();
+-                pUmlRelation.setTarget(getPackageNamePrefix(pUmlClass.getPackageName()) + pUmlClass.getClassName());
++                pUmlRelation.setTarget(getPackageNamePrefix(pUmlClass.getPackageDisplayName()) + pUmlClass.getClassName());
+                 if (importMap.containsKey(implementedType.getNameAsString())) {
+                     if (parserConfig.isShowPackage()) {
+                         pUmlRelation.setSource(importMap.get(implementedType.getNameAsString()));
+@@ -92,7 +97,7 @@ public class ClassVoidVisitor extends VoidVisitorAdapter<PUml> implements MyVisi
+                         pUmlRelation.setSource(implementedType.getNameAsString());
+                     }
+                 } else {
+-                    pUmlRelation.setSource(getPackageNamePrefix(pUmlClass.getPackageName()) + implementedType.getNameAsString());
++                    pUmlRelation.setSource(getPackageNamePrefix(pUmlClass.getPackageDisplayName()) + implementedType.getNameAsString());
+                 }
+                 pUmlRelation.setRelation("<|..");
+                 pUmlView.addPUmlRelation(pUmlRelation);
+@@ -102,7 +107,7 @@ public class ClassVoidVisitor extends VoidVisitorAdapter<PUml> implements MyVisi
+         if (cORid.getExtendedTypes().size() != 0) {
+             for (ClassOrInterfaceType extendedType : cORid.getExtendedTypes()) {
+                 PUmlRelation pUmlRelation = new PUmlRelation();
+-                pUmlRelation.setTarget(getPackageNamePrefix(pUmlClass.getPackageName()) + pUmlClass.getClassName());
++                pUmlRelation.setTarget(getPackageNamePrefix(pUmlClass.getPackageDisplayName()) + pUmlClass.getClassName());
+                 if (importMap.containsKey(extendedType.getNameAsString())) {
+                     if (parserConfig.isShowPackage()) {
+                         pUmlRelation.setSource(importMap.get(extendedType.getNameAsString()));
+@@ -110,7 +115,7 @@ public class ClassVoidVisitor extends VoidVisitorAdapter<PUml> implements MyVisi
+                         pUmlRelation.setSource(extendedType.getNameAsString());
+                     }
+                 } else {
+-                    pUmlRelation.setSource(getPackageNamePrefix(pUmlClass.getPackageName()) + extendedType.getNameAsString());
++                    pUmlRelation.setSource(getPackageNamePrefix(pUmlClass.getPackageDisplayName()) + extendedType.getNameAsString());
+                 }
+                 pUmlRelation.setRelation("<|--");
+                 pUmlView.addPUmlRelation(pUmlRelation);
+@@ -126,6 +131,9 @@ public class ClassVoidVisitor extends VoidVisitorAdapter<PUml> implements MyVisi
+             super.visit(enumDeclaration, pUml);
+             return;
+         }
++        if (enumDeclaration.isNestedType() && !parserConfig.isShowNestedTypes()) {
++            return;
++        }
+         PUmlView pUmlView = (PUmlView) pUml;
+         PUmlClass pUmlClass = createUmlClass();
+ 
+@@ -153,11 +161,14 @@ public class ClassVoidVisitor extends VoidVisitorAdapter<PUml> implements MyVisi
+             super.visit(recordDeclaration, pUml);
+             return;
+         }
++        if (recordDeclaration.isNestedType() && !parserConfig.isShowNestedTypes()) {
++            return;
++        }
+         PUmlView pUmlView = (PUmlView) pUml;
+         PUmlClass pUmlClass = createUmlClass();
+ 
+         pUmlClass.setClassName(recordDeclaration.getNameAsString());
+-        pUmlClass.setClassType("class");
++        pUmlClass.setClassType("record");
+ 
+         if (parserConfig.isShowComment()) {
+             recordDeclaration.getComment().ifPresent(comment -> {
+@@ -179,6 +190,7 @@ public class ClassVoidVisitor extends VoidVisitorAdapter<PUml> implements MyVisi
+             }
+             ConstructorDeclaration c = new ConstructorDeclaration(modifiers, pUmlClass.getClassName());
+             c.setParameters(recordDeclaration.getParameters());
++            c.setData(IS_REQUIRED_CTOR, null);
+             c.accept(this, pUmlClass);
+         }
+ 
+@@ -254,7 +266,8 @@ public class ClassVoidVisitor extends VoidVisitorAdapter<PUml> implements MyVisi
+             super.visit(constructor, pUml);
+             return;
+         }
+-        if (!parserConfig.isShowConstructors()) {
++        boolean required = constructor.containsData(IS_REQUIRED_CTOR);
++        if (!required && !parserConfig.isShowConstructors()) {
+             return;
+         }
+         PUmlClass pUmlClass = (PUmlClass) pUml;
+@@ -267,7 +280,7 @@ public class ClassVoidVisitor extends VoidVisitorAdapter<PUml> implements MyVisi
+                 }
+             }
+         }
+-        if (parserConfig.isMethodModifier(pUmlMethod.getVisibility())) {
++        if (parserConfig.isMethodModifier(pUmlMethod.getVisibility()) || required) {
+             pUmlMethod.setStatic(constructor.isStatic());
+             pUmlMethod.setAbstract(constructor.isAbstract());
+             pUmlMethod.setReturnType("");
+@@ -362,8 +375,8 @@ public class ClassVoidVisitor extends VoidVisitorAdapter<PUml> implements MyVisi
+             Node parentNode = node.getParentNode().get();
+             if (parentNode instanceof CompilationUnit) {
+                 PUmlRelation pUmlRelation = new PUmlRelation();
+-                pUmlRelation.setTarget(getPackageNamePrefix(pUmlClass.getPackageName()) + pUmlClass.getClassName());
+-                pUmlRelation.setSource(getPackageNamePrefix(pUmlClass.getPackageName()) + pUmlClass.getClassName().substring(0, pUmlClass.getClassName().lastIndexOf("$")));
++                pUmlRelation.setTarget(getPackageNamePrefix(pUmlClass.getPackageDisplayName()) + pUmlClass.getClassName());
++                pUmlRelation.setSource(getPackageNamePrefix(pUmlClass.getPackageDisplayName()) + pUmlClass.getClassName().substring(0, pUmlClass.getClassName().lastIndexOf("$")));
+                 pUmlRelation.setRelation("+--");	// Fixed: Intern class should have an association of +-- not +..
+                 pUmlView.addPUmlRelation(pUmlRelation);
+             }
+diff --git a/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/KtClassVOidVisitor.java b/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/KtClassVOidVisitor.java
+index 9da3a3d..71fc92c 100644
+--- a/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/KtClassVOidVisitor.java
++++ b/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/KtClassVOidVisitor.java
+@@ -113,7 +113,7 @@ public class KtClassVOidVisitor extends KtTreeVisitor<PUml> implements MyVisitor
+ 
+                 if (superClassEntry.getElementType() == KtStubElementTypes.SUPER_TYPE_ENTRY) {
+                     PUmlRelation pUmlRelation = new PUmlRelation();
+-                    pUmlRelation.setTarget(getPackageNamePrefix(pUmlClass.getPackageName()) + pUmlClass.getClassName());
++                    pUmlRelation.setTarget(getPackageNamePrefix(pUmlClass.getPackageDisplayName()) + pUmlClass.getClassName());
+                     if (importMap.containsKey(sourceClassName)) {
+                         if (parserConfig.isShowPackage()) {
+                             pUmlRelation.setSource(importMap.get(sourceClassName));
+@@ -121,13 +121,13 @@ public class KtClassVOidVisitor extends KtTreeVisitor<PUml> implements MyVisitor
+                             pUmlRelation.setSource(sourceClassName);
+                         }
+                     } else {
+-                        pUmlRelation.setSource(getPackageNamePrefix(pUmlClass.getPackageName()) + sourceClassName);
++                        pUmlRelation.setSource(getPackageNamePrefix(pUmlClass.getPackageDisplayName()) + sourceClassName);
+                     }
+                     pUmlRelation.setRelation("<|..");
+                     pUmlView.addPUmlRelation(pUmlRelation);
+                 } else if (superClassEntry.getElementType() == KtStubElementTypes.SUPER_TYPE_CALL_ENTRY) {
+                     PUmlRelation pUmlRelation = new PUmlRelation();
+-                    pUmlRelation.setTarget(getPackageNamePrefix(pUmlClass.getPackageName()) + pUmlClass.getClassName());
++                    pUmlRelation.setTarget(getPackageNamePrefix(pUmlClass.getPackageDisplayName()) + pUmlClass.getClassName());
+                     if (importMap.containsKey(sourceClassName)) {
+                         if (parserConfig.isShowPackage()) {
+                             pUmlRelation.setSource(importMap.get(sourceClassName));
+@@ -135,7 +135,7 @@ public class KtClassVOidVisitor extends KtTreeVisitor<PUml> implements MyVisitor
+                             pUmlRelation.setSource(sourceClassName);
+                         }
+                     } else {
+-                        pUmlRelation.setSource(getPackageNamePrefix(pUmlClass.getPackageName()) + sourceClassName);
++                        pUmlRelation.setSource(getPackageNamePrefix(pUmlClass.getPackageDisplayName()) + sourceClassName);
+                     }
+                     pUmlRelation.setRelation("<|--");
+                     pUmlView.addPUmlRelation(pUmlRelation);
+@@ -300,8 +300,8 @@ public class KtClassVOidVisitor extends KtTreeVisitor<PUml> implements MyVisitor
+                 pUmlClass.setClassName(((KtClassOrObject) node.getParent()).getName() + "$" + pUmlClass.getClassName());
+ 
+                 PUmlRelation pUmlRelation = new PUmlRelation();
+-                pUmlRelation.setTarget(getPackageNamePrefix(pUmlClass.getPackageName()) + pUmlClass.getClassName());
+-                pUmlRelation.setSource(getPackageNamePrefix(pUmlClass.getPackageName()) + pUmlClass.getClassName().substring(0, pUmlClass.getClassName().lastIndexOf("$")));
++                pUmlRelation.setTarget(getPackageNamePrefix(pUmlClass.getPackageDisplayName()) + pUmlClass.getClassName());
++                pUmlRelation.setSource(getPackageNamePrefix(pUmlClass.getPackageDisplayName()) + pUmlClass.getClassName().substring(0, pUmlClass.getClassName().lastIndexOf("$")));
+                 pUmlRelation.setRelation("+..");
+                 pUmlView.addPUmlRelation(pUmlRelation);
+             }
+diff --git a/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/MyVisitor.java b/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/MyVisitor.java
+index da1b49e..fb491d6 100644
+--- a/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/MyVisitor.java
++++ b/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/MyVisitor.java
+@@ -3,11 +3,12 @@ package com.shuzijun.plantumlparser.core;
+ public interface MyVisitor {
+ 
+     default PUmlClass createUmlClass() {
+-        PUmlClass pUmlClass = new PUmlClass();
++        String pkg = getPackageName();
++        PUmlClass pUmlClass = new PUmlClass(pkg);
+         if (getParserConfig().isShowPackage()) {
+-            pUmlClass.setPackageName(getPackageName());
++            pUmlClass.setDisplayPackageName(pkg);
+         } else {
+-            pUmlClass.setPackageName("");
++            pUmlClass.setDisplayPackageName("");
+         }
+         return pUmlClass;
+     }
+diff --git a/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/PUml.java b/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/PUml.java
+index 79fc42f..a552e00 100644
+--- a/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/PUml.java
++++ b/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/PUml.java
+@@ -6,4 +6,5 @@ package com.shuzijun.plantumlparser.core;
+  * @author shuzijun
+  */
+ public interface PUml {
++    default void sort() {}
+ }
+diff --git a/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/PUmlClass.java b/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/PUmlClass.java
+index f6de44f..5dae65e 100644
+--- a/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/PUmlClass.java
++++ b/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/PUmlClass.java
+@@ -1,6 +1,7 @@
+ package com.shuzijun.plantumlparser.core;
+ 
+-import java.util.LinkedList;
++import java.util.ArrayList;
++import java.util.Comparator;
+ import java.util.List;
+ import java.util.stream.Collectors;
+ 
+@@ -10,7 +11,9 @@ import java.util.stream.Collectors;
+  * @author shuzijun
+  */
+ public class PUmlClass implements PUml{
+-    private String packageName;
++    private final String actualPackage;
++
++    private String displayPackageName;
+ 
+     private String className;
+ 
+@@ -18,16 +21,20 @@ public class PUmlClass implements PUml{
+ 
+     private String classComment;
+ 
+-    private List<PUmlField> pUmlFieldList = new LinkedList<>();
++    private List<PUmlField> pUmlFieldList = new ArrayList<>();
++
++    private List<PUmlMethod> pUmlMethodList = new ArrayList<>();
+ 
+-    private List<PUmlMethod> pUmlMethodList = new LinkedList<>();
++    public PUmlClass(String actualPackage) {
++        this.actualPackage = actualPackage;
++    }
+ 
+-    public String getPackageName() {
+-        return packageName;
++    public String getPackageDisplayName() {
++        return displayPackageName;
+     }
+ 
+-    public void setPackageName(String packageName) {
+-        this.packageName = packageName;
++    public void setDisplayPackageName(String packageName) {
++        this.displayPackageName = packageName;
+     }
+ 
+     public String getClassName() {
+@@ -63,36 +70,57 @@ public class PUmlClass implements PUml{
+         this.pUmlMethodList.add(pUmlMethod);
+     }
+ 
+-    @Override
+-    public String toString() {
++    public String getActualPackage() {
++        return actualPackage;
++    }
+ 
+-        String fullClassName = ((packageName == null || packageName.trim().equals("")) ? "" : (packageName + ".")) + className;
++    @Override
++    public void sort() {
++        if (!this.classType.equals("enum")) {
++            pUmlFieldList.sort(Comparator.comparing(PUmlField::getName));
++        }
++        pUmlMethodList.sort(Comparator.comparing(PUmlMethod::getName));
++    }
+ 
+-        String classStr = classType + " " + fullClassName + " {\n" +
+-                (pUmlFieldList.isEmpty() ? "" : pUmlFieldList.stream().map(pUmlField -> "\t" + pUmlField.toString()).collect(Collectors.joining("\n")) + "\n") +
+-                (pUmlMethodList.isEmpty() ? "" : pUmlMethodList.stream().map(pUmlField -> "\t" + pUmlField.toString()).collect(Collectors.joining("\n")) + "\n") +
+-                "}";
++    @Override
++    public String toString() {
+ 
+-        if(getClassComment() != null && getClassComment().length() > 0){
+-            classStr += "\nnote top of "+fullClassName+"\n"+getClassComment()+"\nend note\n";
++        String fullClassName = ((displayPackageName == null || displayPackageName.trim().equals("")) ? "" : (displayPackageName + ".")) + className;
++
++        StringBuilder sb = new StringBuilder();
++        sb.append('\'');
++        sb.append(actualPackage);
++        sb.append('\n');
++        sb.append(classType);
++        sb.append(" ");
++        sb.append(fullClassName);
++        sb.append(" {\n");
++        sb.append(pUmlFieldList.isEmpty() ? "" : pUmlFieldList.stream().map(pUmlField -> "\t" + pUmlField.toString()).collect(Collectors.joining("\n")) + "\n");
++        sb.append(pUmlMethodList.isEmpty() ? "" : pUmlMethodList.stream().map(pUmlField -> "\t" + pUmlField.toString()).collect(Collectors.joining("\n")) + "\n");
++        sb.append("}");
++
++        if(getClassComment() != null && !getClassComment().isEmpty()){
++            sb.append("\nnote top of ");
++            sb.append(fullClassName);
++            sb.append("\n");
++            sb.append(getClassComment());
++            sb.append("\nend note\n");
+         }
+ 
+-        StringBuilder fieldComment = new StringBuilder();
+-
+         if(!pUmlFieldList.isEmpty()){
+             int commentIdx = 0;
+-            fieldComment.append("\n");
++            sb.append("\n");
+             for (PUmlField pUmlField : pUmlFieldList) {
+-                if(pUmlField.getComment() != null && pUmlField.getComment().length() > 0){
+-                    fieldComment.append("note ");
++                if(pUmlField.getComment() != null && !pUmlField.getComment().isEmpty()){
++                    sb.append("note ");
+                     if(commentIdx % 2 != 0){
+-                        fieldComment.append("right");
++                        sb.append("right");
+                     }else{
+-                        fieldComment.append("left");
++                        sb.append("left");
+                     }
+-                    fieldComment.append(" of ").append(fullClassName).append("::").append(pUmlField.getName()).append("\n");
+-                    fieldComment.append(pUmlField.getComment()).append("\n");
+-                    fieldComment.append("end note\n");
++                    sb.append(" of ").append(fullClassName).append("::").append(pUmlField.getName()).append("\n");
++                    sb.append(pUmlField.getComment()).append("\n");
++                    sb.append("end note\n");
+                     commentIdx++;
+                 }
+             }
+@@ -101,24 +129,23 @@ public class PUmlClass implements PUml{
+ 
+         if(!pUmlMethodList.isEmpty()){
+             int commentIdx = 0;
+-            fieldComment.append("\n");
++            sb.append("\n");
+             for (PUmlMethod pUmlMethod : pUmlMethodList) {
+-                if(pUmlMethod.getComment() != null && pUmlMethod.getComment().length() > 0){
+-                    fieldComment.append("note ");
++                if(pUmlMethod.getComment() != null && !pUmlMethod.getComment().isEmpty()){
++                    sb.append("note ");
+                     if(commentIdx % 2 != 0){
+-                        fieldComment.append("right");
++                        sb.append("right");
+                     }else{
+-                        fieldComment.append("left");
++                        sb.append("left");
+                     }
+-                    fieldComment.append(" of ").append(fullClassName).append("::").append(pUmlMethod.getFullName()).append("\n");
+-                    fieldComment.append(pUmlMethod.getComment()).append("\n");
+-                    fieldComment.append("end note\n");
++                    sb.append(" of ").append(fullClassName).append("::").append(pUmlMethod.getFullName()).append("\n");
++                    sb.append(pUmlMethod.getComment()).append("\n");
++                    sb.append("end note\n");
+                     commentIdx++;
+                 }
+             }
+         }
+ 
+-        classStr += fieldComment.toString();
+-        return classStr;
++        return sb.toString();
+     }
+ }
+diff --git a/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/PUmlField.java b/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/PUmlField.java
+index c621f08..a780837 100644
+--- a/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/PUmlField.java
++++ b/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/PUmlField.java
+@@ -59,7 +59,15 @@ public class PUmlField implements PUml {
+ 
+     @Override
+     public String toString() {
+-        return VisibilityUtils.toCharacter(visibility) + " " + (isStatic ? "{static} " : "")
+-                + name + ": " + type;
++        StringBuilder sb = new StringBuilder();
++        sb.append(VisibilityUtils.toCharacter(visibility));
++        sb.append(" ");
++        sb.append(isStatic ? "{static} " : "");
++        sb.append(name);
++        if (type != null && !type.isBlank()) {
++            sb.append(": ");
++            sb.append(type);
++        }
++        return sb.toString();
+     }
+ }
+diff --git a/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/PUmlRelation.java b/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/PUmlRelation.java
+index ce6ca9c..8128fc5 100644
+--- a/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/PUmlRelation.java
++++ b/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/PUmlRelation.java
+@@ -1,5 +1,9 @@
+ package com.shuzijun.plantumlparser.core;
+ 
++import kotlin.reflect.KProperty;
++
++import java.util.Objects;
++
+ /**
+  * class之间的关系
+  *
+@@ -13,6 +17,10 @@ public class PUmlRelation {
+ 
+     private String relation;
+ 
++    public String getSource() {
++        return source;
++    }
++
+     public void setSource(String source) {
+         this.source = source;
+     }
+@@ -21,6 +29,10 @@ public class PUmlRelation {
+         this.target = target;
+     }
+ 
++    public String getTarget() {
++        return target;
++    }
++
+     public void setRelation(String relation) {
+         this.relation = relation;
+     }
+@@ -29,4 +41,15 @@ public class PUmlRelation {
+     public String toString() {
+         return source + " " + relation + " " + target;
+     }
++
++    @Override
++    public boolean equals(Object o) {
++        if (!(o instanceof PUmlRelation that)) return false;
++        return Objects.equals(source, that.source) && Objects.equals(target, that.target) && Objects.equals(relation, that.relation);
++    }
++
++    @Override
++    public int hashCode() {
++        return Objects.hash(source, target, relation);
++    }
+ }
+diff --git a/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/PUmlView.java b/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/PUmlView.java
+index 7353eda..36aa1bd 100644
+--- a/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/PUmlView.java
++++ b/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/PUmlView.java
+@@ -1,6 +1,7 @@
+ package com.shuzijun.plantumlparser.core;
+ 
+ import java.util.ArrayList;
++import java.util.Comparator;
+ import java.util.List;
+ import java.util.stream.Collectors;
+ 
+@@ -23,6 +24,13 @@ public class PUmlView implements PUml {
+         pUmlRelationList.add(pUmlRelation);
+     }
+ 
++    @Override
++    public void sort() {
++        pUmlClassList.sort(Comparator.comparing(PUmlClass::getClassName));
++        pUmlClassList.forEach(PUml::sort);
++        pUmlRelationList.sort(Comparator.comparing(PUmlRelation::getSource).thenComparing(PUmlRelation::getTarget));
++    }
++
+     @Override
+     public String toString() {
+         return "@startuml\n" +
+@@ -31,4 +39,18 @@ public class PUmlView implements PUml {
+                 "@enduml"
+                 ;
+     }
++
++    public boolean hasClass(String fullName) {
++        for (PUmlClass c : pUmlClassList) {
++            if (fullName.equals(c.getActualPackage() + "." + c.getClassName())) {
++                return true;
++            }
++        }
++        return false;
++    }
++
++    public void removeClass(String name) {
++        pUmlClassList.removeIf(c -> c.getClassName().equals(name));
++        pUmlRelationList.removeIf(r -> r.getSource().equals(name) || r.getTarget().equals(name));
++    }
+ }
+diff --git a/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/ParserConfig.java b/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/ParserConfig.java
+index 7a1c11c..0f13133 100644
+--- a/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/ParserConfig.java
++++ b/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/ParserConfig.java
+@@ -1,13 +1,8 @@
+ package com.shuzijun.plantumlparser.core;
+ 
+ import com.github.javaparser.ParserConfiguration;
+-import com.intellij.openapi.Disposable;
+ import com.intellij.openapi.project.Project;
+-import com.intellij.openapi.util.Disposer;
+ import org.apache.commons.io.FileUtils;
+-import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles;
+-import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment;
+-import org.jetbrains.kotlin.config.CompilerConfiguration;
+ 
+ import java.io.File;
+ import java.util.*;
+@@ -35,6 +30,8 @@ public class ParserConfig {
+ 
+     private Set<String> methodModifier = new HashSet<>();
+ 
++    private Set<String> childrenToExclude = new HashSet<>();
++
+     private boolean showPackage = true;
+ 
+     private boolean showConstructors = false;
+@@ -43,6 +40,12 @@ public class ParserConfig {
+ 
+     private boolean showComment = false;
+ 
++    private boolean showNestedTypes = false;
++
++    private boolean sortMembers = false;
++
++    private boolean showUsages = false;
++
+     public Project getProject() {
+         return project;
+     }
+@@ -125,6 +128,22 @@ public class ParserConfig {
+         this.showDefaultConstructors = showDefaultConstructors;
+     }
+ 
++    public void setShowNestedTypes(boolean showNestedTypes) {
++        this.showNestedTypes = showNestedTypes;
++    }
++
++    public boolean isShowNestedTypes() {
++        return showNestedTypes;
++    }
++
++    public void setSortMembers(boolean sortMembers) {
++        this.sortMembers = sortMembers;
++    }
++
++    public boolean isSortMembers() {
++        return sortMembers;
++    }
++
+     public ParserConfiguration.LanguageLevel getLanguageLevel() {
+         return languageLevel;
+     }
+@@ -164,4 +183,19 @@ public class ParserConfig {
+     }
+ 
+ 
++    public void setShowUsages(boolean showUsages) {
++        this.showUsages = true;
++    }
++
++    public boolean isShowUsages() {
++        return showUsages;
++    }
++
++    public void addExcludeChildName(String val) {
++        this.childrenToExclude.add(val);
++    }
++
++    public Set<String> getChildrenToExclude() {
++        return Set.copyOf(childrenToExclude);
++    }
+ }
+diff --git a/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/ParserProgram.java b/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/ParserProgram.java
+index d0dae8b..ca0080f 100644
+--- a/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/ParserProgram.java
++++ b/plantuml-parser-core/src/main/java/com/shuzijun/plantumlparser/core/ParserProgram.java
+@@ -3,15 +3,21 @@ package com.shuzijun.plantumlparser.core;
+ import com.github.javaparser.ParserConfiguration;
+ import com.github.javaparser.StaticJavaParser;
+ import com.github.javaparser.ast.CompilationUnit;
++import com.github.javaparser.ast.Node;
+ import com.github.javaparser.ast.PackageDeclaration;
++import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
++import com.github.javaparser.ast.body.TypeDeclaration;
++import com.github.javaparser.ast.nodeTypes.NodeWithType;
++import com.github.javaparser.ast.type.ClassOrInterfaceType;
+ import com.github.javaparser.ast.visitor.VoidVisitor;
+ import org.apache.commons.io.FileUtils;
++import org.jetbrains.annotations.NotNull;
++import org.jetbrains.annotations.Nullable;
+ 
+ import java.io.File;
+ import java.io.IOException;
+ import java.nio.charset.Charset;
+-import java.util.Optional;
+-import java.util.Set;
++import java.util.*;
+ 
+ /**
+  * 解析程序
+@@ -36,10 +42,20 @@ public class ParserProgram {
+         }
+         Set<File> files = this.parserConfig.getFilePaths();
+ 
++        var units = new HashMap<CompilationUnit, String>();
++
++        HashMap<String, List<TypeDeclaration<?>>> typesByPackage = new HashMap<>();
++
+         PUmlView pUmlView = new PUmlView();
+         for (File file : files) {
+             if (file.getPath().endsWith("java")){
+                 CompilationUnit compilationUnit = StaticJavaParser.parse(file);
++
++                String pkg = compilationUnit.getPackageDeclaration().orElseThrow().getNameAsString();
++                typesByPackage.computeIfAbsent(pkg, ignored -> new ArrayList<>())
++                        .addAll(compilationUnit.getTypes());
++                units.put(compilationUnit, pkg);
++
+                 Optional<PackageDeclaration> packageDeclaration = compilationUnit.getPackageDeclaration();
+                 VoidVisitor<PUml> classNameCollector = new ClassVoidVisitor(packageDeclaration.isPresent() ? packageDeclaration.get().getNameAsString() : "", parserConfig);
+                 classNameCollector.visit(compilationUnit, pUmlView);
+@@ -52,6 +68,80 @@ public class ParserProgram {
+             }
+         }
+ 
++        if (parserConfig.isSortMembers()) {
++            pUmlView.sort();
++        }
++
++        if (parserConfig.isShowUsages()) {
++            HashSet<PUmlRelation> relations = new HashSet<>();
++
++            for (var entry : units.entrySet()) {
++
++                var cu = entry.getKey();
++                var pkg = entry.getValue();
++                HashMap<String, String> imports = getImports(cu);
++
++                for (TypeDeclaration<?> declaration : cu.getTypes()) {
++                    String fullName = declaration.getFullyQualifiedName().orElseThrow();
++
++                    if (!pUmlView.hasClass(fullName)) {
++                        continue;
++                    }
++
++                    for (Node.PreOrderIterator it = new Node.PreOrderIterator(declaration); it.hasNext(); ) {
++                        var node = it.next();
++                        if (!(node instanceof NodeWithType<?, ?> t) || !(t.getType() instanceof ClassOrInterfaceType type)) {
++                            continue;
++                        }
++
++                        String typeToResolve = type.getNameAsString();
++                        var resolvedType = resolveType(typeToResolve, pkg, imports, typesByPackage);
++                        if (resolvedType == null) continue;
++
++                        var source = parserConfig.isShowPackage() ? resolvedType : resolvedType.substring(resolvedType.lastIndexOf('.') + 1);
++                        var target = parserConfig.isShowPackage() ? declaration.getFullyQualifiedName().orElseThrow() : declaration.getNameAsString();
++                        if (source.equals(target)) {
++                            continue;
++                        }
++                        var r = new PUmlRelation();
++                        r.setSource(source);
++                        r.setRelation("<..");
++                        r.setTarget(target);
++                        relations.add(r);
++                    }
++                }
++            }
++
++            relations.forEach(pUmlView::addPUmlRelation);
++        }
++
++        ArrayDeque<String> toRemove = new ArrayDeque<>(parserConfig.getChildrenToExclude());
++        while (!toRemove.isEmpty()) {
++            String type = toRemove.pollFirst();
++            for (var entry : units.entrySet()) {
++                var cu = entry.getKey();
++                var pkg = entry.getValue();
++                var imports = getImports(cu);
++                for (var t : cu.getTypes()) {
++                    if (!(t instanceof ClassOrInterfaceDeclaration declaration)) {
++                        continue;
++                    }
++                    var shouldRemove = declaration.getExtendedTypes().stream()
++                            .map(x -> resolveType(x.getNameAsString(), pkg , imports, typesByPackage))
++                            .filter(Objects::nonNull)
++                            .anyMatch(type::equals);
++                    if (shouldRemove) {
++                        var fullName = pkg + "." + declaration.getNameAsString();
++                        toRemove.add(fullName);
++                        pUmlView.removeClass(parserConfig.isShowPackage() ? fullName : declaration.getNameAsString());
++                    }
++                }
++            }
++        }
++
++        // Remove excluded classes (catches external classes added w/ -e)
++        parserConfig.getExcludeClassRegex().forEach(pUmlView::removeClass);
++
+         try {
+             if (this.parserConfig.getOutFilePath() == null) {
+                 System.out.println(pUmlView);
+@@ -71,4 +161,42 @@ public class ParserProgram {
+ 
+     }
+ 
++    @NotNull
++    private static HashMap<String, String> getImports(CompilationUnit cu) {
++        HashMap<String, String> imports = new HashMap<>();
++        for (var i : cu.getImports()) {
++            if (i.isAsterisk()) {
++                continue;
++            }
++            imports.put(i.getName().getIdentifier(), i.getName().toString());
++        }
++        return imports;
++    }
++
++    @Nullable
++    private static String resolveType(String name, String fromPackage, HashMap<String, String> imports, HashMap<String, List<TypeDeclaration<?>>> typesByPackage) {
++        var resolvedType = imports.getOrDefault(name, null);
++
++        // Resolve from package
++        if (resolvedType == null) {
++            for (TypeDeclaration<?> td : typesByPackage.getOrDefault(fromPackage, Collections.emptyList())) {
++                if (td.getNameAsString().equals(name)) {
++                    resolvedType = fromPackage + "." + name;
++                    break;
++                }
++            }
++        }
++
++        if (resolvedType == null) {
++            return null;
++        }
++
++        // Exclude external types
++        var resolvedPkg = resolvedType.contains(".") ? resolvedType.substring(0, resolvedType.lastIndexOf('.')) : resolvedType;
++        if (!typesByPackage.containsKey(resolvedPkg)) {
++            return null;
++        }
++        return resolvedType;
++    }
++
+ }
