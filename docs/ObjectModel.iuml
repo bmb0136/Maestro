@@ -1,141 +1,344 @@
-@startuml ObjectModel
+@startuml
+'io.github.bmb0136.maestro.core.modifier
+class AddIntervalAboveModifier {
+	+ applyTo(notes: List<Note>): void
+	# createCopy(newId: boolean): Modifier
+	+ getSemitones(): int
+	+ setSemitones(semitones: int): boolean
+}
 
+'io.github.bmb0136.maestro.core.theory
+class Chord {
+	+ iterator(): Iterator<Pitch>
+}
+
+'io.github.bmb0136.maestro.core.theory
+class ChordBuilder {
+	+ build(): Chord
+	+ copy(): ChordBuilder
+	+ getChordName(): String
+	+ getView(): View
+	+ setBaseOctave(baseOctave: int): ChordBuilder
+	+ setQuality(quality: ChordQuality): ChordBuilder
+	+ setRootNote(pitch: PitchName): ChordBuilder
+	+ setSlashNote(slashNote: PitchName): ChordBuilder
+}
+
+'io.github.bmb0136.maestro.core.clip
+class ChordClip {
+	# createCopy(newId: boolean): Clip
+	+ getChordBuilderView(): ChordBuilder.View
+	+ iterator(): Iterator<Note>
+	+ setBaseOctave(baseOctave: int): void
+	+ setQuality(quality: ChordQuality): void
+	+ setRootNote(rootNote: PitchName): void
+	+ setSlashNote(slashNote: PitchName): void
+}
+
+'io.github.bmb0136.maestro.core.theory
+enum ChordQuality {
+	+ getIntervalsFromRoot(): List<Integer>
+	+ getKeySignature(rootNote: PitchName): PitchName
+}
+
+
+'io.github.bmb0136.maestro.core.clip
 abstract class Clip {
-    + getDuration(): float
-    + getId(): UUID
-    + getPosition(): float
-    + isMutable(): boolean
-    + setDuration(float): void
-    + setMutable(boolean): void
-    + setPosition(float): void
-    + copy(boolean): Clip
-    # {abstract} createCopy(boolean): Clip
-    + iterator(): Iterator<Note>
+	+ copy(newId: boolean): Clip
+	# {abstract}createCopy(newId: boolean): Clip
+	+ getDuration(): float
+	+ getId(): UUID
+	+ getModifiers(): ModifierList
+	+ getPosition(): float
+	+ isMutable(): boolean
+	+ setDuration(duration: float): void
+	+ setMutable(mutable: boolean): void
+	+ setPosition(position: float): void
 }
 
-class PianoRollClip {
-    + addNote(Note): boolean
-    + removeNote(Pitch, float): boolean
-    + {static} create(float, float): PianoRollClip
-    + {static} create(float, float, Iterable<Note>): PianoRollClip
+'io.github.bmb0136.maestro.core.event
+abstract class ClipEvent {
+	+ getClipId(): UUID
+	+ getTrackId(): UUID
 }
 
-abstract class Event<T> {
-    + {abstract} apply(EventContext<T>): EventResult
+
+
+'io.github.bmb0136.maestro.core.event
+abstract class Event {
+	+ {abstract}apply(context: EventContext<T>): EventResult
 }
 
-enum EventResult {
-    + isOk(): boolean
-}
-
+'io.github.bmb0136.maestro.core.event
 record EventContext<T> {
-    + target(): T
-    + timeline(): Timeline
-    + track(): Track
+	+ EventContext(target: T, timeline: Timeline, track: Track, clip: Clip)
+	+ clip(): Clip
+	+ target(): T
+	+ timeline(): Timeline
+	+ track(): Track
 }
 
+'io.github.bmb0136.maestro.core.event
+class EventGroup {
+	+ apply(context: EventContext<Object>): EventResult
+	+ iterator(): Iterator<Event<?>>
+}
+
+'io.github.bmb0136.maestro.core.event
+class EventResult {
+	+ {static} CLIP_ALREADY_ON_TIMELINE: EventResult
+	+ {static} CLIP_OVERLAP: EventResult
+	+ {static} INVALID_CLIP_DURATION: EventResult
+	+ {static} INVALID_CLIP_POSITION: EventResult
+	+ {static} MODIFIER_ALREADY_ON_CLIP: EventResult
+	+ {static} NOOP: EventResult
+	+ {static} NOTE_OUTSIDE_CLIP: EventResult
+	+ {static} OK: EventResult
+	+ {static} TRACK_ALREADY_ON_TIMELINE: EventResult
+	+ {static} UNKNOWN_CLIP: EventResult
+	+ {static} UNKNOWN_MODIFIER: EventResult
+	+ {static} UNKNOWN_TRACK: EventResult
+	+ {static} WRONG_CLIP_TYPE: EventResult
+	+ {static} WRONG_MODIFIER_TYPE: EventResult
+	+ equals(obj: Object): boolean
+	+ getName(): String
+	+ getTargets(): List<EventTarget>
+	+ isOk(): boolean
+	+ toString(): String
+	+ withTargets(targets: List<EventTarget>): EventResult
+}
+
+
+'io.github.bmb0136.maestro.core.event
+class EventTarget {
+	+ {static} clip(timeline: Timeline, trackId: UUID, clipId: UUID): EventTarget
+	+ {static} fromEventContext(context: EventContext<?>): EventTarget
+	+ getClipId(): Optional<UUID>
+	+ getModifierId(): Optional<UUID>
+	+ getTimeline(): Timeline
+	+ getTrackId(): Optional<UUID>
+	+ isClip(): boolean
+	+ isModifier(): boolean
+	+ isTimeline(): boolean
+	+ isTrack(): boolean
+	+ {static} timeline(timeline: Timeline): EventTarget
+	+ {static} track(timeline: Timeline, trackId: UUID): EventTarget
+}
+
+'io.github.bmb0136.maestro.core.modifier
+abstract class Modifier {
+	+ {abstract}applyTo(notes: List<Note>): void
+	+ copy(newId: boolean): Modifier
+	# {abstract}createCopy(newId: boolean): Modifier
+	+ getId(): UUID
+	+ isMutable(): boolean
+	+ setMutable(mutable: boolean): void
+}
+
+'io.github.bmb0136.maestro.core.event
+abstract class ModifierEvent {
+	+ getClipId(): UUID
+	+ getModifierId(): UUID
+	+ getTrackId(): UUID
+}
+
+'io.github.bmb0136.maestro.core.modifier
+class ModifierList {
+	+ addModifier(modifier: Modifier): void
+	+ applyTo(notes: List<Note>): void
+	+ getModifier(id: UUID): Optional<Modifier>
+	+ getModifier(index: int): Optional<Modifier>
+	+ indexOf(id: UUID): OptionalInt
+	+ iterator(): Iterator<Modifier>
+	+ moveNext(index: int): boolean
+	+ movePrevious(index: int): boolean
+	+ removeModifier(id: UUID): boolean
+	+ removeModifier(index: int): boolean
+	+ size(): int
+}
+
+'io.github.bmb0136.maestro.core.theory
+record Note {
+	+ Note(pitch: Pitch, position: float, duration: float, volume: float)
+	+ duration(): float
+	+ equals(obj: Object): boolean
+	+ modifyDuration(f: Function<Float,Float>): Note
+	+ modifyPitch(f: Function<Pitch,Pitch>): Note
+	+ modifyPosition(f: Function<Float,Float>): Note
+	+ modifyVolume(f: Function<Float,Float>): Note
+	+ pitch(): Pitch
+	+ position(): float
+	+ volume(): float
+}
+
+'io.github.bmb0136.maestro.core.modifier
+class OffsetByIntervalModifier {
+	+ applyTo(notes: List<Note>): void
+	# createCopy(newId: boolean): Modifier
+	+ getSemitones(): int
+	+ setSemitones(semitones: int): void
+}
+
+'io.github.bmb0136.maestro.core.clip
+class PianoRollClip {
+	+ addNote(note: Note): boolean
+	+ {static} create(position: float, duration: float): PianoRollClip
+	+ {static} create(position: float, duration: float, notes: Iterable<Note>): PianoRollClip
+	# createCopy(newId: boolean): Clip
+	+ getNote(pitch: Pitch, position: float): Optional<Note>
+	+ iterator(): Iterator<Note>
+	+ removeNote(pitch: Pitch, position: float): boolean
+}
+
+'io.github.bmb0136.maestro.core.theory
+record Pitch {
+	+ Pitch(name: PitchName, octave: int)
+	+ addSemitones(semitones: int): Pitch
+	+ addSemitones(semitones: int, useSharps: boolean): Pitch
+	+ compareTo(other: Pitch): int
+	+ equals(obj: Object): boolean
+	+ {static} fromMidi(midiNote: int, useSharps: boolean): Pitch
+	+ name(): PitchName
+	+ octave(): int
+	+ toMidi(): int
+	+ {static} tryParse(rawNote: String): Optional<Pitch>
+}
+
+'io.github.bmb0136.maestro.core.theory
+enum PitchName {
+	+ convertAccidental(toSharp: boolean): PitchName
+	+ convertToKey(key: PitchName): PitchName
+	+ getKeySignatureAccidentals(): int
+	+ getOctaveOffset(): int
+	+ isEnharmonicallyEquivalentTo(other: PitchName): boolean
+	+ isFlat(): boolean
+	+ isFlatKey(): boolean
+	+ isNatural(): boolean
+	+ isSharp(): boolean
+	+ isSharpKey(): boolean
+	+ next(): PitchName
+	+ next(semitones: int): PitchName
+	+ previous(): PitchName
+	+ previous(semitones: int): PitchName
+	+ toString(): String
+	+ {static} tryParse(rawName: String): Optional<PitchName>
+}
+
+
+'io.github.bmb0136.maestro.core.theory
+class Scale {
+	+ getDegree(degreeIndex: int): PitchName
+	+ getKeySignature(): PitchName
+	+ getPitch(degreeIndex: int, baseOctave: int): Pitch
+	+ iterator(): Iterator<PitchName>
+}
+
+'io.github.bmb0136.maestro.core.theory
+class ScaleFactory {
+	+ {static} create(type: ScaleType, root: PitchName): Scale
+}
+
+'io.github.bmb0136.maestro.core.theory
+enum ScaleType {
+}
+
+'io.github.bmb0136.maestro.core.timeline
+class Timeline {
+	+ addTrack(track: Track): void
+	+ copy(newId: boolean): Timeline
+	+ getClip(id: UUID): Optional<Clip>
+	+ getDuration(): float
+	+ getTrack(id: UUID): Optional<Track>
+	+ getTrack(index: int): Track
+	+ getTrackForClip(id: UUID): Optional<UUID>
+	+ hasTrack(id: UUID): boolean
+	+ indexOf(trackId: UUID): int
+	+ isMutable(): boolean
+	+ iterator(): Iterator<Track>
+	+ removeTrack(id: UUID): boolean
+	+ setMutable(mutable: boolean): void
+	+ size(): int
+}
+
+'io.github.bmb0136.maestro.core.event
 abstract class TimelineEvent {
 }
-
-abstract class TrackEvent {
-    + getTrackId(): UUID
+'io.github.bmb0136.maestro.core.timeline
+class TimelineManager {
+	+ append(event: Event<?>): EventResult
+	+ appendGroup(events: Event<?>): EventResult
+	+ get(): Timeline
+	+ getMaxHistory(): int
+	+ redo(): void
+	+ registerChangeCallback(func: Consumer<EventTarget>): AutoCloseable
+	+ undo(): void
 }
 
-abstract class ClipEvent {
-    + getTrackId(): UUID
-    + getClipId(): UUID
-}
-
-
-record Note {
-    + pitch(): Pitch
-    + position(): float
-    + duration(): float
-    + volume(): float
-    + modifyPitch(Function<Pitch, Pitch>): Note
-    + modifyPosition(Function<Float, Float>): Note
-    + modifyDuration(Function<Float, Float>): Note
-    + modifyVolume(Function<Float, Float>): Note
-}
-record Pitch {
-    + name(): PitchName
-    + octave(): int
-    + toMidi(): int
-    + {static} fromMidi(int,boolen): Pitch
-    + addSemitones(int): Pitch
-    + addSemitones(int, boolean): Pitch
-    + compareTo(Pitch): int
-    + equals(Object): boolean
-    + {static} tryParse(String): Optional<Pitch>
-}
-
-enum PitchName {
-    + next(): PitchName
-    + next(int): PitchName
-    + previous(): PitchName
-    + previous(int): PitchName
-    + isSharp(): boolean
-    + isFlat(): boolean
-    + isNatural(): boolean
-    + getOctaveOffset(): int
-    + toString(): String
-    + {static} tryParse(String): Optional<PitchName>
-}
-
-class Timeline {
-    +iterator(): Iterator<Track>
-    +hasTrack(UUID): boolean
-    +getTrack(UUID): Optional<Track>
-    +addTrack(Track): void
-    +removeTrack(UUID): boolean
-    +isMutable(): boolean
-    +setMutable(boolean): void
-    +copy(boolean): Timeline
-}
-
-class TimelineManager{
-    + get(): Timeline
-    + append(Event<?>): EventResult
-    + undo(): void
-    + redo(): void
-    + getMaxHistory(): int
-
-}
-
+'io.github.bmb0136.maestro.core.timeline
 class Track {
-    + getId(): UUID
-    + iterator(): Iterator<Clip>
-    + hasClip(UUID): boolean
-    + getClip(UUID): Optional<Clip>
-    + addClip(Clip): void
-    + removeClip(UUID) boolean
-    + isMutable(): boolean
-    + setMutable(boolean): void
-    + copy(boolean): Track
-
+	+ addClip(clip: Clip): void
+	+ copy(newId: boolean): Track
+	+ getClip(id: UUID): Optional<Clip>
+	+ getDuration(): float
+	+ getId(): UUID
+	+ getName(): String
+	+ hasClip(id: UUID): boolean
+	+ isMutable(): boolean
+	+ iterator(): Iterator<Clip>
+	+ removeClip(clipId: UUID): boolean
+	+ setMutable(mutable: boolean): void
+	+ setName(name: String): void
 }
 
-Clip -l-|> PianoRollClip
+'io.github.bmb0136.maestro.core.event
+abstract class TrackEvent {
+	+ getTrackId(): UUID
+}
 
-Clip ..> Note
-PianoRollClip ..> Note
 
-Pitch .l.> PitchName
-Note .l.> Pitch
-
-TimelineEvent -u-|> Event
-TrackEvent -u-|> Event
-ClipEvent -u-|> Event
-
-Event .l.> EventResult
-Event .l.> EventContext
-
-Track -u-* Timeline
-Clip -r-* Track
-
-TimelineManager ..> Timeline
-TimelineManager .l.> Event
-TimelineManager ..> EventContext
-TimelineManager ..> EventResult
-
+Clip <|-- ChordClip
+Clip <|-- PianoRollClip
+Event <|-- ClipEvent
+Event <|-- EventGroup
+Event <|-- ModifierEvent
+Event <|-- TimelineEvent
+Event <|-- TrackEvent
+Modifier <|-u- AddIntervalAboveModifier
+Modifier <|-- OffsetByIntervalModifier
+Chord <.. ChordBuilder
+Clip <.l. EventContext
+PitchName <.. Pitch
+ModifierList <.. Clip
+Modifier <.. EventTarget
+Modifier <.. Clip
+Modifier <.. Note
+Track <.. EventContext
+Note <.. PianoRollClip
+Clip <.. EventTarget
+Clip --* Track
+EventResult <.. EventGroup
+Pitch <.. Chord
+ChordQuality <.. ChordBuilder
+Timeline <.. EventTarget
+Timeline <.. TimelineManager
+EventContext <.. EventGroup
+PitchName <.. Scale
+Pitch <.. Scale
+Track --* Timeline
+TimelineManager <.. EventResult
+Timeline <.. EventContext
+Modifier --* ModifierList
+Pitch <.. PianoRollClip
+Pitch <.. Note
+Track <.. EventTarget
+PitchName <.. ChordQuality
+Scale <.l. ScaleFactory
+Pitch <.. ChordBuilder
+EventContext <.d. Event
+EventResult <.. Event
+EventContext <.. EventTarget
+PitchName <.. ScaleFactory
+Note <.. AddIntervalAboveModifier
+ScaleType <.d. ScaleFactory
+PitchName <.. ChordBuilder
 @enduml
