@@ -21,6 +21,7 @@ public class PlaybackTest {
         try {
             //Testing The PlaybackEngine
             PlaybackEngine testPlayBack = new PlaybackEngine(manager);
+            System.out.println("Starting Play Function");
             testPlayBack.play();
         }catch (Exception e){}
         Note[] notes = {/*  */};

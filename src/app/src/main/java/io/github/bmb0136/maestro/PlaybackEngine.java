@@ -76,7 +76,9 @@ public class PlaybackEngine {
         channels[0].noteOff(60);
         synth.close();
     }
-    //Creating ON/OFF Events from Notes
+    /*
+    Purpose: Creating ON/OFF Events from Notes List
+     */
     public final NoteEvent[] buildIntoEvents(Note[] notes) {
          long  timeDuration = SecondstoBPM(60);
          NoteEvent[] onEvents = new NoteEvent[channels.length];
@@ -94,14 +96,12 @@ public class PlaybackEngine {
          NoteEvent[] events = NoteEventSorter(onEvents, offEvents);
          //EventPlayer - Schedules the Notes (Timeline Position, Player, Stop)
         NoteEvent[] properEvents = NoteEventScheduler(events);
-         //Note Event ON
-         //Note Event Off
         return properEvents;
 
     }
 
     private NoteEvent[] NoteEventSorter(NoteEvent[] onEvents, NoteEvent[] offEvents) {
-
+        //Temp Sorter; Don't like the code for this
         NoteEvent[] result = new NoteEvent[onEvents.length + offEvents.length];
         System.arraycopy(onEvents, 0, result, 0, onEvents.length);
         System.arraycopy(offEvents, 0, result, onEvents.length, offEvents.length);
@@ -141,6 +141,7 @@ public class PlaybackEngine {
     }
     /*
     Creation Notes: (Not Finished)
+        Trent(March 23rd): Unnecessary, remove it in the future
         Point of playTrack:
             -To play tracks on separate Threads
             -(Not Really sure where to start)
@@ -171,10 +172,10 @@ public class PlaybackEngine {
         final Timeline asd = manager.get();
         assignTrackstoChannels(asd);
         long PlayStartNanos = System.nanoTime();
-        Iterator<Track> Tracks = asd.iterator();
+        /*Iterator<Track> Tracks = asd.iterator();
         while (Tracks.hasNext()) { //InComplete
             Track track = Tracks.next();
-        }
+        }*/
     }
     public void stop(){
         if(synth != null){
