@@ -1,6 +1,7 @@
 package io.github.bmb0136.maestro;
 
 import io.github.bmb0136.maestro.core.clip.Clip;
+import io.github.bmb0136.maestro.core.theory.Note;
 import io.github.bmb0136.maestro.core.timeline.Timeline;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import io.github.bmb0136.maestro.core.timeline.Track;
@@ -9,10 +10,7 @@ import javax.sound.midi.MidiChannel; //Is this Required?
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Synthesizer;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 
 public class PlaybackEngine {
@@ -78,14 +76,65 @@ public class PlaybackEngine {
         channels[0].noteOff(60);
         synth.close();
     }
+    //Creating ON/OFF Events from Notes
+    public final NoteEvent[] buildIntoEvents(Note[] notes) {
+         long  timeDuration = SecondstoBPM(60);
+         NoteEvent[] onEvents = new NoteEvent[channels.length];
+         NoteEvent[] offEvents = new NoteEvent[channels.length];
+         int i = 0;
+         for (Note not: notes){
+             double onTime = not.position() * timeDuration; //Logic: Position of Note * timeDuration = Start Position
+             double offTime =(not.position() + not.duration()) * timeDuration; //Logic: (Position of StartPosition + The Expected duration of the Event) * Time according to BPM (timeDuration) = End Position
+             //OnEvent
+             onEvents[i] =  new NoteEvent(NoteEvent.Type.ON, 0, not.pitch(),onTime);
+             //OffEvent
+             offEvents[i] = new NoteEvent(NoteEvent.Type.OFF, 0, not.pitch(),offTime);
+         }
+         //Sorts Events
+         NoteEvent[] events = NoteEventSorter(onEvents, offEvents);
+         //EventPlayer - Schedules the Notes (Timeline Position, Player, Stop)
+        NoteEvent[] properEvents = NoteEventScheduler(events);
+         //Note Event ON
+         //Note Event Off
+        return properEvents;
+
+    }
+
+    private NoteEvent[] NoteEventSorter(NoteEvent[] onEvents, NoteEvent[] offEvents) {
+
+        NoteEvent[] result = new NoteEvent[onEvents.length + offEvents.length];
+        System.arraycopy(onEvents, 0, result, 0, onEvents.length);
+        System.arraycopy(offEvents, 0, result, onEvents.length, offEvents.length);
+        Arrays.sort(result);
+        return result;
+    }
+    private NoteEvent[] NoteEventScheduler(NoteEvent[] events) {
+        double currentTime = 0;
+        for (NoteEvent event : events) {
+            double waitTime = event.getTimeExecution() - currentTime;
+            currentTime = event.getTimeExecution();
+            try{
+                Thread.sleep((long) waitTime*1000);
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+        }
+        return events;
+    }
     private final void playTimeline(Timeline timeline){
         for (Track track : timeline){
-            for (Clip clip : track){
-                //for Note note in Clip
+            for (Clip clip : track) {
+                Note[] holder = new Note[10]; //Placeholder Size
+                int sad = 0;
+                for (Note note : clip) {  //for Note : note in Clip
                     //Collect notes in a list; Need to know when to start/end.
-                    //Also, not Seconds to Millis, but Beats to Millis! (Based on the BPM)
-                long startMS = SecondstoMillis(clip.getPosition());
-                long endMS = SecondstoMillis((clip.getDuration()));
+                    holder[sad++] = note;
+                }
+                NoteEvent[] poke = buildIntoEvents(holder);
+                // long startMS = SecondstoMillis(clip.getPosition());
+               // long endMS = SecondstoMillis((clip.getDuration()));
 
             }
         }
@@ -158,6 +207,11 @@ public class PlaybackEngine {
         //NGL, this might be useless
     private  long SecondstoMillis(float seconds){
         return (long) (seconds * 1000.0f);
+    }
+    //Pretty sure I'll want this.
+    private long SecondstoBPM(float seconds){
+        int temp_BPM = 100;
+        return (long) seconds * temp_BPM;
     }
 
 
