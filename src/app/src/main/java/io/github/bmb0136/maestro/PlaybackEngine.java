@@ -5,6 +5,7 @@ import io.github.bmb0136.maestro.core.theory.Note;
 import io.github.bmb0136.maestro.core.timeline.Timeline;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import io.github.bmb0136.maestro.core.timeline.Track;
+
 import java.util.ArrayList;
 
 import javax.sound.midi.MidiChannel; //Is this Required?
@@ -21,6 +22,7 @@ public class PlaybackEngine {
 
     //To Map the UUIDs to individal MIDI channels for the play session
     private Map<UUID, MidiChannel> trackChannelMap = new HashMap<>();
+
     /*
     -Breakdown (Trent's Thought Process):
         -The TimelineManger Holds Track Objects which should be played
@@ -45,22 +47,23 @@ public class PlaybackEngine {
         -Open Midi Channels for uses*
 
      */
-    public void Midistarter()throws Exception {
-        try{
+    public void Midistarter() throws Exception {
+        try {
             synth = MidiSystem.getSynthesizer();
             synth.open();
             System.out.println("Using device: " + synth.getDeviceInfo().getName());
-            if(synth.getAvailableInstruments().length > 0){
+            if (synth.getAvailableInstruments().length > 0) {
                 synth.loadInstrument(synth.getAvailableInstruments()[0]);
             }
             channels = synth.getChannels();
-            if(channels == null || channels.length > 0){
+            if (channels == null || channels.length > 0) {
                 throw new IllegalStateException("Channels not supported");
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
     /*
        Most, if not all, of the code in has been used or initialized elsewhere.
         */
@@ -76,26 +79,27 @@ public class PlaybackEngine {
         channels[0].noteOff(60);
         synth.close();
     }
+
     /*
     Purpose: Creating ON/OFF Events from Notes List
      */
     public final ArrayList<NoteEvent> buildIntoEvents(ArrayList<Note> notes) {
-         long  timeDuration = SecondstoBPM(60);
-         ArrayList<NoteEvent> events = new ArrayList<>();
+        long timeDuration = SecondstoBPM(60);
+        ArrayList<NoteEvent> events = new ArrayList<>();
         // NoteEvent[] onEvents = new NoteEvent[channels.length];
         // NoteEvent[] offEvents = new NoteEvent[channels.length];
-         int i = 0;
-         for (Note not: notes){
-             double onTime = not.position() * timeDuration; //Logic: Position of Note * timeDuration = Start Position
-             double offTime =(not.position() + not.duration()) * timeDuration; //Logic: (Position of StartPosition + The Expected duration of the Event) * Time according to BPM (timeDuration) = End Position
-             //OnEvent : onEvents[i] =  new NoteEvent(NoteEvent.Type.ON, 0, not.pitch(),onTime);
-             events.add(new NoteEvent(NoteEvent.Type.ON, 0, not.pitch(), onTime));
-             //OffEvent : offEvents[i] = new NoteEvent(NoteEvent.Type.OFF, 0, not.pitch(),offTime);
-             events.add(new NoteEvent(NoteEvent.Type.OFF, 0, not.pitch(), offTime));
-         }
-         //Sorts Events
+        int i = 0;
+        for (Note not : notes) {
+            double onTime = not.position() * timeDuration; //Logic: Position of Note * timeDuration = Start Position
+            double offTime = (not.position() + not.duration()) * timeDuration; //Logic: (Position of StartPosition + The Expected duration of the Event) * Time according to BPM (timeDuration) = End Position
+            //OnEvent : onEvents[i] =  new NoteEvent(NoteEvent.Type.ON, 0, not.pitch(),onTime);
+            events.add(new NoteEvent(NoteEvent.Type.ON, 0, not.pitch(), onTime));
+            //OffEvent : offEvents[i] = new NoteEvent(NoteEvent.Type.OFF, 0, not.pitch(),offTime);
+            events.add(new NoteEvent(NoteEvent.Type.OFF, 0, not.pitch(), offTime));
+        }
+        //Sorts Events
         events = NoteEventSorter(events);
-         //EventPlayer - Schedules the Notes (Timeline Position, Player, Stop)
+        //EventPlayer - Schedules the Notes (Timeline Position, Player, Stop)
         ArrayList<NoteEvent> properEvents = NoteEventScheduler(events);
         return properEvents;
 
@@ -105,16 +109,18 @@ public class PlaybackEngine {
         //Temp Sorter; Don't like the code for this (Also Unfinished, needs Comparator)
         ArrayList<NoteEvent> sorted_events = new ArrayList<>();
         sorted_events.addAll(unsorted_events);
+        sorted_events.sort(new NoteEventComparator());
         //sorted_events.sort();
         return sorted_events;
     }
+
     private ArrayList<NoteEvent> NoteEventScheduler(ArrayList<NoteEvent> events) {
         double currentTime = 0;
         for (NoteEvent event : events) {
             double waitTime = event.getTimeExecution() - currentTime;
             currentTime = event.getTimeExecution();
-            try{
-                Thread.sleep((long) waitTime*1000);
+            try {
+                Thread.sleep((long) waitTime * 1000);
 
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -123,8 +129,9 @@ public class PlaybackEngine {
         }
         return events;
     }
-    private final void playTimeline(Timeline timeline){
-        for (Track track : timeline){
+
+    private final void playTimeline(Timeline timeline) {
+        for (Track track : timeline) {
             for (Clip clip : track) {
                 ArrayList<Note> notes = new ArrayList<>();
                 int sad = 0;
@@ -135,11 +142,12 @@ public class PlaybackEngine {
 
                 ArrayList<NoteEvent> poke = buildIntoEvents(notes);
                 // long startMS = SecondstoMillis(clip.getPosition());
-               // long endMS = SecondstoMillis((clip.getDuration()));
+                // long endMS = SecondstoMillis((clip.getDuration()));
 
             }
         }
     }
+
     /*
     Creation Notes: (Not Finished)
         Trent(March 23rd): Unnecessary, remove it in the future
@@ -148,28 +156,29 @@ public class PlaybackEngine {
             -(Not Really sure where to start)
             -Since The Tracks are Clips, we can just use Clips (I'm writing poorly)
      */
-    private final void playTrack(Track track){
-       try {
-           for (Clip clip : track) {
-               //Executes Clip
-               long startMS = SecondstoMillis(clip.getPosition());
-               long endMS = SecondstoMillis(clip.getDuration());
-               MidiChannel[] channels = synth.getChannels();
-               int testnote = 60;
-               channels[0].noteOn(testnote, 127);
-               Thread.sleep(endMS);
-               channels[0].noteOff(testnote);
+    private final void playTrack(Track track) {
+        try {
+            for (Clip clip : track) {
+                //Executes Clip
+                long startMS = SecondstoMillis(clip.getPosition());
+                long endMS = SecondstoMillis(clip.getDuration());
+                MidiChannel[] channels = synth.getChannels();
+                int testnote = 60;
+                channels[0].noteOn(testnote, 127);
+                Thread.sleep(endMS);
+                channels[0].noteOff(testnote);
 
-           }
-       } catch (Exception e) {
-           e.printStackTrace();
-       }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
+
     /*
     Purpose: Starting the Playback of the current Timeline
 
      */
-    public void play(){
+    public void play() {
         final Timeline asd = manager.get();
         assignTrackstoChannels(asd);
         long PlayStartNanos = System.nanoTime();
@@ -178,19 +187,21 @@ public class PlaybackEngine {
             Track track = Tracks.next();
         }*/
     }
-    public void stop(){
-        if(synth != null){
+
+    public void stop() {
+        if (synth != null) {
             synth.close();
             synth = null;
         }
     }
-    public void assignTrackstoChannels(Timeline timeline){
+
+    public void assignTrackstoChannels(Timeline timeline) {
         //To Make sure The Mapping is clear
         trackChannelMap.clear();
         int channel = 0;
         Iterator<Track> Tracks = timeline.iterator();
         while (Tracks.hasNext()) { //Eh, Good Enough - Trent
-            if(channel == channels.length || channels[channel] == null){
+            if (channel == channels.length || channels[channel] == null) {
                 throw new IllegalStateException("Channels not supported");
             }
             MidiChannel assignChannel = channels[channel];
@@ -201,17 +212,20 @@ public class PlaybackEngine {
         }
 
     }
+
     //Purpose: Consistency; simple way to convert systemmillis to Seconds
-    private  long MillistoSeconds(){
-        return (long) (System.currentTimeMillis()/1000);
+    private long MillistoSeconds() {
+        return (long) (System.currentTimeMillis() / 1000);
     }
+
     //Purpose: Consistency; simple way to convert Seconds to systemMillis
-        //NGL, this might be useless
-    private  long SecondstoMillis(float seconds){
+    //NGL, this might be useless
+    private long SecondstoMillis(float seconds) {
         return (long) (seconds * 1000.0f);
     }
+
     //Pretty sure I'll want this.
-    private long SecondstoBPM(float seconds){
+    private long SecondstoBPM(float seconds) {
         int temp_BPM = 100;
         return (long) seconds * temp_BPM;
     }
