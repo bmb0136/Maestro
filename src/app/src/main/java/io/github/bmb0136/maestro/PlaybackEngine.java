@@ -5,10 +5,10 @@ import io.github.bmb0136.maestro.core.theory.Note;
 import io.github.bmb0136.maestro.core.timeline.Timeline;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import io.github.bmb0136.maestro.core.timeline.Track;
+import java.util.ArrayList;
 
 import javax.sound.midi.MidiChannel; //Is this Required?
 import javax.sound.midi.MidiSystem;
-import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Synthesizer;
 import java.util.*;
 
@@ -79,36 +79,36 @@ public class PlaybackEngine {
     /*
     Purpose: Creating ON/OFF Events from Notes List
      */
-    public final NoteEvent[] buildIntoEvents(Note[] notes) {
+    public final ArrayList<NoteEvent> buildIntoEvents(ArrayList<Note> notes) {
          long  timeDuration = SecondstoBPM(60);
-         NoteEvent[] onEvents = new NoteEvent[channels.length];
-         NoteEvent[] offEvents = new NoteEvent[channels.length];
+         ArrayList<NoteEvent> events = new ArrayList<>();
+        // NoteEvent[] onEvents = new NoteEvent[channels.length];
+        // NoteEvent[] offEvents = new NoteEvent[channels.length];
          int i = 0;
          for (Note not: notes){
              double onTime = not.position() * timeDuration; //Logic: Position of Note * timeDuration = Start Position
              double offTime =(not.position() + not.duration()) * timeDuration; //Logic: (Position of StartPosition + The Expected duration of the Event) * Time according to BPM (timeDuration) = End Position
-             //OnEvent
-             onEvents[i] =  new NoteEvent(NoteEvent.Type.ON, 0, not.pitch(),onTime);
-             //OffEvent
-             offEvents[i] = new NoteEvent(NoteEvent.Type.OFF, 0, not.pitch(),offTime);
+             //OnEvent : onEvents[i] =  new NoteEvent(NoteEvent.Type.ON, 0, not.pitch(),onTime);
+             events.add(new NoteEvent(NoteEvent.Type.ON, 0, not.pitch(), onTime));
+             //OffEvent : offEvents[i] = new NoteEvent(NoteEvent.Type.OFF, 0, not.pitch(),offTime);
+             events.add(new NoteEvent(NoteEvent.Type.OFF, 0, not.pitch(), offTime));
          }
          //Sorts Events
-         NoteEvent[] events = NoteEventSorter(onEvents, offEvents);
+        events = NoteEventSorter(events);
          //EventPlayer - Schedules the Notes (Timeline Position, Player, Stop)
-        NoteEvent[] properEvents = NoteEventScheduler(events);
+        ArrayList<NoteEvent> properEvents = NoteEventScheduler(events);
         return properEvents;
 
     }
 
-    private NoteEvent[] NoteEventSorter(NoteEvent[] onEvents, NoteEvent[] offEvents) {
-        //Temp Sorter; Don't like the code for this
-        NoteEvent[] result = new NoteEvent[onEvents.length + offEvents.length];
-        System.arraycopy(onEvents, 0, result, 0, onEvents.length);
-        System.arraycopy(offEvents, 0, result, onEvents.length, offEvents.length);
-        Arrays.sort(result);
-        return result;
+    private ArrayList<NoteEvent> NoteEventSorter(ArrayList<NoteEvent> unsorted_events) {
+        //Temp Sorter; Don't like the code for this (Also Unfinished, needs Comparator)
+        ArrayList<NoteEvent> sorted_events = new ArrayList<>();
+        sorted_events.addAll(unsorted_events);
+        //sorted_events.sort();
+        return sorted_events;
     }
-    private NoteEvent[] NoteEventScheduler(NoteEvent[] events) {
+    private ArrayList<NoteEvent> NoteEventScheduler(ArrayList<NoteEvent> events) {
         double currentTime = 0;
         for (NoteEvent event : events) {
             double waitTime = event.getTimeExecution() - currentTime;
@@ -126,13 +126,14 @@ public class PlaybackEngine {
     private final void playTimeline(Timeline timeline){
         for (Track track : timeline){
             for (Clip clip : track) {
-                Note[] holder = new Note[10]; //Placeholder Size
+                ArrayList<Note> notes = new ArrayList<>();
                 int sad = 0;
                 for (Note note : clip) {  //for Note : note in Clip
                     //Collect notes in a list; Need to know when to start/end.
-                    holder[sad++] = note;
+                    notes.add(note);
                 }
-                NoteEvent[] poke = buildIntoEvents(holder);
+
+                ArrayList<NoteEvent> poke = buildIntoEvents(notes);
                 // long startMS = SecondstoMillis(clip.getPosition());
                // long endMS = SecondstoMillis((clip.getDuration()));
 
