@@ -37,7 +37,7 @@ public class PlaybackEngine {
     PlaybackEngine(TimelineManager timelineManager) throws Exception {
         System.out.println("PlaybackEngine created");
         this.manager = timelineManager;
-        Midistarter();
+        //Midistarter();
     }
 
     /*
@@ -131,6 +131,7 @@ public class PlaybackEngine {
     }
 
     private final void playTimeline(Timeline timeline) {
+        System.out.println("Playing timeline function: playTimeline");
         for (Track track : timeline) {
             for (Clip clip : track) {
                 ArrayList<Note> notes = new ArrayList<>();
@@ -179,13 +180,13 @@ public class PlaybackEngine {
 
      */
     public void play() {
+        System.out.println("Play Function: Started");
         final Timeline asd = manager.get();
-        assignTrackstoChannels(asd);
+        //assignTrackstoChannels(asd);
+        playTimeline(asd);
         long PlayStartNanos = System.nanoTime();
-        /*Iterator<Track> Tracks = asd.iterator();
-        while (Tracks.hasNext()) { //InComplete
-            Track track = Tracks.next();
-        }*/
+        System.out.println("Play Function: Ended");
+
     }
 
     public void stop() {
@@ -196,18 +197,15 @@ public class PlaybackEngine {
     }
 
     public void assignTrackstoChannels(Timeline timeline) {
-        //To Make sure The Mapping is clear
+        System.out.println("Assigning trackstoChannels");
         trackChannelMap.clear();
         int channel = 0;
         Iterator<Track> Tracks = timeline.iterator();
         while (Tracks.hasNext()) { //Eh, Good Enough - Trent
-            if (channel == channels.length || channels[channel] == null) {
-                throw new IllegalStateException("Channels not supported");
-            }
             MidiChannel assignChannel = channels[channel];
             trackChannelMap.put(Tracks.next().getId(), assignChannel);
 
-            channel++;
+            //channel++;
 
         }
 
