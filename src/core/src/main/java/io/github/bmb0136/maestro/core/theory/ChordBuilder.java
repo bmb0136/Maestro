@@ -37,21 +37,24 @@ public class ChordBuilder {
             return this;
         }
 
+        // Reset notes to original order to find inversion
+        bassNote = null;
+        inversionNumber = 0;
+        recalculatePitches();
+
         int i = 0;
-        int start = bassNote != null ? 1 : 0;
         for (Pitch pitch : pitches) {
-            if (i++ < start) {
-                continue;
-            }
             if (pitch.name().isEnharmonicallyEquivalentTo(slashNote)) {
-                inversionNumber = i - start + 1;
+                inversionNumber = i;
                 bassNote = null;
                 recalculatePitches();
                 return this;
             }
+            i++;
         }
 
         bassNote = slashNote;
+        inversionNumber = 0;
         recalculatePitches();
         return this;
     }
