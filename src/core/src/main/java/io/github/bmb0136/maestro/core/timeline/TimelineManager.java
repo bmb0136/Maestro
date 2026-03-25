@@ -74,7 +74,8 @@ public class TimelineManager {
         }
 
         // Run change callbacks
-        changeCallbacks.values().forEach(res.getTargets()::forEach);
+        // Copy callback list to avoid ConcurrentModificationExceptions
+        new ArrayList<>(changeCallbacks.values()).forEach(res.getTargets()::forEach);
 
         while (events.size() > maxHistory) {
             applyEvents(referencePoint, Collections.singletonList(events.removeFirst()), ResultCheckMode.THROW_IF_ERROR);
