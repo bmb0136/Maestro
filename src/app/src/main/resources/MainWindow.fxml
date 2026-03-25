@@ -148,7 +148,7 @@
                      <children>
                         <AnchorPane HBox.hgrow="ALWAYS">
                            <children>
-                              <ChoiceBox maxHeight="-Infinity" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" />
+                              <ChoiceBox fx:id="modifierSelector" maxHeight="-Infinity" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" />
                            </children>
                         </AnchorPane>
                         <Button mnemonicParsing="false" prefHeight="40.0" text="Paste" HBox.hgrow="NEVER" />
@@ -156,7 +156,7 @@
                   </HBox>
                   <ScrollPane hbarPolicy="NEVER" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
                      <content>
-                        <VBox fx:id="modifierList" prefWidth="304.0" />
+                        <VBox fx:id="modifierList" prefWidth="304.0" spacing="8.0" />
                      </content></ScrollPane>
                </children>
                <padding>
