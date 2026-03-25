@@ -1,5 +1,6 @@
 package io.github.bmb0136.maestro;
 
+import io.github.bmb0136.maestro.core.clip.ChordClip;
 import io.github.bmb0136.maestro.core.clip.ClipFactory;
 import io.github.bmb0136.maestro.core.clip.PianoRollClip;
 import io.github.bmb0136.maestro.core.event.AddClipToTrackEvent;
@@ -118,6 +119,7 @@ public class TimelineRenderer {
         // Setup context menus
         Menu addClipMenu = new Menu("Add Clip");
         addMenuItem(addClipMenu.getItems(), "Piano Roll", e -> rootContextMenuOnAddClipHandler(e, PianoRollClip::create));
+        addMenuItem(addClipMenu.getItems(), "Chord", e -> rootContextMenuOnAddClipHandler(e, ChordClip::create));
         trackContextMenu.getItems().add(addClipMenu);
 
         addMenuItem(clipContextMenu.getItems(), "Delete", this::clipContextMenuOnDeleteHandler);
