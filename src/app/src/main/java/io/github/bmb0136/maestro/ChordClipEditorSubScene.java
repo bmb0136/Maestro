@@ -4,6 +4,7 @@ import io.github.bmb0136.maestro.core.clip.ChordClip;
 import io.github.bmb0136.maestro.core.event.SetChordClipBaseOctaveEvent;
 import io.github.bmb0136.maestro.core.event.SetChordClipQualityEvent;
 import io.github.bmb0136.maestro.core.event.SetChordClipRootNoteEvent;
+import io.github.bmb0136.maestro.core.event.SetChordClipSlashNoteEvent;
 import io.github.bmb0136.maestro.core.theory.ChordQuality;
 import io.github.bmb0136.maestro.core.theory.Pitch;
 import io.github.bmb0136.maestro.core.theory.PitchName;
@@ -17,10 +18,12 @@ import java.util.*;
 
 public class ChordClipEditorSubScene extends ClipEditorSubScene<ChordClip> {
 
+    private static final String NO_SLASH_NOTE = "None";
+
     @FXML
     private Region root;
     @FXML
-    private ChoiceBox<Object> rootChoiceBox, qualityChoiceBox;
+    private ChoiceBox<Object> rootChoiceBox, qualityChoiceBox, slashNoteChoiceBox;
     @FXML
     private Label notesLabel;
     @FXML
@@ -38,7 +41,7 @@ public class ChordClipEditorSubScene extends ClipEditorSubScene<ChordClip> {
             var view = clip.get().getChordBuilderView();
             rootChoiceBox.setValue(view.getRootNote().toString());
             qualityChoiceBox.setValue(formatChordQuality(view.getQuality()));
-            // TODO: slash note
+            slashNoteChoiceBox.setValue(Optional.ofNullable(view.getSlashNote()).map(PitchName::toString).orElse(NO_SLASH_NOTE));
             baseOctaveSpinner.getValueFactory().setValue(view.getBaseOctave());
             updateNotesLabel();
         });
@@ -78,6 +81,14 @@ public class ChordClipEditorSubScene extends ClipEditorSubScene<ChordClip> {
         });
         baseOctaveSpinner.getValueFactory().setValue(valueFac.getValue());
 
+        // Init slash note choice box
+        slashNoteChoiceBox.getItems().clear();
+        slashNoteChoiceBox.getItems().add(NO_SLASH_NOTE);
+        for (PitchName value : PitchName.values()) {
+            slashNoteChoiceBox.getItems().add(value.toString());
+        }
+        slashNoteChoiceBox.setValue(Optional.ofNullable(initialView.getSlashNote()).map(PitchName::toString).orElse(NO_SLASH_NOTE));
+
         // Init notes label
         updateNotesLabel();
 
@@ -104,6 +115,13 @@ public class ChordClipEditorSubScene extends ClipEditorSubScene<ChordClip> {
             var result = manager.append(new SetChordClipBaseOctaveEvent(trackId, clipId, octave));
             if (!result.isOk()) {
                 new Alert(Alert.AlertType.ERROR, "Failed to set base octave: " + result, ButtonType.OK).showAndWait();
+            }
+        });
+        slashNoteChoiceBox.setOnAction(e -> {
+            var parsed = PitchName.tryParse(slashNoteChoiceBox.getValue().toString()).orElse(null);
+            var result = manager.append(new SetChordClipSlashNoteEvent(trackId, clipId, parsed));
+            if (!result.isOk()) {
+                new Alert(Alert.AlertType.ERROR, "Failed to set chord slash note: " + result, ButtonType.OK).showAndWait();
             }
         });
     }
