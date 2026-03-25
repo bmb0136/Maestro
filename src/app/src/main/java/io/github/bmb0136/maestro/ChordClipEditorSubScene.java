@@ -1,6 +1,7 @@
 package io.github.bmb0136.maestro;
 
 import io.github.bmb0136.maestro.core.clip.ChordClip;
+import io.github.bmb0136.maestro.core.event.SetChordClipBaseOctaveEvent;
 import io.github.bmb0136.maestro.core.event.SetChordClipQualityEvent;
 import io.github.bmb0136.maestro.core.event.SetChordClipRootNoteEvent;
 import io.github.bmb0136.maestro.core.theory.ChordQuality;
@@ -9,10 +10,7 @@ import io.github.bmb0136.maestro.core.theory.PitchName;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
 import javafx.scene.layout.Region;
 
 import java.util.*;
@@ -21,12 +19,12 @@ public class ChordClipEditorSubScene extends ClipEditorSubScene<ChordClip> {
 
     @FXML
     private Region root;
-
     @FXML
     private ChoiceBox<Object> rootChoiceBox, qualityChoiceBox;
-
     @FXML
     private Label notesLabel;
+    @FXML
+    private Spinner<Object> baseOctaveSpinner;
 
     public ChordClipEditorSubScene(TimelineManager manager, UUID trackId, UUID clipId) {
         super(manager, trackId, clipId);
@@ -41,7 +39,7 @@ public class ChordClipEditorSubScene extends ClipEditorSubScene<ChordClip> {
             rootChoiceBox.setValue(view.getRootNote().toString());
             qualityChoiceBox.setValue(formatChordQuality(view.getQuality()));
             // TODO: slash note
-            // TODO: base octave
+            baseOctaveSpinner.getValueFactory().setValue(view.getBaseOctave());
             updateNotesLabel();
         });
         final var initialView = clip.get().getChordBuilderView();
@@ -60,6 +58,26 @@ public class ChordClipEditorSubScene extends ClipEditorSubScene<ChordClip> {
         }
         qualityChoiceBox.setValue(formatChordQuality(initialView.getQuality()));
 
+        // Init bass octave spinner
+        final var valueFac = new SpinnerValueFactory.IntegerSpinnerValueFactory(
+                Pitch.fromMidi(0, false).octave(),
+                Pitch.fromMidi(127, false).octave(),
+                4);
+        baseOctaveSpinner.setValueFactory(new SpinnerValueFactory<>() {
+            @Override
+            public void decrement(int steps) {
+                valueFac.decrement(steps);
+                setValue(valueFac.getValue());
+            }
+
+            @Override
+            public void increment(int steps) {
+                valueFac.increment(steps);
+                setValue(valueFac.getValue());
+            }
+        });
+        baseOctaveSpinner.getValueFactory().setValue(valueFac.getValue());
+
         // Init notes label
         updateNotesLabel();
 
@@ -75,17 +93,28 @@ public class ChordClipEditorSubScene extends ClipEditorSubScene<ChordClip> {
             var parsed = getChordQuality(qualityChoiceBox.getValue().toString()).orElse(ChordQuality.MAJOR);
             var result = manager.append(new SetChordClipQualityEvent(trackId, clipId, parsed));
             if (!result.isOk()) {
-                new Alert(Alert.AlertType.ERROR, "Failed to set chord quality" + result, ButtonType.OK).showAndWait();
+                new Alert(Alert.AlertType.ERROR, "Failed to set chord quality: " + result, ButtonType.OK).showAndWait();
+            }
+        });
+        baseOctaveSpinner.valueProperty().addListener(ignored -> {
+            Object value = baseOctaveSpinner.getValue();
+            if (!(value instanceof Integer octave)) {
+                throw new IllegalStateException("Chord clip editor base octave spinner had invalid value");
+            }
+            var result = manager.append(new SetChordClipBaseOctaveEvent(trackId, clipId, octave));
+            if (!result.isOk()) {
+                new Alert(Alert.AlertType.ERROR, "Failed to set base octave: " + result, ButtonType.OK).showAndWait();
             }
         });
     }
 
     private void updateNotesLabel() {
+        final var view = clip.get().getChordBuilderView();
         var sb = new StringBuilder();
         sb.append("Notes: ");
         var pitches = new ArrayList<Pitch>();
-        for (var n : clip.get()) {
-            pitches.add(n.pitch());
+        for (var p : view) {
+            pitches.add(p);
         }
         pitches.sort(Comparator.naturalOrder());
         for (int i = 0; i < pitches.size(); i++) {
@@ -96,6 +125,9 @@ public class ChordClipEditorSubScene extends ClipEditorSubScene<ChordClip> {
                 sb.append(", ");
             }
         }
+        sb.append(" (");
+        sb.append(view.getChordName());
+        sb.append(")");
         notesLabel.setText(sb.toString());
     }
 
