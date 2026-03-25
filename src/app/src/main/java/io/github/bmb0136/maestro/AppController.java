@@ -45,7 +45,7 @@ public class AppController implements AutoCloseable {
     static {
         MODIFIER_LABELS.add("Offset by Interval", OffsetByIntervalModifier.class);
         MODIFIER_FACTORIES.put(OffsetByIntervalModifier.class, OffsetByIntervalModifier::new);
-        // TODO: editor
+        MODIFIER_EDITOR_FACTORIES.put(OffsetByIntervalModifier.class, OffsetByIntervalModifierEditor::new);
 
         MODIFIER_LABELS.add("Add Interval Above", AddIntervalAboveModifier.class);
         MODIFIER_FACTORIES.put(AddIntervalAboveModifier.class, AddIntervalAboveModifier::new);
@@ -314,7 +314,9 @@ public class AppController implements AutoCloseable {
         var left = DoubleExpression.doubleExpression(title.boundsInParentProperty().map(Bounds::getMinX));
         title.prefWidthProperty().bind(modifierList.prefWidthProperty().subtract(left));
 
-        pane.setContent(MODIFIER_EDITOR_FACTORIES.get(modifier.getClass()).create(manager, trackId, clip.getId(), modifier.getId()));
+        var subscene = MODIFIER_EDITOR_FACTORIES.get(modifier.getClass()).create(manager, trackId, clip.getId(), modifier.getId());
+        subscene.widthProperty().bind(pane.widthProperty());
+        pane.setContent(subscene);
 
         return pane;
     }
