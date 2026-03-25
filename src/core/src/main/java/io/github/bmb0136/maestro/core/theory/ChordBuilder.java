@@ -61,8 +61,8 @@ public class ChordBuilder {
 
     public ChordBuilder setQuality(@NotNull ChordQuality quality) {
         this.quality = quality;
-        recalculatePitches();
-        return this;
+        // Update inversion if new quality contains current slash note
+        return setSlashNote(view.getSlashNote());
     }
 
     public ChordBuilder setBaseOctave(int baseOctave) {
