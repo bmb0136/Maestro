@@ -165,19 +165,12 @@ public class ChordBuilder {
 
         @Nullable
         public PitchName getSlashNote() {
-            PitchName slashNote = null;
             if (bassNote != null) {
-                slashNote = bassNote;
-            } else if (inversionNumber != 0) {
-                int i = inversionNumber;
-                for (var p : pitches) {
-                    slashNote = p.name();
-                    if (i-- < 0) {
-                        break;
-                    }
-                }
+                return bassNote;
+            } else if (inversionNumber != 0 && !pitches.isEmpty()) {
+                return pitches.getFirst().name();
             }
-            return slashNote;
+            return null;
         }
 
         public String getChordName() {
