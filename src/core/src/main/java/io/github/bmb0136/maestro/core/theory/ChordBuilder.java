@@ -111,6 +111,7 @@ public class ChordBuilder {
     }
 
     public Chord build() {
+        recalculatePitches();
         Pitch[] pitches = new Pitch[this.pitches.size()];
         int i = 0;
         for (Pitch pitch : this.pitches) {

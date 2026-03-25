@@ -1,5 +1,6 @@
 package io.github.bmb0136.maestro;
 
+import io.github.bmb0136.maestro.core.clip.ChordClip;
 import io.github.bmb0136.maestro.core.clip.Clip;
 import io.github.bmb0136.maestro.core.clip.PianoRollClip;
 import io.github.bmb0136.maestro.core.event.AddTrackToTimelineEvent;
@@ -100,6 +101,7 @@ public class AppController {
         SubScene scene;
         switch (clip) {
             case PianoRollClip c -> scene = PianoRollEditorSubScene.create(manager, trackId, c.getId());
+            case ChordClip c -> scene = ChordClipEditorSubScene.create(manager, trackId, c.getId());
             default -> throw new IllegalArgumentException("Unknown clip type: " + clip.getClass().getName());
         }
 
