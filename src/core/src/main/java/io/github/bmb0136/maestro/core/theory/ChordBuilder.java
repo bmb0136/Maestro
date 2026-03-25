@@ -149,7 +149,7 @@ public class ChordBuilder {
     }
 
     // A read-only wrapper around this builder
-    public class View {
+    public class View implements Iterable<Pitch> {
         public PitchName getRootNote() {
             return rootNote;
         }
@@ -181,6 +181,12 @@ public class ChordBuilder {
 
         public String getChordName() {
             return ChordBuilder.this.getChordName();
+        }
+
+        @Override
+        public @NotNull Iterator<Pitch> iterator() {
+            recalculatePitches();
+            return new ArrayList<>(pitches).iterator();
         }
     }
 }
