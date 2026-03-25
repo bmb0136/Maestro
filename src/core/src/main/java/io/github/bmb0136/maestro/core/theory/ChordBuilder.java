@@ -107,6 +107,7 @@ public class ChordBuilder {
         b.inversionNumber = inversionNumber;
         b.bassNote = bassNote;
         b.baseOctave = baseOctave;
+        b.recalculatePitches();
         return b;
     }
 
