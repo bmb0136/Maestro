@@ -37,29 +37,32 @@ public class ChordBuilder {
             return this;
         }
 
+        // Reset notes to original order to find inversion
+        bassNote = null;
+        inversionNumber = 0;
+        recalculatePitches();
+
         int i = 0;
-        int start = bassNote != null ? 1 : 0;
         for (Pitch pitch : pitches) {
-            if (i++ < start) {
-                continue;
-            }
             if (pitch.name().isEnharmonicallyEquivalentTo(slashNote)) {
-                inversionNumber = i - start + 1;
+                inversionNumber = i;
                 bassNote = null;
                 recalculatePitches();
                 return this;
             }
+            i++;
         }
 
         bassNote = slashNote;
+        inversionNumber = 0;
         recalculatePitches();
         return this;
     }
 
     public ChordBuilder setQuality(@NotNull ChordQuality quality) {
         this.quality = quality;
-        recalculatePitches();
-        return this;
+        // Update inversion if new quality contains current slash note
+        return setSlashNote(view.getSlashNote());
     }
 
     public ChordBuilder setBaseOctave(int baseOctave) {
@@ -107,10 +110,12 @@ public class ChordBuilder {
         b.inversionNumber = inversionNumber;
         b.bassNote = bassNote;
         b.baseOctave = baseOctave;
+        b.recalculatePitches();
         return b;
     }
 
     public Chord build() {
+        recalculatePitches();
         Pitch[] pitches = new Pitch[this.pitches.size()];
         int i = 0;
         for (Pitch pitch : this.pitches) {
@@ -148,7 +153,7 @@ public class ChordBuilder {
     }
 
     // A read-only wrapper around this builder
-    public class View {
+    public class View implements Iterable<Pitch> {
         public PitchName getRootNote() {
             return rootNote;
         }
@@ -163,23 +168,22 @@ public class ChordBuilder {
 
         @Nullable
         public PitchName getSlashNote() {
-            PitchName slashNote = null;
             if (bassNote != null) {
-                slashNote = bassNote;
-            } else if (inversionNumber != 0) {
-                int i = inversionNumber;
-                for (var p : pitches) {
-                    slashNote = p.name();
-                    if (i-- < 0) {
-                        break;
-                    }
-                }
+                return bassNote;
+            } else if (inversionNumber != 0 && !pitches.isEmpty()) {
+                return pitches.getFirst().name();
             }
-            return slashNote;
+            return null;
         }
 
         public String getChordName() {
             return ChordBuilder.this.getChordName();
+        }
+
+        @Override
+        public @NotNull Iterator<Pitch> iterator() {
+            recalculatePitches();
+            return new ArrayList<>(pitches).iterator();
         }
     }
 }

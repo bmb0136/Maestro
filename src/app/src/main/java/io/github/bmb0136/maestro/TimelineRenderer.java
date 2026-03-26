@@ -1,7 +1,9 @@
 package io.github.bmb0136.maestro;
 
+import io.github.bmb0136.maestro.core.clip.ChordClip;
 import io.github.bmb0136.maestro.core.clip.ClipFactory;
 import io.github.bmb0136.maestro.core.clip.PianoRollClip;
+import io.github.bmb0136.maestro.core.clip.ScaleClip;
 import io.github.bmb0136.maestro.core.event.AddClipToTrackEvent;
 import io.github.bmb0136.maestro.core.event.RemoveClipFromTrackEvent;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
@@ -115,6 +117,8 @@ public class TimelineRenderer {
         // Setup context menus
         Menu addClipMenu = new Menu("Add Clip");
         addMenuItem(addClipMenu.getItems(), "Piano Roll", e -> rootContextMenuOnAddClipHandler(e, PianoRollClip::create));
+        addMenuItem(addClipMenu.getItems(), "Chord", e -> rootContextMenuOnAddClipHandler(e, ChordClip::create));
+        addMenuItem(addClipMenu.getItems(), "Scale", e -> rootContextMenuOnAddClipHandler(e, ScaleClip::create));
         trackContextMenu.getItems().add(addClipMenu);
 
         // Notify main window when selection changes

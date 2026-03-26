@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="360.0" prefWidth="720.0" spacing="8.0" xmlns="http://javafx.com/javafx/21.0.3-internal" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <HBox spacing="8.0">
+         <children>
+            <AnchorPane HBox.hgrow="ALWAYS">
+               <children>
+                  <Label text="Scale" AnchorPane.bottomAnchor="0.0" AnchorPane.topAnchor="0.0" />
+               </children>
+            </AnchorPane>
+            <ChoiceBox fx:id="scaleChoiceBox" prefWidth="200.0" />
+         </children>
+         <padding>
+            <Insets left="16.0" right="16.0" />
+         </padding>
+      </HBox>
+      <HBox layoutX="10.0" layoutY="10.0" spacing="8.0">
+         <children>
+            <AnchorPane HBox.hgrow="ALWAYS">
+               <children>
+                  <Label text="Root Pitch" AnchorPane.bottomAnchor="0.0" AnchorPane.topAnchor="0.0" />
+               </children>
+            </AnchorPane>
+            <ChoiceBox fx:id="rootPitchChoiceBox" prefWidth="200.0" />
+         </children>
+         <padding>
+            <Insets left="16.0" right="16.0" />
+         </padding>
+      </HBox>
+      <HBox layoutX="10.0" layoutY="42.0" spacing="8.0">
+         <children>
+            <AnchorPane HBox.hgrow="ALWAYS">
+               <children>
+                  <Label text="Root Octave" AnchorPane.bottomAnchor="0.0" AnchorPane.topAnchor="0.0" />
+               </children>
+            </AnchorPane>
+            <Spinner fx:id="rootOctaveSpinner" prefWidth="200.0" />
+         </children>
+         <padding>
+            <Insets left="16.0" right="16.0" />
+         </padding>
+      </HBox>
+      <HBox layoutX="26.0" layoutY="90.0" spacing="8.0">
+         <children>
+            <AnchorPane HBox.hgrow="ALWAYS">
+               <children>
+                  <Label text="Scale Degrees" AnchorPane.bottomAnchor="0.0" AnchorPane.topAnchor="0.0" />
+               </children>
+            </AnchorPane>
+            <Spinner fx:id="minDegreeSpinner" prefWidth="200.0" />
+            <AnchorPane>
+               <children>
+                  <Label text="to" AnchorPane.bottomAnchor="0.0" AnchorPane.topAnchor="0.0" />
+               </children>
+            </AnchorPane>
+            <Spinner fx:id="maxDegreeSpinner" layoutX="548.0" layoutY="10.0" prefWidth="200.0" />
+         </children>
+         <padding>
+            <Insets left="16.0" right="16.0" />
+         </padding>
+      </HBox>
+      <HBox layoutX="10.0" layoutY="42.0" spacing="8.0">
+         <children>
+            <AnchorPane HBox.hgrow="ALWAYS">
+               <children>
+                  <Label text="Mode" AnchorPane.bottomAnchor="0.0" AnchorPane.topAnchor="0.0" />
+               </children>
+            </AnchorPane>
+            <ChoiceBox fx:id="modeChoiceBox" prefWidth="200.0" />
+         </children>
+         <padding>
+            <Insets left="16.0" right="16.0" />
+         </padding>
+      </HBox>
+      <VBox fx:id="nonHoldModeOptions" prefHeight="200.0" prefWidth="100.0" spacing="8.0">
+         <children>
+            <HBox spacing="8.0">
+               <children>
+                  <AnchorPane HBox.hgrow="ALWAYS">
+                     <children>
+                        <Label text="Repeat" AnchorPane.bottomAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                     </children>
+                  </AnchorPane>
+                  <CheckBox fx:id="repeatCheckBox" mnemonicParsing="false" prefWidth="200.0" />
+               </children>
+               <padding>
+                  <Insets left="16.0" right="16.0" />
+               </padding>
+            </HBox>
+            <HBox spacing="8.0">
+               <children>
+                  <AnchorPane HBox.hgrow="ALWAYS">
+                     <children>
+                        <Label text="Note Duration" AnchorPane.bottomAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                     </children>
+                  </AnchorPane>
+                  <Button mnemonicParsing="false" onAction="#onMakeEvenButtonClicked" text="Make Even" />
+                  <TextField fx:id="noteDurationTextBox" onAction="#onNoteDurationEdited" prefWidth="200.0" />
+               </children>
+               <padding>
+                  <Insets left="16.0" right="16.0" />
+               </padding>
+            </HBox>
+         </children>
+      </VBox>
+   </children>
+</VBox>

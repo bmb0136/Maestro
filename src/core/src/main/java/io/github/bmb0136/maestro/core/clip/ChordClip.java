@@ -66,4 +66,13 @@ public class ChordClip extends Clip {
         }
         return notes.iterator();
     }
+
+    public static ChordClip create(float position, float duration) {
+        var clip = new ChordClip();
+        clip.setMutable(true);
+        clip.setPosition(position);
+        clip.setDuration(duration);
+        clip.setMutable(false);
+        return clip;
+    }
 }

@@ -1,8 +1,10 @@
 package io.github.bmb0136.maestro;
 
+import io.github.bmb0136.maestro.core.clip.ChordClip;
 import io.github.bmb0136.maestro.core.clip.Clip;
 import io.github.bmb0136.maestro.core.clip.PianoRollClip;
 import io.github.bmb0136.maestro.core.event.AddModifierToClipEvent;
+import io.github.bmb0136.maestro.core.clip.ScaleClip;
 import io.github.bmb0136.maestro.core.event.AddTrackToTimelineEvent;
 import io.github.bmb0136.maestro.core.event.RemoveModifierFromClipEvent;
 import io.github.bmb0136.maestro.core.event.RemoveTrackFromTimelineEvent;
@@ -32,6 +34,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -78,6 +83,9 @@ public class AppController implements AutoCloseable {
     private TimelineRenderer timelineRenderer;
     private AutoCloseable changeCallback;
     private final SimpleObjectProperty<Tuple2<UUID, UUID>> selectedClip = new SimpleObjectProperty<>(null);
+    private final HashSet<UUID> knownClips = new HashSet<>();
+    @Nullable
+    private UUID lastOpenEditor = null;
 
     @FXML
     private void initialize() {
@@ -120,6 +128,7 @@ public class AppController implements AutoCloseable {
         });
 
         editorPane.prefWidthProperty().bind(timelineCanvas.widthProperty());
+        editorPane.visibleProperty().bind(editorPane.contentProperty().map(Objects::nonNull));
 
         // Init modifier selector
         modifierSelector.getItems().add(ADD_MODIFIER);
@@ -170,13 +179,46 @@ public class AppController implements AutoCloseable {
                     refreshModifierList(trackId, clip);
                 }
             }
+
+            // Check for clip deletion
+            HashSet<UUID> deleted = new HashSet<>(knownClips);
+            knownClips.clear();
+            for (Track track : target.getTimeline()) {
+                for (Clip clip : track) {
+                    deleted.remove(clip.getId());
+                    knownClips.add(clip.getId());
+                }
+            }
+
+            // Hide editor if open clip was deleted
+            if (deleted.contains(lastOpenEditor)) {
+                setupEditorFor(null, null);
+            }
         });
     }
 
-    private void setupEditorFor(UUID trackId, @NotNull Clip clip) {
+    private void setupEditorFor(UUID trackId, Clip clip) {
+        lastOpenEditor = Optional.ofNullable(clip).map(Clip::getId).orElse(null);
+
+        if (trackId == null || clip == null) {
+            // ClipEditorSubscene implements AutoClosable, make sure to call close() on it!
+            if (editorPane.getContent() instanceof AutoCloseable closeable) {
+                try {
+                    closeable.close();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            editorPane.setContent(null);
+            editorPane.setExpanded(false);
+            return;
+        }
+
         SubScene scene;
         switch (clip) {
             case PianoRollClip c -> scene = PianoRollEditorSubScene.create(manager, trackId, c.getId());
+            case ChordClip c -> scene = ChordClipEditorSubScene.create(manager, trackId, c.getId());
+            case ScaleClip c -> scene = ScaleClipEditorSubScene.create(manager, trackId, c.getId());
             default -> throw new IllegalArgumentException("Unknown clip type: " + clip.getClass().getName());
         }
 
@@ -193,7 +235,6 @@ public class AppController implements AutoCloseable {
         }
 
         editorPane.setContent(scene);
-        editorPane.setVisible(true);
     }
 
     @FXML
