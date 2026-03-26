@@ -93,10 +93,11 @@ public class PlaybackEngine {
             double onTime = not.position() * timeDuration; //Logic: Position of Note * timeDuration = Start Position
             double offTime = (not.position() + not.duration()) * timeDuration; //Logic: (Position of StartPosition + The Expected duration of the Event) * Time according to BPM (timeDuration) = End Position
             //OnEvent : onEvents[i] =  new NoteEvent(NoteEvent.Type.ON, 0, not.pitch(),onTime);
-            events.add(new NoteEvent(NoteEvent.Type.ON, 0, not.pitch(), onTime));
+            events.add(new NoteEvent(NoteEvent.Type.ON, not, not.pitch(), onTime));
             //OffEvent : offEvents[i] = new NoteEvent(NoteEvent.Type.OFF, 0, not.pitch(),offTime);
-            events.add(new NoteEvent(NoteEvent.Type.OFF, 0, not.pitch(), offTime));
+            events.add(new NoteEvent(NoteEvent.Type.OFF, not, not.pitch(), offTime));
         }
+        System.out.println(events);
         //Sorts Events
         events = NoteEventSorter(events);
         //EventPlayer - Schedules the Notes (Timeline Position, Player, Stop)
@@ -106,25 +107,62 @@ public class PlaybackEngine {
     }
 
     private ArrayList<NoteEvent> NoteEventSorter(ArrayList<NoteEvent> unsorted_events) {
-        //Temp Sorter; Don't like the code for this (Also Unfinished, needs Comparator)
-        ArrayList<NoteEvent> sorted_events = new ArrayList<>();
-        sorted_events.addAll(unsorted_events);
+
+        ArrayList<NoteEvent> sorted_events = new ArrayList<>(unsorted_events);
         sorted_events.sort(new NoteEventComparator());
-        //sorted_events.sort();
+        for (NoteEvent event : sorted_events) {
+
+            System.out.print(event.getNote().pitch());
+            System.out.print(event.getType() +" " + event.getTimeExecution() +  " \n");
+        }
         return sorted_events;
     }
 
     private ArrayList<NoteEvent> NoteEventScheduler(ArrayList<NoteEvent> events) {
-        double currentTime = 0;
-        for (NoteEvent event : events) {
-            double waitTime = event.getTimeExecution() - currentTime;
-            currentTime = event.getTimeExecution();
-            try {
-                Thread.sleep((long) waitTime * 1000);
+        System.out.println("Begin NoteEventScheduler");
+        long startTime = System.currentTimeMillis();
+        MidiChannel Pianochannel = channels[0];
+        /*
+        Proper SetUp:
+            -Main Thread
+                -Grab ExecutionTime for each Event
+                -Execute each event using Split Threads
+                -The Main Program should continue on, each event should be executed via threads
+            -
+         */
 
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        for (NoteEvent event : events) {
+            //Worker Thread
+            Runnable task = () -> {
+                long targetTime = startTime + (long) event.getTimeExecution();
+                long delay = targetTime - startTime;
+                if (delay > 0){
+                    try {
+                        Thread.sleep(delay);
+                    } catch(InterruptedException e){
+                        System.out.println("NoteEventScheduler interrupted");
+                    }
+                }
+                int pitch = 60;//event.getNote().pitch();
+                int velocity = event.getPitch().octave();
+                if (event.getType() == NoteEvent.Type.ON){
+                    Pianochannel.noteOn(pitch, velocity);
+                    System.out.println("Note ON: " + event.getNote());
+                } else if (event.getType() == NoteEvent.Type.OFF){ //In case Variety
+                    Pianochannel.noteOff(pitch, velocity);
+                }
+            };
+
+            //To Name Each Split Thread; Great for Debugging!
+            String threadName =
+                    event.getType() == NoteEvent.Type.ON ? "on" : "off" +
+                    event.getNote().toString() + "-" +
+                    event.getTimeExecution() + "ms";
+            Thread thread = new Thread(task);
+            thread.setName(threadName);
+            System.out.println("Starting thread: " + threadName);
+            thread.start();
+
 
         }
         return events;
@@ -133,12 +171,15 @@ public class PlaybackEngine {
     private final void playTimeline(Timeline timeline) {
         System.out.println("Playing timeline function: playTimeline");
         for (Track track : timeline) {
+            int sad = 0;
             for (Clip clip : track) {
                 ArrayList<Note> notes = new ArrayList<>();
-                int sad = 0;
+               System.out.println(sad++);
                 for (Note note : clip) {  //for Note : note in Clip
                     //Collect notes in a list; Need to know when to start/end.
                     notes.add(note);
+                    System.out.println(note.pitch() + " " + note.position());
+                    System.out.println("Note added");
                 }
 
                 ArrayList<NoteEvent> poke = buildIntoEvents(notes);
@@ -229,6 +270,15 @@ public class PlaybackEngine {
     }
 
 
+}
+class RunnableTask implements Runnable {
+    private final NoteEvent noteEvent;
+    public RunnableTask(NoteEvent noteEvent) {
+        this.noteEvent = noteEvent;
+    }
+    public void run() {
+
+    }
 }
 
 
