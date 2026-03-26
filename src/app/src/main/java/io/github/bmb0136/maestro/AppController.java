@@ -49,7 +49,7 @@ public class AppController implements AutoCloseable {
 
         MODIFIER_LABELS.add("Add Interval Above", AddIntervalAboveModifier.class);
         MODIFIER_FACTORIES.put(AddIntervalAboveModifier.class, AddIntervalAboveModifier::new);
-        // TODO: editor
+        MODIFIER_EDITOR_FACTORIES.put(AddIntervalAboveModifier.class, AddIntervalAboveModifierEditor::new);
     }
 
     @FXML
