@@ -166,15 +166,16 @@ public class AppController implements AutoCloseable {
         });
 
         changeCallback = manager.registerChangeCallback(target -> {
+            var selected = selectedClip.get();
             // TODO: update other parts of UI (#35)
 
             // Update modifier list if possible
-            if (target.isClip() && selectedClip.get() != null) {
+            if (target.isClip() && selected != null) {
                 assert target.getTrackId().isPresent();
                 assert target.getClipId().isPresent();
                 var trackId = target.getTrackId().orElseThrow();
                 var clipId = target.getClipId().orElseThrow();
-                if (selectedClip.get().first().equals(trackId) && selectedClip.get().second().equals(clipId)) {
+                if (selected.first().equals(trackId) && selected.second().equals(clipId)) {
                     var clip = manager.get().getTrack(trackId).flatMap(t -> t.getClip(clipId)).orElseThrow();
                     refreshModifierList(trackId, clip);
                 }
@@ -193,6 +194,11 @@ public class AppController implements AutoCloseable {
             // Hide editor if open clip was deleted
             if (deleted.contains(lastOpenEditor)) {
                 setupEditorFor(null, null);
+            }
+
+            // Clear modifier list if selected clip was deleted
+            if (selected != null && deleted.contains(selected.second())) {
+                refreshModifierList(null, null);
             }
         });
     }
@@ -316,8 +322,10 @@ public class AppController implements AutoCloseable {
         }
 
         children.clear();
-        for (Modifier m : clip.getModifiers()) {
-            children.add(createModifierNodeFor(trackId, clip, m));
+        if (trackId != null && clip != null) {
+            for (Modifier m : clip.getModifiers()) {
+                children.add(createModifierNodeFor(trackId, clip, m));
+            }
         }
     }
 
