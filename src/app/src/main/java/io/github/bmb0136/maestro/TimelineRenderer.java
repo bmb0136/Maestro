@@ -25,10 +25,7 @@ import javafx.scene.paint.Color;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public class TimelineRenderer {
     private final TimelineManager manager;
@@ -123,6 +120,15 @@ public class TimelineRenderer {
         addMenuItem(addClipMenu.getItems(), "Chord", e -> rootContextMenuOnAddClipHandler(e, ChordClip::create));
         addMenuItem(addClipMenu.getItems(), "Scale", e -> rootContextMenuOnAddClipHandler(e, ScaleClip::create));
         trackContextMenu.getItems().add(addClipMenu);
+
+        // Notify main window when selection changes
+        selectedClip.addListener((ignored1, oldValue, newValue) -> {
+            if (Objects.equals(oldValue, newValue)) {
+                return;
+            }
+            var trackId = manager.get().getTrackForClip(newValue).orElse(null);
+            callback.run(trackId, newValue, CallbackType.CLIP_SELECTION_CHANGED);
+        });
 
         addMenuItem(clipContextMenu.getItems(), "Delete", this::clipContextMenuOnDeleteHandler);
     }
@@ -359,7 +365,8 @@ public class TimelineRenderer {
     }
 
     public enum CallbackType {
-        OPEN_EDITOR
+        OPEN_EDITOR,
+        CLIP_SELECTION_CHANGED
     }
 
     @FunctionalInterface

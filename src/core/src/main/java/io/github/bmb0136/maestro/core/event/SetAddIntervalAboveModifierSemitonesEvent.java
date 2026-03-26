@@ -9,7 +9,7 @@ import java.util.UUID;
 public class SetAddIntervalAboveModifierSemitonesEvent extends ModifierEvent {
     private final int newSemitones;
 
-    protected SetAddIntervalAboveModifierSemitonesEvent(UUID trackId, UUID clipId, UUID modifierId, int newSemitones) {
+    public SetAddIntervalAboveModifierSemitonesEvent(UUID trackId, UUID clipId, UUID modifierId, int newSemitones) {
         super(trackId, clipId, modifierId);
         this.newSemitones = newSemitones;
     }
