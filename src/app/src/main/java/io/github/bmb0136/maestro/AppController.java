@@ -28,6 +28,9 @@ import javafx.scene.layout.VBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 public class AppController {
@@ -54,6 +57,9 @@ public class AppController {
     private final SimpleIntegerProperty bpm = new SimpleIntegerProperty(120);
     private final SimpleDoubleProperty pixelsPerBeat = new SimpleDoubleProperty(60.0);
     private TimelineRenderer timelineRenderer;
+    private final HashSet<UUID> knownClips = new HashSet<>();
+    @Nullable
+    private UUID lastOpenEditor = null;
 
     @FXML
     private void initialize() {
@@ -96,9 +102,44 @@ public class AppController {
         });
 
         editorPane.prefWidthProperty().bind(timelineCanvas.widthProperty());
+        editorPane.visibleProperty().bind(editorPane.contentProperty().map(Objects::nonNull));
+
+        //noinspection resource
+        manager.registerChangeCallback(target -> {
+            // Check for clip deletion
+            HashSet<UUID> deleted = new HashSet<>(knownClips);
+            knownClips.clear();
+            for (Track track : target.getTimeline()) {
+                for (Clip clip : track) {
+                    deleted.remove(clip.getId());
+                    knownClips.add(clip.getId());
+                }
+            }
+
+            // Hide editor if open clip was deleted
+            if (deleted.contains(lastOpenEditor)) {
+                setupEditorFor(null, null);
+            }
+        });
     }
 
-    private void setupEditorFor(UUID trackId, @NotNull Clip clip) {
+    private void setupEditorFor(UUID trackId, Clip clip) {
+        lastOpenEditor = Optional.ofNullable(clip).map(Clip::getId).orElse(null);
+
+        if (trackId == null || clip == null) {
+            // ClipEditorSubscene implements AutoClosable, make sure to call close() on it!
+            if (editorPane.getContent() instanceof AutoCloseable closeable) {
+                try {
+                    closeable.close();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            editorPane.setContent(null);
+            editorPane.setExpanded(false);
+            return;
+        }
+
         SubScene scene;
         switch (clip) {
             case PianoRollClip c -> scene = PianoRollEditorSubScene.create(manager, trackId, c.getId());
@@ -120,7 +161,6 @@ public class AppController {
         }
 
         editorPane.setContent(scene);
-        editorPane.setVisible(true);
     }
 
     @FXML
