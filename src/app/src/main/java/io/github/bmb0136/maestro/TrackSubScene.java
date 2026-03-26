@@ -18,13 +18,14 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
-public class TrackSubScene extends SubScene {
+public class TrackSubScene extends SubScene implements AutoCloseable {
 
     public static final int HEIGHT = 120;
 
     private final TimelineManager manager;
     private final UUID trackId;
     private final BiConsumer<UUID, TrackCallbackType> callback;
+    private final AutoCloseable changeCallback;
 
     @FXML
     private Parent root;
@@ -32,6 +33,7 @@ public class TrackSubScene extends SubScene {
     private Label nameLabel;
     @FXML
     private TextField nameEditField;
+    private String lastName = "???";
 
     private TrackSubScene(TimelineManager manager, UUID trackId, BiConsumer<UUID, TrackCallbackType> callback) {
         // Dummy node (can't pass null here)
@@ -39,19 +41,40 @@ public class TrackSubScene extends SubScene {
         this.manager = manager;
         this.trackId = trackId;
         this.callback = callback;
+
+        changeCallback = manager.registerChangeCallback(target -> {
+            if (!target.isTrack()) {
+                return;
+            }
+            if (target.getTrackId().map(id -> id.equals(trackId)).orElse(false)) {
+                return;
+            }
+            var track = target.getTrackId().flatMap(target.getTimeline()::getTrack).orElseThrow();
+
+            lastName = track.getName();
+            nameEditField.setText(lastName);
+        });
     }
 
     @FXML
     private void initialize() {
         root.getStylesheets().add("/DarkMode.css");
-        manager.get().getTrack(trackId).ifPresent(t -> nameEditField.setText(t.getName()));
+
+        var track = manager.get().getTrack(trackId).orElseThrow();
+        lastName = track.getName();
+
+        // Init name label
         nameLabel.textProperty().bind(nameEditField.textProperty());
         nameLabel.visibleProperty().bind(Bindings.not(nameEditField.visibleProperty()));
+
+        // Init name editor
+        nameEditField.setText(lastName);
         nameEditField.mouseTransparentProperty().bind(Bindings.not(nameEditField.visibleProperty()));
+
         nameEditField.setVisible(false);
         nameEditField.focusedProperty().addListener((observableValue, oldValue, newValue) -> {
             if (!newValue) {
-                nameEditField.setText(manager.get().getTrack(trackId).orElseThrow().getName());
+                nameEditField.setText(lastName);
                 nameEditField.setVisible(false);
             }
         });
@@ -59,12 +82,10 @@ public class TrackSubScene extends SubScene {
 
     @FXML
     private void onNameEdited() {
+        nameEditField.setVisible(false);
         if (!manager.append(new SetTrackNameEvent(trackId, nameEditField.getText())).isOk()) {
             return;
         }
-        var name = manager.get().getTrack(trackId).orElseThrow().getName();
-        nameEditField.setText(name);
-        nameEditField.setVisible(false);
     }
 
     @FXML
@@ -93,4 +114,8 @@ public class TrackSubScene extends SubScene {
         }
     }
 
+    @Override
+    public void close() throws Exception {
+        changeCallback.close();
+    }
 }
