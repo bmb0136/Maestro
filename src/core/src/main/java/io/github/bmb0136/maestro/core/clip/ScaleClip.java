@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.UUID;
 
-public class RandomClip extends Clip {
+public class ScaleClip extends Clip {
     private ScaleType scale = ScaleType.MAJOR;
     private PitchName rootPitch = PitchName.C;
     private int rootOctave = 4;
@@ -19,11 +19,11 @@ public class RandomClip extends Clip {
     private boolean repeat = true;
     private Mode mode = Mode.ASCENDING;
 
-    public RandomClip() {
+    public ScaleClip() {
         this(UUID.randomUUID());
     }
 
-    protected RandomClip(UUID id) {
+    protected ScaleClip(UUID id) {
         super(id);
     }
 
@@ -33,7 +33,7 @@ public class RandomClip extends Clip {
 
     public void setScale(ScaleType scale) {
         if (!isMutable()) {
-            throw new IllegalStateException("RandomClip is immutable");
+            throw new IllegalStateException("ScaleClip is immutable");
         }
         this.scale = scale;
     }
@@ -44,7 +44,7 @@ public class RandomClip extends Clip {
 
     public void setRootPitch(PitchName rootPitch) {
         if (!isMutable()) {
-            throw new IllegalStateException("RandomClip is immutable");
+            throw new IllegalStateException("ScaleClip is immutable");
         }
         this.rootPitch = rootPitch;
     }
@@ -55,7 +55,7 @@ public class RandomClip extends Clip {
 
     public void setRootOctave(int rootOctave) {
         if (!isMutable()) {
-            throw new IllegalStateException("RandomClip is immutable");
+            throw new IllegalStateException("ScaleClip is immutable");
         }
         this.rootOctave = rootOctave;
     }
@@ -66,7 +66,7 @@ public class RandomClip extends Clip {
 
     public void setMinDegree(int minDegree) {
         if (!isMutable()) {
-            throw new IllegalStateException("RandomClip is immutable");
+            throw new IllegalStateException("ScaleClip is immutable");
         }
         this.minDegree = minDegree;
     }
@@ -77,7 +77,7 @@ public class RandomClip extends Clip {
 
     public void setMaxDegree(int maxDegree) {
         if (!isMutable()) {
-            throw new IllegalStateException("RandomClip is immutable");
+            throw new IllegalStateException("ScaleClip is immutable");
         }
         this.maxDegree = maxDegree;
     }
@@ -88,7 +88,7 @@ public class RandomClip extends Clip {
 
     public void setMode(Mode mode) {
         if (!isMutable()) {
-            throw new IllegalStateException("RandomClip is immutable");
+            throw new IllegalStateException("ScaleClip is immutable");
         }
         this.mode = mode;
     }
@@ -99,7 +99,7 @@ public class RandomClip extends Clip {
 
     public void setNoteDuration(float noteDuration) {
         if (!isMutable()) {
-            throw new IllegalStateException("RandomClip is immutable");
+            throw new IllegalStateException("ScaleClip is immutable");
         }
         this.noteDuration = noteDuration;
     }
@@ -110,14 +110,14 @@ public class RandomClip extends Clip {
 
     public void setRepeat(boolean repeat) {
         if (!isMutable()) {
-            throw new IllegalStateException("RandomClip is immutable");
+            throw new IllegalStateException("ScaleClip is immutable");
         }
         this.repeat = repeat;
     }
 
     @Override
     protected Clip createCopy(boolean newId) {
-        var clip = new RandomClip(newId ? UUID.randomUUID() : getId());
+        var clip = new ScaleClip(newId ? UUID.randomUUID() : getId());
         clip.setMutable(true);
         clip.setScale(scale);
         clip.setRootPitch(rootPitch);
