@@ -81,6 +81,13 @@ public class RandomClip extends Clip {
     @Override
     protected Clip createCopy(boolean newId) {
         var clip = new RandomClip(newId ? UUID.randomUUID() : getId());
+        clip.setMutable(true);
+        clip.setScale(scale);
+        clip.setRootPitch(rootPitch);
+        clip.setRootOctave(rootOctave);
+        clip.setMinDegree(minDegree);
+        clip.setMaxDegree(maxDegree);
+        clip.setMutable(false);
         return clip;
     }
 
