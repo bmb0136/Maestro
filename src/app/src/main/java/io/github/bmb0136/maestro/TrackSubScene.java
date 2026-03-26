@@ -7,6 +7,8 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.SubScene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
@@ -83,8 +85,9 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
     @FXML
     private void onNameEdited() {
         nameEditField.setVisible(false);
-        if (!manager.append(new SetTrackNameEvent(trackId, nameEditField.getText())).isOk()) {
-            return;
+        var result = manager.append(new SetTrackNameEvent(trackId, nameEditField.getText()));
+        if (!result.isOk()) {
+            new Alert(Alert.AlertType.ERROR, "Failed to update track name: " + result, ButtonType.OK).showAndWait();
         }
     }
 
