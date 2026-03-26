@@ -62,24 +62,11 @@ public class ChordClipEditorSubScene extends ClipEditorSubScene<ChordClip> {
         qualityChoiceBox.setValue(formatChordQuality(initialView.getQuality()));
 
         // Init bass octave spinner
-        final var valueFac = new SpinnerValueFactory.IntegerSpinnerValueFactory(
+        baseOctaveSpinner.setValueFactory(SpinnerUtil.toObjectValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(
                 Pitch.fromMidi(0, false).octave(),
                 Pitch.fromMidi(127, false).octave(),
-                4);
-        baseOctaveSpinner.setValueFactory(new SpinnerValueFactory<>() {
-            @Override
-            public void decrement(int steps) {
-                valueFac.decrement(steps);
-                setValue(valueFac.getValue());
-            }
-
-            @Override
-            public void increment(int steps) {
-                valueFac.increment(steps);
-                setValue(valueFac.getValue());
-            }
-        });
-        baseOctaveSpinner.getValueFactory().setValue(valueFac.getValue());
+                4)));
+        baseOctaveSpinner.getValueFactory().setValue(baseOctaveSpinner.getValueFactory().getValue());
 
         // Init slash note choice box
         slashNoteChoiceBox.getItems().clear();

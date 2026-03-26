@@ -45,7 +45,7 @@ public final class ScaleFactory {
         var pitches = new PitchName[intervals.length + 1];
         pitches[0] = root.convertToKey(keySignature);
         for (int i = 1; i < pitches.length; i++) {
-            pitches[i] = pitches[i - 1].next(intervals[i]).convertToKey(keySignature);
+            pitches[i] = pitches[i - 1].next(intervals[i - 1]).convertToKey(keySignature);
         }
         return new Scale(keySignature, pitches);
     }
