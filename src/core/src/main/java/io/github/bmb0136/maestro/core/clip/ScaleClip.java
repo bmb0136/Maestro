@@ -181,6 +181,15 @@ public class ScaleClip extends Clip {
         return notes.iterator();
     }
 
+    public static ScaleClip create(float position, float duration) {
+        var clip = new ScaleClip();
+        clip.setMutable(true);
+        clip.setPosition(position);
+        clip.setDuration(duration);
+        clip.setMutable(false);
+        return clip;
+    }
+
     public enum Mode {
         HOLD,
         ASCENDING,
