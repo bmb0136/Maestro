@@ -32,19 +32,7 @@ public class PlaybackTest {
         manager.append (new AddNoteToPianoRollClipEvent(
                 track.getId(), clip2.getId(), new Note(new Pitch(PitchName.D,6),(float)1.5,1)));
 
-        var test_track = manager.get();
-        System.out.println(manager.get());
-        int i = 0;
-        for (Track tack : manager.get()) {
-            System.out.println(i++);
-            System.out.println(tack);
-            for (Clip clipper : tack){
-                for (Note note : clipper){
-                    System.out.println(note);
-                }
-                System.out.println(clipper);
-            }
-        }
+
         try {
             //Testing The PlaybackEngine
             PlaybackEngine testPlayBack = new PlaybackEngine(manager);

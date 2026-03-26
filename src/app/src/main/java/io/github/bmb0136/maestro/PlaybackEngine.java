@@ -37,7 +37,7 @@ public class PlaybackEngine {
     PlaybackEngine(TimelineManager timelineManager) throws Exception {
         System.out.println("PlaybackEngine created");
         this.manager = timelineManager;
-        //Midistarter();
+        MidiStarter();
     }
 
     /*
@@ -47,7 +47,7 @@ public class PlaybackEngine {
         -Open Midi Channels for uses*
 
      */
-    public void Midistarter() throws Exception {
+    public void MidiStarter() throws Exception {
         try {
             synth = MidiSystem.getSynthesizer();
             synth.open();
@@ -86,8 +86,7 @@ public class PlaybackEngine {
     public final ArrayList<NoteEvent> buildIntoEvents(ArrayList<Note> notes) {
         long timeDuration = SecondstoBPM(60);
         ArrayList<NoteEvent> events = new ArrayList<>();
-        // NoteEvent[] onEvents = new NoteEvent[channels.length];
-        // NoteEvent[] offEvents = new NoteEvent[channels.length];
+
         int i = 0;
         for (Note not : notes) {
             double onTime = not.position() * timeDuration; //Logic: Position of Note * timeDuration = Start Position
@@ -97,7 +96,6 @@ public class PlaybackEngine {
             //OffEvent : offEvents[i] = new NoteEvent(NoteEvent.Type.OFF, 0, not.pitch(),offTime);
             events.add(new NoteEvent(NoteEvent.Type.OFF, not, not.pitch(), offTime));
         }
-        System.out.println(events);
         //Sorts Events
         events = NoteEventSorter(events);
         //EventPlayer - Schedules the Notes (Timeline Position, Player, Stop)
@@ -112,8 +110,6 @@ public class PlaybackEngine {
         sorted_events.sort(new NoteEventComparator());
         for (NoteEvent event : sorted_events) {
 
-            System.out.print(event.getNote().pitch());
-            System.out.print(event.getType() +" " + event.getTimeExecution() +  " \n");
         }
         return sorted_events;
     }
@@ -143,20 +139,21 @@ public class PlaybackEngine {
                         System.out.println("NoteEventScheduler interrupted");
                     }
                 }
-                int pitch = 60;//event.getNote().pitch();
+                int pitch = (int) event.getNote().volume();//event.getNote().pitch();
                 int velocity = event.getPitch().octave();
                 if (event.getType() == NoteEvent.Type.ON){
                     Pianochannel.noteOn(pitch, velocity);
                     System.out.println("Note ON: " + event.getNote());
                 } else if (event.getType() == NoteEvent.Type.OFF){ //In case Variety
                     Pianochannel.noteOff(pitch, velocity);
+                    System.out.println("Note OFF: " + event.getNote());
                 }
             };
 
             //To Name Each Split Thread; Great for Debugging!
             String threadName =
-                    event.getType() == NoteEvent.Type.ON ? "on" : "off" +
-                    event.getNote().toString() + "-" +
+                    event.getType() == NoteEvent.Type.ON ? "On " : "Off " +
+                    event.getNote().pitch().name() + "-" +
                     event.getTimeExecution() + "ms";
             Thread thread = new Thread(task);
             thread.setName(threadName);
@@ -174,12 +171,12 @@ public class PlaybackEngine {
             int sad = 0;
             for (Clip clip : track) {
                 ArrayList<Note> notes = new ArrayList<>();
-               System.out.println(sad++);
+
                 for (Note note : clip) {  //for Note : note in Clip
                     //Collect notes in a list; Need to know when to start/end.
                     notes.add(note);
-                    System.out.println(note.pitch() + " " + note.position());
-                    System.out.println("Note added");
+                    // System.out.println(note.pitch() + " " + note.position());
+                    // System.out.println("Note added");
                 }
 
                 ArrayList<NoteEvent> poke = buildIntoEvents(notes);
