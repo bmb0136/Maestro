@@ -27,7 +27,13 @@ public abstract class ModifierEditorSubscene<T extends Modifier> extends SubScen
         this.clipId = clipId;
         this.modifierId = modifierId;
 
-        wrapper = new ReadOnlyObjectWrapper<>();
+        @SuppressWarnings("unchecked")
+        var initialValue = (T) manager.get()
+                .getTrack(trackId)
+                .flatMap(t -> t.getClip(clipId))
+                .flatMap(c -> c.getModifiers().getModifier(modifierId))
+                .orElseThrow();
+        wrapper = new ReadOnlyObjectWrapper<>(initialValue);
         modifier = wrapper.getReadOnlyProperty();
         callback = manager.registerChangeCallback(this::changeCallback);
     }

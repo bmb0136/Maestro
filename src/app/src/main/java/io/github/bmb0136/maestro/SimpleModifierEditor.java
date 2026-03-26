@@ -2,15 +2,14 @@ package io.github.bmb0136.maestro;
 
 import io.github.bmb0136.maestro.core.modifier.Modifier;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
+import javafx.beans.Observable;
 import javafx.beans.value.ObservableValue;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.SpinnerValueFactory;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -26,12 +25,12 @@ public class SimpleModifierEditor<T extends Modifier> extends ModifierEditorSubs
         components.setSpacing(8);
         components.getStylesheets().add("/DarkMode.css");
         setRoot(components);
-        // TODO: fix height
+        heightProperty().bind(components.prefHeightProperty());
     }
 
     protected void addInteger(String text, int min, int max, ObservableValue<Integer> getter, Consumer<Integer> valueChanged) {
         var spinner = new Spinner<Integer>();
-        var factory = new SpinnerValueFactory.IntegerSpinnerValueFactory(min, max);
+        var factory = new SpinnerValueFactory.IntegerSpinnerValueFactory(min, max, getter.getValue());
         spinner.setValueFactory(factory);
         getter.addListener((ignored1, ignored2, newValue) ->
                 factory.setValue(newValue));
@@ -45,6 +44,7 @@ public class SimpleModifierEditor<T extends Modifier> extends ModifierEditorSubs
 
     protected void addLabeled(String text, Node node) {
         HBox hbox = new HBox();
+        hbox.setPadding(new Insets(0, 8, 0, 8));
         var children = hbox.getChildren();
 
         var label = new Label(text);
@@ -57,5 +57,17 @@ public class SimpleModifierEditor<T extends Modifier> extends ModifierEditorSubs
 
         hbox.prefWidthProperty().bind(components.widthProperty());
         components.getChildren().add(hbox);
+
+        hbox.heightProperty().addListener(this::recalculateHeight);
+    }
+
+    private void recalculateHeight(Observable ignored) {
+        double total = 0;
+        for (Node node : components.getChildren()) {
+            if ((node instanceof Region r)) {
+                total += r.getHeight();
+            }
+        }
+        components.setPrefHeight(total);
     }
 }
