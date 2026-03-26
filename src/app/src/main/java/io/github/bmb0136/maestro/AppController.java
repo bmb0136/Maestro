@@ -3,11 +3,8 @@ package io.github.bmb0136.maestro;
 import io.github.bmb0136.maestro.core.clip.ChordClip;
 import io.github.bmb0136.maestro.core.clip.Clip;
 import io.github.bmb0136.maestro.core.clip.PianoRollClip;
-import io.github.bmb0136.maestro.core.event.AddModifierToClipEvent;
+import io.github.bmb0136.maestro.core.event.*;
 import io.github.bmb0136.maestro.core.clip.ScaleClip;
-import io.github.bmb0136.maestro.core.event.AddTrackToTimelineEvent;
-import io.github.bmb0136.maestro.core.event.RemoveModifierFromClipEvent;
-import io.github.bmb0136.maestro.core.event.RemoveTrackFromTimelineEvent;
 import io.github.bmb0136.maestro.core.modifier.AddIntervalAboveModifier;
 import io.github.bmb0136.maestro.core.modifier.Modifier;
 import io.github.bmb0136.maestro.core.modifier.OffsetByIntervalModifier;
@@ -33,11 +30,7 @@ import javafx.scene.layout.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Supplier;
 
 public class AppController implements AutoCloseable {
@@ -84,6 +77,7 @@ public class AppController implements AutoCloseable {
     private AutoCloseable changeCallback;
     private final SimpleObjectProperty<Tuple2<UUID, UUID>> selectedClip = new SimpleObjectProperty<>(null);
     private final HashSet<UUID> knownClips = new HashSet<>();
+    private final ArrayList<UUID> knownTracks = new ArrayList<>();
     @Nullable
     private UUID lastOpenEditor = null;
 
@@ -166,8 +160,8 @@ public class AppController implements AutoCloseable {
         });
 
         changeCallback = manager.registerChangeCallback(target -> {
+            var timeline = target.getTimeline();
             var selected = selectedClip.get();
-            // TODO: update other parts of UI (#35)
 
             // Update modifier list if possible
             if (target.isClip() && selected != null) {
@@ -182,23 +176,70 @@ public class AppController implements AutoCloseable {
             }
 
             // Check for clip deletion
-            HashSet<UUID> deleted = new HashSet<>(knownClips);
-            knownClips.clear();
-            for (Track track : target.getTimeline()) {
-                for (Clip clip : track) {
-                    deleted.remove(clip.getId());
-                    knownClips.add(clip.getId());
+            if (target.isTrack()) {
+                HashSet<UUID> deleted = new HashSet<>(knownClips);
+                knownClips.clear();
+                for (Track track : timeline) {
+                    for (Clip clip : track) {
+                        deleted.remove(clip.getId());
+                        knownClips.add(clip.getId());
+                    }
+                }
+
+                // Hide editor if open clip was deleted
+                if (deleted.contains(lastOpenEditor)) {
+                    setupEditorFor(null, null);
+                }
+
+                // Clear modifier list if selected clip was deleted
+                if (selected != null && deleted.contains(selected.second())) {
+                    refreshModifierList(null, null);
                 }
             }
 
-            // Hide editor if open clip was deleted
-            if (deleted.contains(lastOpenEditor)) {
-                setupEditorFor(null, null);
-            }
+            // Check for track addition/deletion
+            if (target.isTimeline()) {
 
-            // Clear modifier list if selected clip was deleted
-            if (selected != null && deleted.contains(selected.second())) {
-                refreshModifierList(null, null);
+                var tracks = trackList.getChildren();
+
+                ArrayList<UUID> newTracks = new ArrayList<>();
+                for (int i = 0; i < timeline.size(); i++) {
+                    var newId = timeline.getTrack(i).getId();
+                    newTracks.add(newId);
+
+                    boolean add;
+                    if (i < knownTracks.size()) {
+                        var oldId = knownTracks.get(i);
+                        if (!oldId.equals(newId)) {
+                            // Replace node (make sure to call close if possible)
+                            if (tracks.remove(i) instanceof AutoCloseable closeable) {
+                                try {
+                                    closeable.close();
+                                } catch (Exception e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }
+                            add = true; // Replace node
+                        } else {
+                            add = false; // Same track ID, do nothing
+                        }
+                    } else {
+                        add = true; // Outside of known track list; must add a new node
+                    }
+
+                    // Add new node
+                    if (add) {
+                        tracks.add(i, TrackSubScene.create(manager, newId, this::trackCallback));
+                    }
+                }
+
+                // Remove extras
+                if (newTracks.size() < knownTracks.size()) {
+                    tracks.remove(newTracks.size(), knownTracks.size());
+                }
+
+                knownTracks.clear();
+                knownTracks.addAll(newTracks);
             }
         });
     }
@@ -271,21 +312,19 @@ public class AppController implements AutoCloseable {
     }
 
     private void addTrack(@NotNull Track track) {
-        if (!manager.append(new AddTrackToTimelineEvent(track)).isOk()) {
-            return;
+        var result = manager.append(new AddTrackToTimelineEvent(track));
+        if (!result.isOk()) {
+            new Alert(Alert.AlertType.ERROR, "Failed to add track: " + result, ButtonType.OK).showAndWait();
         }
-
-        trackList.getChildren().add(TrackSubScene.create(manager, track.getId(), this::trackCallback));
     }
 
     private void trackCallback(UUID trackId, TrackCallbackType type) {
         switch (type) {
             case DELETE -> {
-                int index = manager.get().indexOf(trackId);
-                if (!manager.append(new RemoveTrackFromTimelineEvent(trackId)).isOk()) {
-                    return;
+                var result = manager.append(new RemoveTrackFromTimelineEvent(trackId));
+                if (!result.isOk()) {
+                    new Alert(Alert.AlertType.ERROR, "Failed to add track: " + result, ButtonType.OK).showAndWait();
                 }
-                trackList.getChildren().remove(index);
             }
             case null, default -> throw new IllegalArgumentException();
         }
