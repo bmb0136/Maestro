@@ -124,10 +124,10 @@ public class ScaleClip extends Clip {
         clip.setRootOctave(rootOctave);
         clip.setMinDegree(minDegree);
         clip.setMaxDegree(maxDegree);
-        clip.setMutable(false);
         clip.setMode(mode);
         clip.setRepeat(repeat);
         clip.setNoteDuration(noteDuration);
+        clip.setMutable(false);
         return clip;
     }
 
