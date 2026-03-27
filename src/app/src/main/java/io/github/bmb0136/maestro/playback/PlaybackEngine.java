@@ -1,0 +1,170 @@
+package io.github.bmb0136.maestro.playback;
+
+import io.github.bmb0136.maestro.core.clip.Clip;
+import io.github.bmb0136.maestro.core.event.EventTarget;
+import io.github.bmb0136.maestro.core.timeline.TimelineManager;
+import io.github.bmb0136.maestro.core.timeline.Track;
+import javafx.beans.property.ReadOnlyIntegerProperty;
+import javafx.beans.property.ReadOnlyIntegerWrapper;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.sound.midi.MidiChannel;
+import javax.sound.midi.MidiSystem;
+import javax.sound.midi.MidiUnavailableException;
+import javax.sound.midi.Synthesizer;
+import java.util.*;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class PlaybackEngine implements AutoCloseable {
+    protected final AtomicInteger bpm = new AtomicInteger();
+    protected final HashMap<UUID, PlaybackActionQueue> clipQueues = new HashMap<>();
+    private final PlaybackThread thread;
+    private final AutoCloseable changeCallback;
+    private final ReadOnlyIntegerWrapper bpmWrapper = new ReadOnlyIntegerWrapper();
+    private final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+    private final ArrayList<ScheduledFuture<?>> scheduled = new ArrayList<>();
+    // Used to detect track/clip changes
+    private final HashSet<UUID> knownTracks = new HashSet<>();
+    private final HashSet<UUID> knownClips = new HashSet<>();
+    private final HashMap<UUID, Set<UUID>> clipsByTrack = new HashMap<>();
+    // Used by states for synthesis
+    protected Synthesizer synthesizer;
+    protected MidiChannel[] channels;
+
+    public PlaybackEngine(TimelineManager manager) {
+        thread = new PlaybackThread(this);
+        changeCallback = manager.registerChangeCallback(this::onTimelineChanged);
+        initSynth(null);
+        thread.start();
+    }
+
+    public int getBpm() {
+        return bpm.get();
+    }
+
+    public void setBpm(int bpm) {
+        if (canSetBpm()) {
+            this.bpm.set(bpm);
+            bpmWrapper.set(bpm);
+        }
+    }
+
+    public ReadOnlyIntegerProperty bpmProperty() {
+        return bpmWrapper.getReadOnlyProperty();
+    }
+
+    public boolean canSetBpm() {
+        return thread.currentState.get() == PlaybackState.Type.IDLE;
+    }
+
+    public void initSynth(@Nullable Synthesizer synth) {
+        if (synth == null) {
+            try {
+                synthesizer = MidiSystem.getSynthesizer();
+                synthesizer.loadAllInstruments(synthesizer.getDefaultSoundbank());
+            } catch (MidiUnavailableException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            synthesizer = synth;
+        }
+        channels = synthesizer.getChannels();
+    }
+
+    public void start() {
+        sendMessage(new PlaybackMessage.Start());
+    }
+
+    public void seek(float position) {
+        scheduled.forEach(f -> f.cancel(true));
+        synchronized (clipQueues) {
+            clipQueues.values().forEach(q -> q.seek(position));
+        }
+        sendMessage(new PlaybackMessage.Seek(position));
+    }
+
+    public void stop() {
+        sendMessage(new PlaybackMessage.Stop());
+    }
+
+    public void scheduleMessage(@NotNull PlaybackMessage message, long delay, TimeUnit delayUnit) {
+        scheduled.add(executor.schedule(() -> sendMessage(message), delay, delayUnit));
+    }
+
+    protected void sendMessage(@NotNull PlaybackMessage message) {
+        thread.messages.add(message);
+        thread.messageSemaphore.release();
+    }
+
+    private void onTimelineChanged(EventTarget target) {
+        var timeline = target.getTimeline();
+
+        // Check for track add/remove
+        if (target.isTimeline()) {
+            // Note: build this set "backwards," i.e., copy knownTracks and remove all that exist.
+            // Then, any tracks remaining must have deleted
+            HashSet<UUID> deleted = new HashSet<>(knownTracks);
+            knownTracks.clear();
+
+            for (Track track : timeline) {
+                var trackId = track.getId();
+                knownTracks.add(trackId);
+
+                // If the track did not exist before
+                if (!deleted.remove(trackId)) {
+                    // TODO: track created
+                }
+            }
+
+            for (UUID trackId : deleted) {
+                // TODO: track deleted
+            }
+        }
+
+        // Check for clip add/remove
+        if (target.isTrack()) {
+            var track = target.getTrackId().flatMap(timeline::getTrack).orElseThrow();
+
+            // Same logic as with tracks
+            HashSet<UUID> deleted = new HashSet<>(knownClips);
+            knownClips.clear();
+
+            for (Clip clip : track) {
+                var id = clip.getId();
+                knownClips.add(id);
+
+                // Same logic as with tracks
+                if (!deleted.remove(id)) {
+                    // TODO: clip created
+                }
+            }
+
+            var trackClips = clipsByTrack.computeIfAbsent(track.getId(), ignored -> new HashSet<>());
+            trackClips.addAll(knownClips);
+            trackClips.removeAll(deleted);
+
+            for (UUID clipId : deleted) {
+                // TODO: clip deleted
+            }
+        }
+
+        // Check for modifier add/remove/edit
+        if (target.isClip() || target.isModifier()) {
+            var track = target.getTrackId().flatMap(timeline::getTrack).orElseThrow();
+            var clip = target.getClipId().flatMap(track::getClip).orElseThrow();
+
+            // TODO: rerender clip
+        }
+    }
+
+    @Override
+    public void close() throws Exception {
+        executor.close();
+        changeCallback.close();
+        thread.close();
+    }
+}
