@@ -24,8 +24,11 @@ public class PlaybackThread extends Thread implements AutoCloseable {
         running.set(true);
         while (running.get()) {
             // Update playing property (Make sure to do it on the UI thread though)
-            final var type = state.getType();
-            Platform.runLater(() -> engine.isPlaying.set(type == PlaybackState.Type.PLAYING));
+            final var isPlaying = state.getType() == PlaybackState.Type.PLAYING;
+            Platform.runLater(() -> engine.isPlaying.set(isPlaying));
+            if (!isPlaying && engine.stoppedSemaphore.hasQueuedThreads()) {
+                engine.stoppedSemaphore.release();
+            }
 
             // Note: `oldState` is unused but will be closed automatically
             var oldState = state;

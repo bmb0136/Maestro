@@ -26,7 +26,7 @@ public class PlaybackEngine implements AutoCloseable {
     private final AutoCloseable changeCallback;
     private final ReadOnlyIntegerWrapper bpmWrapper = new ReadOnlyIntegerWrapper();
     protected final ReadOnlyBooleanWrapper isPlaying = new ReadOnlyBooleanWrapper();
-    private final Semaphore stoppedSemaphore = new Semaphore(0);
+    protected final Semaphore stoppedSemaphore = new Semaphore(0);
     private final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
     private final ArrayList<ScheduledFuture<?>> scheduled = new ArrayList<>();
     // Used to detect track/clip changes
@@ -37,7 +37,7 @@ public class PlaybackEngine implements AutoCloseable {
     protected MidiChannel[] channels;
     // Used to calculate current position
     protected float lastPosition;
-    protected float lastActionTime;
+    protected long lastActionTime;
     protected int lastBpm;
 
     public PlaybackEngine(TimelineManager manager) {
@@ -79,6 +79,10 @@ public class PlaybackEngine implements AutoCloseable {
             return lastPosition;
         }
 
+        return calculateLastPosition();
+    }
+
+    private float calculateLastPosition() {
         float offset = (System.currentTimeMillis() - lastActionTime) / 60_000.0f * lastBpm;
         return lastPosition + offset;
     }
@@ -152,7 +156,8 @@ public class PlaybackEngine implements AutoCloseable {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        lastPosition = getPositionInBeats();
+        lastBpm = getBpm();
+        lastPosition = calculateLastPosition();
     }
 
     public void scheduleMessage(@NotNull PlaybackMessage message, long delay, TimeUnit delayUnit) {
