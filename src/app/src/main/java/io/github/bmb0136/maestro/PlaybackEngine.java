@@ -64,22 +64,6 @@ public class PlaybackEngine {
     }
 
     /*
-       Most, if not all, of the code in has been used or initialized elsewhere.
-        */
-    public static void main(String[] args) throws Exception {
-
-        Synthesizer synth = MidiSystem.getSynthesizer();
-        synth.open();
-        System.out.println("Using device: " + synth.getDeviceInfo().getName());
-        synth.loadInstrument(synth.getAvailableInstruments()[0]);
-        MidiChannel[] channels = synth.getChannels();
-        channels[0].noteOn(60, 127);
-        Thread.sleep(1000);
-        channels[0].noteOff(60);
-        synth.close();
-    }
-
-    /*
     Purpose: Creating ON/OFF Events from Notes List
      */
     public final ArrayList<NoteEvent> buildIntoEvents(ArrayList<Note> notes) {
@@ -169,7 +153,6 @@ public class PlaybackEngine {
         long startTime = System.nanoTime();
         MidiChannel Pianochannel = channels[0];
         Pianochannel.programChange(0);
-        Clip_position = 4;
         /*
         Proper SetUp:
             -Main Thread
@@ -213,7 +196,7 @@ public class PlaybackEngine {
                 if (event.getType() == NoteEvent.Type.ON){
                     Pianochannel.noteOn(pitch, velocity);
                     System.out.println("Note ON: " + event.getNote());
-                } else if (event.getType() == NoteEvent.Type.OFF){ //In case Variety
+                } else if (event.getType() == NoteEvent.Type.OFF){
                     Pianochannel.noteOff(pitch, velocity);
                     System.out.println("Note OFF: " + event.getNote());
                 }
