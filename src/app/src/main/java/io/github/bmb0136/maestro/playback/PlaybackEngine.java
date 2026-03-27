@@ -4,7 +4,10 @@ import io.github.bmb0136.maestro.core.clip.Clip;
 import io.github.bmb0136.maestro.core.event.EventTarget;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import io.github.bmb0136.maestro.core.timeline.Track;
-import javafx.beans.property.*;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
+import javafx.beans.property.ReadOnlyIntegerProperty;
+import javafx.beans.property.ReadOnlyIntegerWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,11 +25,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class PlaybackEngine implements AutoCloseable {
     protected final AtomicInteger bpm = new AtomicInteger();
     protected final HashMap<UUID, PlaybackActionQueue> clipQueues = new HashMap<>();
+    protected final ReadOnlyBooleanWrapper isPlaying = new ReadOnlyBooleanWrapper();
+    protected final Semaphore stoppedSemaphore = new Semaphore(0);
     private final PlaybackThread thread;
     private final AutoCloseable changeCallback;
     private final ReadOnlyIntegerWrapper bpmWrapper = new ReadOnlyIntegerWrapper();
-    protected final ReadOnlyBooleanWrapper isPlaying = new ReadOnlyBooleanWrapper();
-    protected final Semaphore stoppedSemaphore = new Semaphore(0);
     private final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
     private final ArrayList<ScheduledFuture<?>> scheduled = new ArrayList<>();
     // Used to detect track/clip changes
