@@ -127,7 +127,7 @@ public class TimelineRenderer {
                 return;
             }
             var trackId = manager.get().getTrackForClip(newValue).orElse(null);
-            callback.run(trackId, newValue, CallbackType.CLIP_SELECTION_CHANGED);
+            callback.run(trackId, newValue, 0, CallbackType.CLIP_SELECTION_CHANGED);
         });
 
         addMenuItem(clipContextMenu.getItems(), "Delete", this::clipContextMenuOnDeleteHandler);
@@ -180,6 +180,10 @@ public class TimelineRenderer {
 
     public void setPlaybackHeadPosition(float beats) {
         playbackHeadXBeats.set(beats);
+    }
+
+    public float getPlaybackHeadPosition() {
+        return playbackHeadXBeats.get();
     }
 
     public void draw() {
@@ -309,7 +313,9 @@ public class TimelineRenderer {
 
         if (e.getY() < scrollbarBounds.get().getMinY()) {
             if (e.getButton() == MouseButton.PRIMARY) {
-                playbackHeadXBeats.set(localXToBeats(e.getX()));
+                float beats = localXToBeats(e.getX());
+                playbackHeadXBeats.set(beats);
+                callback.run(null, null, beats, CallbackType.SEEK);
             }
         } else if (e.getY() > scrollbarBounds.get().getMaxY()) {
             switch (e.getButton()) {
@@ -318,7 +324,7 @@ public class TimelineRenderer {
                     if (e.getClickCount() == 2) {
                         var trackId = manager.get().getTrackForClip(clipId).orElseThrow();
                         clipBeingEdited.set(clipId);
-                        callback.run(trackId, clipId, CallbackType.OPEN_EDITOR);
+                        callback.run(trackId, clipId, 0, CallbackType.OPEN_EDITOR);
                     }
                 }, () -> selectedClip.set(null));
                 case SECONDARY -> {
@@ -370,11 +376,11 @@ public class TimelineRenderer {
 
     public enum CallbackType {
         OPEN_EDITOR,
-        CLIP_SELECTION_CHANGED
+        SEEK, CLIP_SELECTION_CHANGED
     }
 
     @FunctionalInterface
     public interface Callback {
-        void run(@Nullable UUID trackId, @Nullable UUID clipId, CallbackType type);
+        void run(@Nullable UUID trackId, @Nullable UUID clipId, float beats, CallbackType type);
     }
 }

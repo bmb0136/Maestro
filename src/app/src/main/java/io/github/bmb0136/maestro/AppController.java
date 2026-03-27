@@ -3,8 +3,11 @@ package io.github.bmb0136.maestro;
 import io.github.bmb0136.maestro.core.clip.ChordClip;
 import io.github.bmb0136.maestro.core.clip.Clip;
 import io.github.bmb0136.maestro.core.clip.PianoRollClip;
-import io.github.bmb0136.maestro.core.event.*;
 import io.github.bmb0136.maestro.core.clip.ScaleClip;
+import io.github.bmb0136.maestro.core.event.AddModifierToClipEvent;
+import io.github.bmb0136.maestro.core.event.AddTrackToTimelineEvent;
+import io.github.bmb0136.maestro.core.event.RemoveModifierFromClipEvent;
+import io.github.bmb0136.maestro.core.event.RemoveTrackFromTimelineEvent;
 import io.github.bmb0136.maestro.core.modifier.AddIntervalAboveModifier;
 import io.github.bmb0136.maestro.core.modifier.Modifier;
 import io.github.bmb0136.maestro.core.modifier.OffsetByIntervalModifier;
@@ -72,6 +75,8 @@ public class AppController implements AutoCloseable {
     private Region timelineParent;
     @FXML
     private ChoiceBox<Object> modifierSelector;
+    @FXML
+    private Button playButton;
     private final TimelineManager manager = new TimelineManager(1024, new Timeline());
     private final SimpleIntegerProperty bpm = new SimpleIntegerProperty(120);
     private final SimpleDoubleProperty pixelsPerBeat = new SimpleDoubleProperty(60.0);
@@ -168,11 +173,14 @@ public class AppController implements AutoCloseable {
         playbackEngine.isPlayingProperty().addListener((ignored1, ignored2, newValue) -> {
             if (newValue) {
                 playbackTimer.start();
+                playButton.setText("Stop");
             } else {
                 playbackTimer.stop();
                 timelineRenderer.setPlaybackHeadPosition(playbackEngine.getPositionInBeats());
+                playButton.setText("Play");
             }
         });
+        bpm.bind(playbackEngine.bpmProperty());
 
         changeCallback = manager.registerChangeCallback(target -> {
             var timeline = target.getTimeline();
@@ -304,6 +312,15 @@ public class AppController implements AutoCloseable {
         addTrack(new Track());
     }
 
+    @FXML
+    private void onPlayButtonClicked() {
+        if (!playbackEngine.isPlayingProperty().get()) {
+            playbackEngine.start(timelineRenderer.getPlaybackHeadPosition());
+        } else {
+            playbackEngine.stop();
+        }
+    }
+
 
     @FXML
     private void onBpmScrolled(ScrollEvent event) {
@@ -351,7 +368,7 @@ public class AppController implements AutoCloseable {
         }
     }
 
-    private void timelineCallback(@Nullable UUID trackId, @Nullable UUID clipId, TimelineRenderer.CallbackType type) {
+    private void timelineCallback(@Nullable UUID trackId, @Nullable UUID clipId, float position, TimelineRenderer.CallbackType type) {
         switch (type) {
             case OPEN_EDITOR -> {
                 assert trackId != null;
@@ -365,6 +382,7 @@ public class AppController implements AutoCloseable {
                     selectedClip.set(null);
                 }
             }
+            case SEEK -> playbackEngine.seek(position);
             case null, default -> throw new IllegalArgumentException();
         }
     }
@@ -433,6 +451,7 @@ public class AppController implements AutoCloseable {
     @Override
     public void close() throws Exception {
         changeCallback.close();
+        playbackEngine.close();
     }
 
     private class PlaybackAnimationTimer extends AnimationTimer {

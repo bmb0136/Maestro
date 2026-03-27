@@ -57,8 +57,13 @@ public class PlaybackActionQueue {
     }
 
     public void seek(float beats) {
+        if (queue.isEmpty()) {
+            offset = 0;
+            return;
+        }
+
         // If past last action (or if empty), seek to end
-        if (Optional.ofNullable(getTail()).map(a -> beats > a.timeBeats).orElse(true)) {
+        if (Optional.ofNullable(queue.getLast()).map(a -> beats > a.timeBeats).orElse(true)) {
             offset = queue.size();
             return;
         }

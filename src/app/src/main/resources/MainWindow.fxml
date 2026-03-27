@@ -93,6 +93,11 @@
                         </AnchorPane>
                         <AnchorPane HBox.hgrow="NEVER">
                            <children>
+                              <Button fx:id="playButton" mnemonicParsing="false" onAction="#onPlayButtonClicked" text="Play" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                           </children>
+                        </AnchorPane>
+                        <AnchorPane layoutX="170.0" layoutY="18.0">
+                           <children>
                               <Button mnemonicParsing="false" text="Settings" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                            </children>
                         </AnchorPane>
