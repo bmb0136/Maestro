@@ -82,14 +82,20 @@ public class PlaybackActionQueue {
     }
 
     public void addFromClip(@NotNull Clip clip) {
+        ArrayList<Note> notes = new ArrayList<>();
+        clip.forEach(notes::add);
+        clip.getModifiers().applyTo(notes);
+
         PriorityQueue<Action> actions = new PriorityQueue<>(Comparator.comparing(Action::timeBeats));
-        for (Note note : clip) {
+        for (Note note : notes) {
             int midi = note.pitch().toMidi();
             var start = clip.getPosition() + note.position();
             actions.add(new Action(true, midi, (int) (note.volume() * 127), start));
             actions.add(new Action(true, midi, 0, start + note.duration()));
         }
-        actions.forEach(this::add);
+        while (!actions.isEmpty()) {
+            add(actions.remove());
+        }
     }
 
     public void clear() {
