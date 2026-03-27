@@ -30,6 +30,7 @@ import java.util.UUID;
 
 public class AppController {
 
+
     @FXML
     private ScrollBar trackScrollBar, timelineScrollBar;
     @FXML
@@ -124,6 +125,10 @@ public class AppController {
         addTrack(new Track());
     }
 
+    @FXML
+    private void onPlayButtonClicked() {
+        playTimeline();
+    }
 
     @FXML
     private void onBpmScrolled(ScrollEvent event) {
@@ -152,6 +157,9 @@ public class AppController {
         }
 
         trackList.getChildren().add(TrackSubScene.create(manager, track.getId(), this::trackCallback));
+    }
+    private void playTimeline(){
+        PlaybackTest.play(manager);
     }
 
     private void trackCallback(UUID trackId, TrackCallbackType type) {
