@@ -29,7 +29,6 @@ public class PlaybackEngine implements AutoCloseable {
     private final ArrayList<ScheduledFuture<?>> scheduled = new ArrayList<>();
     // Used to detect track/clip changes
     private final HashSet<UUID> knownTracks = new HashSet<>();
-    private final HashSet<UUID> knownClips = new HashSet<>();
     private final HashMap<UUID, Set<UUID>> clipsByTrack = new HashMap<>();
     // Used by states for synthesis
     protected Synthesizer synthesizer;
@@ -116,48 +115,56 @@ public class PlaybackEngine implements AutoCloseable {
 
                 // If the track did not exist before
                 if (!deleted.remove(trackId)) {
-                    // TODO: track created
+                    onTrackUpdated(track);
                 }
             }
 
-            for (UUID trackId : deleted) {
-                // TODO: track deleted
+            synchronized (clipQueues) {
+                for (UUID trackId : deleted) {
+                    clipsByTrack.remove(trackId).forEach(clipQueues::remove);
+                }
             }
         }
 
         // Check for clip add/remove
         if (target.isTrack()) {
-            var track = target.getTrackId().flatMap(timeline::getTrack).orElseThrow();
-
-            // Same logic as with tracks
-            HashSet<UUID> deleted = new HashSet<>(knownClips);
-            knownClips.clear();
-
-            for (Clip clip : track) {
-                var id = clip.getId();
-                knownClips.add(id);
-
-                // Same logic as with tracks
-                if (!deleted.remove(id)) {
-                    // TODO: clip created
-                }
-            }
-
-            var trackClips = clipsByTrack.computeIfAbsent(track.getId(), ignored -> new HashSet<>());
-            trackClips.addAll(knownClips);
-            trackClips.removeAll(deleted);
-
-            for (UUID clipId : deleted) {
-                // TODO: clip deleted
-            }
+            onTrackUpdated(target.getTrackId().flatMap(timeline::getTrack).orElseThrow());
         }
 
         // Check for modifier add/remove/edit
         if (target.isClip() || target.isModifier()) {
             var track = target.getTrackId().flatMap(timeline::getTrack).orElseThrow();
             var clip = target.getClipId().flatMap(track::getClip).orElseThrow();
+            onClipUpdated(clip);
+        }
+    }
 
-            // TODO: rerender clip
+    private void onTrackUpdated(Track track) {
+        // Same logic as with tracks
+        var knownClips = clipsByTrack.computeIfAbsent(track.getId(), ignored -> new HashSet<>());
+        HashSet<UUID> deleted = new HashSet<>(knownClips);
+        knownClips.clear();
+
+        for (Clip clip : track) {
+            var id = clip.getId();
+            knownClips.add(id);
+
+            // Same logic as with tracks
+            if (!deleted.remove(id)) {
+                onClipUpdated(clip);
+            }
+        }
+
+        synchronized (clipQueues) {
+            for (UUID clipId : deleted) {
+                clipQueues.remove(clipId);
+            }
+        }
+    }
+
+    private void onClipUpdated(Clip clip) {
+        synchronized (clipQueues) {
+            clipQueues.computeIfAbsent(clip.getId(), ignored -> new PlaybackActionQueue()).addFromClip(clip);
         }
     }
 
