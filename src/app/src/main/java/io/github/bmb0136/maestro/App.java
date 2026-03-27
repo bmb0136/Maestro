@@ -16,10 +16,10 @@ public class App extends Application {
     public void start(Stage stage) throws Exception {
         URL resource = Objects.requireNonNull(getClass().getResource("/MainWindow.fxml"));
         FXMLLoader loader = new FXMLLoader(resource);
+        Parent root = loader.load();
         if (loader.getController() instanceof AutoCloseable closeable) {
             controllerClosable = closeable;
         }
-        Parent root = loader.load();
         Scene scene = new Scene(root, 1280, 720);
         stage.setScene(scene);
         stage.setTitle("Maestro");
