@@ -12,6 +12,7 @@ import javax.sound.midi.MidiChannel; //Is this Required?
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.Synthesizer;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 
 public class PlaybackEngine {
@@ -56,9 +57,7 @@ public class PlaybackEngine {
                 synth.loadInstrument(synth.getAvailableInstruments()[0]);
             }
             channels = synth.getChannels();
-            if (channels == null || channels.length > 0) {
-                throw new IllegalStateException("Channels not supported");
-            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -84,23 +83,22 @@ public class PlaybackEngine {
     Purpose: Creating ON/OFF Events from Notes List
      */
     public final ArrayList<NoteEvent> buildIntoEvents(ArrayList<Note> notes) {
-        long timeDuration = SecondstoBPM(60);
+        long timeDuration = SecondstoBPM(10);
         ArrayList<NoteEvent> events = new ArrayList<>();
 
-        int i = 0;
         for (Note not : notes) {
             double onTime = not.position() * timeDuration; //Logic: Position of Note * timeDuration = Start Position
             double offTime = (not.position() + not.duration()) * timeDuration; //Logic: (Position of StartPosition + The Expected duration of the Event) * Time according to BPM (timeDuration) = End Position
             //OnEvent : onEvents[i] =  new NoteEvent(NoteEvent.Type.ON, 0, not.pitch(),onTime);
             events.add(new NoteEvent(NoteEvent.Type.ON, not, not.pitch(), onTime));
             //OffEvent : offEvents[i] = new NoteEvent(NoteEvent.Type.OFF, 0, not.pitch(),offTime);
+
             events.add(new NoteEvent(NoteEvent.Type.OFF, not, not.pitch(), offTime));
         }
         //Sorts Events
-        events = NoteEventSorter(events);
+        return NoteEventSorter(events);
         //EventPlayer - Schedules the Notes (Timeline Position, Player, Stop)
-        ArrayList<NoteEvent> properEvents = NoteEventScheduler(events);
-        return properEvents;
+
 
     }
 
@@ -108,16 +106,70 @@ public class PlaybackEngine {
 
         ArrayList<NoteEvent> sorted_events = new ArrayList<>(unsorted_events);
         sorted_events.sort(new NoteEventComparator());
-        for (NoteEvent event : sorted_events) {
-
-        }
         return sorted_events;
     }
-
-    private ArrayList<NoteEvent> NoteEventScheduler(ArrayList<NoteEvent> events) {
-        System.out.println("Begin NoteEventScheduler");
-        long startTime = System.currentTimeMillis();
+    // Purpose: Work In Progress to handle Threading
+    private void NoteEventScheduler2(ArrayList<NoteEvent> events) throws InterruptedException{
+        System.out.println("NoteEventScheduler2");
+        Runnable task;
+        Thread thread;
+        long startTime = System.nanoTime();
         MidiChannel Pianochannel = channels[0];
+        Pianochannel.programChange(0);
+        ArrayList<Thread> threads = new ArrayList<>(events.size());
+        for (NoteEvent event : events){
+            task = () -> {
+                long targetTime = startTime + TimeUnit.MILLISECONDS.toNanos( (long) event.getTimeExecution());
+                long delay = TimeUnit.MILLISECONDS.toMillis(Math.max(0, targetTime - System.nanoTime()));
+                if (delay > 0) {
+                    try{
+                        Thread.sleep(delay);
+                    } catch ( InterruptedException e){
+                        System.out.print("NoteEventScheduler Interrupted");
+                    }
+                int pitch = event.getNote().pitch().toMidi();
+        int velocity = (int) event.getNote().volume();
+        if (event.getType() == NoteEvent.Type.ON){
+        Pianochannel.noteOn(pitch,velocity);
+        System.out.println("ON: " + event.toString());
+        }
+        else if(event.getType() == NoteEvent.Type.OFF){
+        Pianochannel.noteOff(pitch, velocity);
+        System.out.println("OFF: " + event.toString());
+        }
+
+        }
+            };
+         try {
+                String threadName =
+                        event.getType() == NoteEvent.Type.ON ? "On " : "Off ";
+                threadName += event.getNote().pitch().name() + " - " +
+                        event.getTimeExecution() + "ms";
+                thread = new Thread(task, threadName);
+                thread.setName(threadName);
+                System.out.println("Starting thread: " + threadName);
+                thread.start();
+
+            } catch (Exception e) {
+                System.out.println("NoteEventScheduler interrupted");
+                return;
+            }
+        }
+
+        for (Thread threada : threads){
+        threada.join();
+        }
+
+    }
+
+    private void NoteEventScheduler(ArrayList<NoteEvent> events, float Clip_position) throws InterruptedException {
+        Runnable task;
+        Thread thread;
+        System.out.println("Begin NoteEventScheduler");
+        long startTime = System.nanoTime();
+        MidiChannel Pianochannel = channels[0];
+        Pianochannel.programChange(0);
+        Clip_position = 4;
         /*
         Proper SetUp:
             -Main Thread
@@ -127,20 +179,37 @@ public class PlaybackEngine {
             -
          */
 
+
         for (NoteEvent event : events) {
             //Worker Thread
-            Runnable task = () -> {
-                long targetTime = startTime + (long) event.getTimeExecution();
-                long delay = targetTime - startTime;
+            float finalClip_position = Clip_position;
+            task = () -> {
+                //If you're reading This, brandon. The reason why I was using NanoTime was because
+                //I was told it was more accurate.
+                //True, which is what the following code basically does.
+                    //The time isn't as accurate as i want it to be,
+                System.out.println(TimeUnit.MILLISECONDS.toNanos((long) event.getTimeExecution()));
+                //System.out.println(event.getTimeExecution());
+                float finalClipPosition = finalClip_position * 1000;
+                System.out.println(TimeUnit.MILLISECONDS.toNanos((long) (finalClip_position * 1000)));
+                long clipTime = startTime + TimeUnit.MILLISECONDS.toNanos((long) event.getTimeExecution())
+                        +TimeUnit.MILLISECONDS.toNanos((long) (finalClip_position * 1000));
+                System.out.println("NoteEventScheduler: clipTime: " + (clipTime));
+                long targetNano = startTime + TimeUnit.MILLISECONDS.toNanos((long) event.getTimeExecution());
+                //long delay = TimeUnit.NANOSECONDS.toMillis(Math.max(0, targetNano - System.nanoTime()));
+                long delay = TimeUnit.NANOSECONDS.toMillis(Math.max(0, clipTime - startTime));
+                System.out.println(delay);
+
                 if (delay > 0){
                     try {
                         Thread.sleep(delay);
                     } catch(InterruptedException e){
                         System.out.println("NoteEventScheduler interrupted");
+                        return;
                     }
                 }
-                int pitch = (int) event.getNote().volume();//event.getNote().pitch();
-                int velocity = event.getPitch().octave();
+                int pitch = event.getNote().pitch().toMidi();
+                int velocity = (int) event.getNote().volume();
                 if (event.getType() == NoteEvent.Type.ON){
                     Pianochannel.noteOn(pitch, velocity);
                     System.out.println("Note ON: " + event.getNote());
@@ -151,38 +220,53 @@ public class PlaybackEngine {
             };
 
             //To Name Each Split Thread; Great for Debugging!
-            String threadName =
-                    event.getType() == NoteEvent.Type.ON ? "On " : "Off " +
-                    event.getNote().pitch().name() + "-" +
-                    event.getTimeExecution() + "ms";
-            Thread thread = new Thread(task);
-            thread.setName(threadName);
-            System.out.println("Starting thread: " + threadName);
-            thread.start();
+            try {
+                String threadName =
+                        event.getType() == NoteEvent.Type.ON ? "On " : "Off ";
+                threadName += event.getNote().pitch().name() + " - " +
+                        event.getTimeExecution() + "ms";
+                thread = new Thread(task, threadName);
+                thread.setName(threadName);
+                System.out.println("Starting thread: " + threadName);
+                thread.start();
+
+            } catch (Exception e) {
+                System.out.println("NoteEventScheduler interrupted");
+                return;
+            }
+            //For the purpose of ensuring the program doesn't
+            //thread.join();
 
 
         }
-        return events;
     }
 
     private final void playTimeline(Timeline timeline) {
         System.out.println("Playing timeline function: playTimeline");
+        boolean running = false;
         for (Track track : timeline) {
-            int sad = 0;
-            for (Clip clip : track) {
-                ArrayList<Note> notes = new ArrayList<>();
 
+            if (!running) {
+            for (Clip clip : track) {
+                running = true;
+                ArrayList<Note> notes = new ArrayList<>();
                 for (Note note : clip) {  //for Note : note in Clip
-                    //Collect notes in a list; Need to know when to start/end.
                     notes.add(note);
-                    // System.out.println(note.pitch() + " " + note.position());
-                    // System.out.println("Note added");
+                }
+                //The Clip of Notes are then build into Events; Also Sorted during this
+                ArrayList<NoteEvent> events = buildIntoEvents(notes);
+                //Phase 2: Note Events are scheduled following their layout.
+                try {
+                    //Changing The engine to include Clip position
+                    System.out.print(clip.getPosition());
+                    NoteEventScheduler(events, clip.getPosition());
+                    //NoteEventScheduler(events);
+                    running = false;
+                }catch(InterruptedException e){
+                    System.out.println("NoteEventScheduler interrupted");
                 }
 
-                ArrayList<NoteEvent> poke = buildIntoEvents(notes);
-                // long startMS = SecondstoMillis(clip.getPosition());
-                // long endMS = SecondstoMillis((clip.getDuration()));
-
+            }
             }
         }
     }
@@ -190,22 +274,24 @@ public class PlaybackEngine {
     /*
     Creation Notes: (Not Finished)
         Trent(March 23rd): Unnecessary, remove it in the future
+        Trent(March 27th): Scratch that, will utilize later
         Point of playTrack:
-            -To play tracks on separate Threads
-            -(Not Really sure where to start)
-            -Since The Tracks are Clips, we can just use Clips (I'm writing poorly)
+            -To Play singular Tracks, instead of the entire timeline
+            -Less Complicated version of Timeline; Just Play Notes -> Clips -> Track
      */
     private final void playTrack(Track track) {
         try {
             for (Clip clip : track) {
-                //Executes Clip
-                long startMS = SecondstoMillis(clip.getPosition());
-                long endMS = SecondstoMillis(clip.getDuration());
-                MidiChannel[] channels = synth.getChannels();
-                int testnote = 60;
-                channels[0].noteOn(testnote, 127);
-                Thread.sleep(endMS);
-                channels[0].noteOff(testnote);
+                ArrayList<Note> notes = new ArrayList<>();
+                for (Note note : clip) {  //for Note : note in Clip
+                    notes.add(note);
+                }
+                ArrayList<NoteEvent> events = buildIntoEvents(notes);
+                try {
+                    NoteEventScheduler(events, clip.getPosition());
+                }catch(InterruptedException e){
+                    System.out.println("NoteEventScheduler interrupted");
+                }
 
             }
         } catch (Exception e) {
@@ -222,7 +308,6 @@ public class PlaybackEngine {
         final Timeline asd = manager.get();
         //assignTrackstoChannels(asd);
         playTimeline(asd);
-        long PlayStartNanos = System.nanoTime();
         System.out.println("Play Function: Ended");
 
     }
@@ -234,17 +319,14 @@ public class PlaybackEngine {
         }
     }
 
+    //Useful, but sadly not for this project due to our focus on using only the Piano Instrument
     public void assignTrackstoChannels(Timeline timeline) {
         System.out.println("Assigning trackstoChannels");
         trackChannelMap.clear();
         int channel = 0;
-        Iterator<Track> Tracks = timeline.iterator();
-        while (Tracks.hasNext()) { //Eh, Good Enough - Trent
+        for (Track clips : timeline) { //Eh, Good Enough - Trent
             MidiChannel assignChannel = channels[channel];
-            trackChannelMap.put(Tracks.next().getId(), assignChannel);
-
-            //channel++;
-
+            trackChannelMap.put(clips.getId(), assignChannel);
         }
 
     }
@@ -268,14 +350,17 @@ public class PlaybackEngine {
 
 
 }
+/*
 class RunnableTask implements Runnable {
     private final NoteEvent noteEvent;
     public RunnableTask(NoteEvent noteEvent) {
         this.noteEvent = noteEvent;
     }
+
+
     public void run() {
 
     }
-}
+}*/
 
 
