@@ -229,7 +229,9 @@ public class PlaybackEngine implements AutoCloseable {
 
     private void onClipUpdated(Clip clip) {
         synchronized (clipQueues) {
-            clipQueues.computeIfAbsent(clip.getId(), ignored -> new PlaybackActionQueue()).addFromClip(clip);
+            var queue = clipQueues.computeIfAbsent(clip.getId(), ignored -> new PlaybackActionQueue());
+            queue.clear();
+            queue.addFromClip(clip);
         }
     }
 

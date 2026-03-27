@@ -92,6 +92,11 @@ public class PlaybackActionQueue {
         actions.forEach(this::add);
     }
 
+    public void clear() {
+        queue.clear();
+        offset = 0;
+    }
+
     public record Action(boolean on, int note, int velocity, float timeBeats) {
     }
 }
