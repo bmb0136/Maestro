@@ -81,7 +81,7 @@ public class PlaybackActionQueue {
         for (Note note : clip) {
             int midi = note.pitch().toMidi();
             var start = clip.getPosition() + note.position();
-            actions.add(new Action(true, midi, (int) (note.volume() * 128), start));
+            actions.add(new Action(true, midi, (int) (note.volume() * 127), start));
             actions.add(new Action(true, midi, 0, start + note.duration()));
         }
         actions.forEach(this::add);
