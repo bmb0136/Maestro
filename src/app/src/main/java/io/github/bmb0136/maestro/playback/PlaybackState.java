@@ -40,7 +40,7 @@ public abstract class PlaybackState implements AutoCloseable {
         @Override
         public PlaybackState handle(@NotNull PlaybackMessage message) {
             return switch (message) {
-                case PlaybackMessage.Start m -> new PlayState(engine, System.currentTimeMillis());
+                case PlaybackMessage.Start m -> new PlayState(engine, System.currentTimeMillis(), m.getPosition());
                 default -> this;
             };
         }
@@ -48,10 +48,12 @@ public abstract class PlaybackState implements AutoCloseable {
 
     public static final class PlayState extends PlaybackState {
         private final long startTimeMillis;
+        private final float startTimeBeats;
 
-        public PlayState(@NotNull PlaybackEngine engine, long startTimeMillis) {
+        public PlayState(@NotNull PlaybackEngine engine, long startTimeMillis, float startTimeBeats) {
             super(Type.PLAYING, engine);
             this.startTimeMillis = startTimeMillis;
+            this.startTimeBeats = startTimeBeats;
         }
 
         @Override
@@ -82,7 +84,7 @@ public abstract class PlaybackState implements AutoCloseable {
             q.setOffset(q.getOffset() + 1);
 
             // Determine how long to wait
-            long millis = (long) (60_000.0f / engine.getBpm() * action.timeBeats());
+            long millis = (long) (60_000.0f / engine.getBpm() * (action.timeBeats() - startTimeBeats));
             long delay = startTimeMillis + millis - System.currentTimeMillis();
 
             var message = new PlaybackMessage.PerformAction(action);
@@ -96,6 +98,7 @@ public abstract class PlaybackState implements AutoCloseable {
         @Override
         public PlaybackState handle(@NotNull PlaybackMessage message) {
             return switch (message) {
+                case PlaybackMessage.Seek m -> new PlayState(engine, System.currentTimeMillis(), m.getPosition());
                 case PlaybackMessage.PerformAction m -> {
                     var action = m.getAction();
                     if (action.on()) {

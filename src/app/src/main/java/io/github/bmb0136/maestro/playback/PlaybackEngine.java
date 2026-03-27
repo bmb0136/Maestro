@@ -75,7 +75,11 @@ public class PlaybackEngine implements AutoCloseable {
     }
 
     public void start() {
-        sendMessage(new PlaybackMessage.Start());
+        start(0);
+    }
+
+    public void start(float position) {
+        sendMessage(new PlaybackMessage.Start(position));
     }
 
     public void seek(float position) {
