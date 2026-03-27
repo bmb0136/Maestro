@@ -252,6 +252,10 @@ public class TimelineRenderer {
         }
     }
 
+    private void  movePlaybackHead(){
+        float startline = playbackHeadXBeats.get();
+        float endline = playbackHeadXBeats.get() ;
+    }
     private void onScroll(ScrollEvent e) {
         if (e.isControlDown()) {
             pixelsPerBeat.set(Math.max(30, pixelsPerBeat.get() + (e.getDeltaY() / e.getMultiplierY() * 5.0)));
@@ -357,6 +361,7 @@ public class TimelineRenderer {
     public enum CallbackType {
         OPEN_EDITOR
     }
+
 
     @FunctionalInterface
     public interface Callback {
