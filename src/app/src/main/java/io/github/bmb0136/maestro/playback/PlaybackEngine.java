@@ -88,6 +88,10 @@ public class PlaybackEngine implements AutoCloseable {
     }
 
     public void initSynth(@Nullable Synthesizer synth) {
+        if (synthesizer != null && synthesizer.isOpen()) {
+            synthesizer.close();
+        }
+
         if (synth == null) {
             try {
                 synthesizer = MidiSystem.getSynthesizer();
@@ -97,6 +101,13 @@ public class PlaybackEngine implements AutoCloseable {
             }
         } else {
             synthesizer = synth;
+        }
+        if (!synthesizer.isOpen()) {
+            try {
+                synthesizer.open();
+            } catch (MidiUnavailableException e) {
+                throw new RuntimeException(e);
+            }
         }
         channels = synthesizer.getChannels();
     }
