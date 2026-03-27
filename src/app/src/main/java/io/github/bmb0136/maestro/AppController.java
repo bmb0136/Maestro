@@ -13,6 +13,7 @@ import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import io.github.bmb0136.maestro.core.timeline.Track;
 import io.github.bmb0136.maestro.core.util.BiHashMap;
 import io.github.bmb0136.maestro.core.util.Tuple2;
+import io.github.bmb0136.maestro.playback.PlaybackEngine;
 import javafx.beans.binding.DoubleExpression;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -74,6 +75,7 @@ public class AppController implements AutoCloseable {
     private final SimpleIntegerProperty bpm = new SimpleIntegerProperty(120);
     private final SimpleDoubleProperty pixelsPerBeat = new SimpleDoubleProperty(60.0);
     private TimelineRenderer timelineRenderer;
+    private final PlaybackEngine playbackEngine = new PlaybackEngine(manager);
     private AutoCloseable changeCallback;
     private final SimpleObjectProperty<Tuple2<UUID, UUID>> selectedClip = new SimpleObjectProperty<>(null);
     private final HashSet<UUID> knownClips = new HashSet<>();
@@ -158,6 +160,9 @@ public class AppController implements AutoCloseable {
             var clip = manager.get().getTrack(newValue.first()).flatMap(t -> t.getClip(newValue.second())).orElseThrow();
             refreshModifierList(newValue.first(), clip);
         });
+
+        // Playback-related bindings
+        bpmLabel.opacityProperty().bind(playbackEngine.isPlayingProperty().map(b -> b ? 0.25 : 1.0));
 
         changeCallback = manager.registerChangeCallback(target -> {
             var timeline = target.getTimeline();
@@ -292,6 +297,9 @@ public class AppController implements AutoCloseable {
 
     @FXML
     private void onBpmScrolled(ScrollEvent event) {
+        if (playbackEngine.isPlayingProperty().get()) {
+            return;
+        }
         if (Math.abs(event.getDeltaY()) < 1e-6) {
             return;
         }
@@ -303,6 +311,9 @@ public class AppController implements AutoCloseable {
     private int bpmDragStartValue;
     @FXML
     private void onBpmDragged(MouseEvent event) {
+        if (playbackEngine.isPlayingProperty().get()) {
+            return;
+        }
         if (event.getEventType() == MouseEvent.MOUSE_PRESSED) {
             bpmDragStartY = event.getScreenY();
             bpmDragStartValue = bpm.get();

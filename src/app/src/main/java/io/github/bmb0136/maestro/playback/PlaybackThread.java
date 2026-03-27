@@ -1,14 +1,13 @@
 package io.github.bmb0136.maestro.playback;
 
+import javafx.application.Platform;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class PlaybackThread extends Thread implements AutoCloseable {
-    protected final AtomicReference<PlaybackState.Type> currentState = new AtomicReference<>();
     protected final ConcurrentLinkedQueue<PlaybackMessage> messages = new ConcurrentLinkedQueue<>();
     protected final Semaphore messageSemaphore = new Semaphore(0);
     private final PlaybackEngine engine;
@@ -24,7 +23,10 @@ public class PlaybackThread extends Thread implements AutoCloseable {
         PlaybackState state = new PlaybackState.IdleState(engine);
         running.set(true);
         while (running.get()) {
-            currentState.set(state.getType());
+            // Update playing property (Make sure to do it on the UI thread though)
+            final var type = state.getType();
+            Platform.runLater(() -> engine.isPlaying.set(type == PlaybackState.Type.PLAYING));
+
             // Note: `oldState` is unused but will be closed automatically
             var oldState = state;
             try {

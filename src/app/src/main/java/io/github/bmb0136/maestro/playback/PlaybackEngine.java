@@ -4,8 +4,7 @@ import io.github.bmb0136.maestro.core.clip.Clip;
 import io.github.bmb0136.maestro.core.event.EventTarget;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import io.github.bmb0136.maestro.core.timeline.Track;
-import javafx.beans.property.ReadOnlyIntegerProperty;
-import javafx.beans.property.ReadOnlyIntegerWrapper;
+import javafx.beans.property.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +15,7 @@ import javax.sound.midi.Synthesizer;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -25,6 +25,8 @@ public class PlaybackEngine implements AutoCloseable {
     private final PlaybackThread thread;
     private final AutoCloseable changeCallback;
     private final ReadOnlyIntegerWrapper bpmWrapper = new ReadOnlyIntegerWrapper();
+    protected final ReadOnlyBooleanWrapper isPlaying = new ReadOnlyBooleanWrapper();
+    private final Semaphore stoppedSemaphore = new Semaphore(0);
     private final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
     private final ArrayList<ScheduledFuture<?>> scheduled = new ArrayList<>();
     // Used to detect track/clip changes
@@ -33,11 +35,23 @@ public class PlaybackEngine implements AutoCloseable {
     // Used by states for synthesis
     protected Synthesizer synthesizer;
     protected MidiChannel[] channels;
+    // Used to calculate current position
+    protected float lastPosition;
+    protected float lastActionTime;
+    protected int lastBpm;
 
     public PlaybackEngine(TimelineManager manager) {
         thread = new PlaybackThread(this);
         changeCallback = manager.registerChangeCallback(this::onTimelineChanged);
+
         initSynth(null);
+        // Notify when we stop playing
+        isPlaying.addListener((ignored1, ignored2, newValue) -> {
+            if (!newValue) {
+                stoppedSemaphore.release();
+            }
+        });
+
         thread.start();
     }
 
@@ -56,8 +70,21 @@ public class PlaybackEngine implements AutoCloseable {
         return bpmWrapper.getReadOnlyProperty();
     }
 
+    public ReadOnlyBooleanProperty isPlayingProperty() {
+        return isPlaying.getReadOnlyProperty();
+    }
+
+    public float getPositionInBeats() {
+        if (!isPlaying.get()) {
+            return lastPosition;
+        }
+
+        float offset = (System.currentTimeMillis() - lastActionTime) / 60_000.0f * lastBpm;
+        return lastPosition + offset;
+    }
+
     public boolean canSetBpm() {
-        return thread.currentState.get() == PlaybackState.Type.IDLE;
+        return !isPlaying.get();
     }
 
     public void initSynth(@Nullable Synthesizer synth) {
@@ -79,6 +106,14 @@ public class PlaybackEngine implements AutoCloseable {
     }
 
     public void start(float position) {
+        if (isPlaying.get()) {
+            seek(position);
+            return;
+        }
+
+        lastPosition = position;
+        lastActionTime = System.currentTimeMillis();
+        lastBpm = getBpm();
         sendMessage(new PlaybackMessage.Start(position));
     }
 
@@ -87,11 +122,26 @@ public class PlaybackEngine implements AutoCloseable {
         synchronized (clipQueues) {
             clipQueues.values().forEach(q -> q.seek(position));
         }
+
+        lastPosition = position;
+        lastActionTime = System.currentTimeMillis();
+        lastBpm = getBpm();
+
         sendMessage(new PlaybackMessage.Seek(position));
     }
 
     public void stop() {
+        if (!isPlaying.get()) {
+            return;
+        }
+
         sendMessage(new PlaybackMessage.Stop());
+        try {
+            stoppedSemaphore.acquire();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        lastPosition = getPositionInBeats();
     }
 
     public void scheduleMessage(@NotNull PlaybackMessage message, long delay, TimeUnit delayUnit) {

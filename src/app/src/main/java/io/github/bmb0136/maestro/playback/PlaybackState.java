@@ -83,9 +83,17 @@ public abstract class PlaybackState implements AutoCloseable {
             var q = engine.clipQueues.get(clipId);
             q.setOffset(q.getOffset() + 1);
 
+            var bpm = engine.getBpm();
+            var now = System.currentTimeMillis();
+
+            // Track last action
+            engine.lastBpm = bpm;
+            engine.lastActionTime = now;
+            engine.lastPosition = action.timeBeats();
+
             // Determine how long to wait
-            long millis = (long) (60_000.0f / engine.getBpm() * (action.timeBeats() - startTimeBeats));
-            long delay = startTimeMillis + millis - System.currentTimeMillis();
+            long millis = (long) (60_000.0f / bpm * (action.timeBeats() - startTimeBeats));
+            long delay = startTimeMillis + millis - now;
 
             var message = new PlaybackMessage.PerformAction(action);
             if (delay >= 5) {

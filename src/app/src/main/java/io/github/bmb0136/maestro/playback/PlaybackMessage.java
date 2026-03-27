@@ -5,7 +5,18 @@ public abstract class PlaybackMessage {
     }
 
     public static final class Start extends PlaybackMessage {
+        private final float position;
+
         public Start() {
+            this(0);
+        }
+
+        public Start(float position) {
+            this.position = position;
+        }
+
+        public float getPosition() {
+            return position;
         }
     }
 
