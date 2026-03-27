@@ -86,11 +86,6 @@ public abstract class PlaybackState implements AutoCloseable {
             var bpm = engine.getBpm();
             var now = System.currentTimeMillis();
 
-            // Track last action
-            engine.lastBpm = bpm;
-            engine.lastActionTime = now;
-            engine.lastPosition = action.timeBeats();
-
             // Determine how long to wait
             long millis = (long) (60_000.0f / bpm * (action.timeBeats() - startTimeBeats));
             long delay = startTimeMillis + millis - now;
@@ -109,6 +104,11 @@ public abstract class PlaybackState implements AutoCloseable {
                 case PlaybackMessage.Seek m -> new PlayState(engine, System.currentTimeMillis(), m.getPosition());
                 case PlaybackMessage.PerformAction m -> {
                     var action = m.getAction();
+
+                    engine.lastPosition = action.timeBeats();
+                    engine.lastBpm = engine.getBpm();
+                    engine.lastActionTime = System.currentTimeMillis();
+
                     if (action.on()) {
                         engine.channels[0].noteOn(action.note(), action.velocity());
                     } else {
