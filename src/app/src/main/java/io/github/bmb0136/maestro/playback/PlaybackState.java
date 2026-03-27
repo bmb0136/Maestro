@@ -58,6 +58,34 @@ public abstract class PlaybackState implements AutoCloseable {
 
         @Override
         public void init() {
+            scheduleNextAction();
+        }
+
+        @Override
+        public PlaybackState handle(@NotNull PlaybackMessage message) {
+            return switch (message) {
+                case PlaybackMessage.Seek m -> new PlayState(engine, System.currentTimeMillis(), m.getPosition());
+                case PlaybackMessage.PerformAction m -> {
+                    var action = m.getAction();
+
+                    engine.lastPosition = action.timeBeats();
+                    engine.lastBpm = engine.getBpm();
+                    engine.lastActionTime = System.currentTimeMillis();
+
+                    if (action.on()) {
+                        engine.channels[0].noteOn(action.note(), action.velocity());
+                    } else {
+                        engine.channels[0].noteOff(action.note());
+                    }
+                    scheduleNextAction();
+                    yield this;
+                }
+                case PlaybackMessage.Stop ignored -> new IdleState(engine);
+                default -> this;
+            };
+        }
+
+        private void scheduleNextAction() {
             // Determine which action to perform
             UUID clipId = null;
             PlaybackActionQueue.Action action = null;
@@ -96,29 +124,6 @@ public abstract class PlaybackState implements AutoCloseable {
             } else {
                 engine.sendMessage(message);
             }
-        }
-
-        @Override
-        public PlaybackState handle(@NotNull PlaybackMessage message) {
-            return switch (message) {
-                case PlaybackMessage.Seek m -> new PlayState(engine, System.currentTimeMillis(), m.getPosition());
-                case PlaybackMessage.PerformAction m -> {
-                    var action = m.getAction();
-
-                    engine.lastPosition = action.timeBeats();
-                    engine.lastBpm = engine.getBpm();
-                    engine.lastActionTime = System.currentTimeMillis();
-
-                    if (action.on()) {
-                        engine.channels[0].noteOn(action.note(), action.velocity());
-                    } else {
-                        engine.channels[0].noteOff(action.note());
-                    }
-                    yield this;
-                }
-                case PlaybackMessage.Stop ignored -> new IdleState(engine);
-                default -> this;
-            };
         }
 
         @Override
