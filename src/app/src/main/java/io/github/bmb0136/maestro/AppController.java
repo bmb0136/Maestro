@@ -14,6 +14,7 @@ import io.github.bmb0136.maestro.core.timeline.Track;
 import io.github.bmb0136.maestro.core.util.BiHashMap;
 import io.github.bmb0136.maestro.core.util.Tuple2;
 import io.github.bmb0136.maestro.playback.PlaybackEngine;
+import javafx.animation.AnimationTimer;
 import javafx.beans.binding.DoubleExpression;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -163,6 +164,15 @@ public class AppController implements AutoCloseable {
 
         // Playback-related bindings
         bpmLabel.opacityProperty().bind(playbackEngine.isPlayingProperty().map(b -> b ? 0.25 : 1.0));
+        AnimationTimer playbackTimer = new PlaybackAnimationTimer();
+        playbackEngine.isPlayingProperty().addListener((ignored1, ignored2, newValue) -> {
+            if (newValue) {
+                playbackTimer.start();
+            } else {
+                playbackTimer.stop();
+                timelineRenderer.setPlaybackHeadPosition(playbackEngine.getPositionInBeats());
+            }
+        });
 
         changeCallback = manager.registerChangeCallback(target -> {
             var timeline = target.getTimeline();
@@ -423,5 +433,12 @@ public class AppController implements AutoCloseable {
     @Override
     public void close() throws Exception {
         changeCallback.close();
+    }
+
+    private class PlaybackAnimationTimer extends AnimationTimer {
+        @Override
+        public void handle(long now) {
+            timelineRenderer.setPlaybackHeadPosition(playbackEngine.getPositionInBeats());
+        }
     }
 }

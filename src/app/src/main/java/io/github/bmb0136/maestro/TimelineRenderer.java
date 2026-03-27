@@ -178,6 +178,10 @@ public class TimelineRenderer {
         return timelineLength.getReadOnlyProperty();
     }
 
+    public void setPlaybackHeadPosition(float beats) {
+        playbackHeadXBeats.set(beats);
+    }
+
     public void draw() {
         var gc = canvas.getGraphicsContext2D();
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
