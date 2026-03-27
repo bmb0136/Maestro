@@ -45,12 +45,7 @@ public class PlaybackEngine implements AutoCloseable {
         changeCallback = manager.registerChangeCallback(this::onTimelineChanged);
 
         initSynth(null);
-        // Notify when we stop playing
-        isPlaying.addListener((ignored1, ignored2, newValue) -> {
-            if (!newValue) {
-                stoppedSemaphore.release();
-            }
-        });
+        setBpm(120);
 
         thread.start();
     }
