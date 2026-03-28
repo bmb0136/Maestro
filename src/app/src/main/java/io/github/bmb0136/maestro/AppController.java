@@ -20,7 +20,6 @@ import io.github.bmb0136.maestro.playback.PlaybackEngine;
 import javafx.animation.AnimationTimer;
 import javafx.beans.binding.DoubleExpression;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
@@ -78,7 +77,6 @@ public class AppController implements AutoCloseable {
     @FXML
     private Button playButton;
     private final TimelineManager manager = new TimelineManager(1024, new Timeline());
-    private final SimpleIntegerProperty bpm = new SimpleIntegerProperty(120);
     private final SimpleDoubleProperty pixelsPerBeat = new SimpleDoubleProperty(60.0);
     private TimelineRenderer timelineRenderer;
     private final PlaybackEngine playbackEngine = new PlaybackEngine(manager);
@@ -120,7 +118,7 @@ public class AppController implements AutoCloseable {
         trackScrollBar.setVisible(false);
         //timelineScrollBar.setVisible(false);
 
-        bpmLabel.textProperty().bind(bpm.map(value -> "BPM: " + value));
+        bpmLabel.textProperty().bind(playbackEngine.bpmProperty().map(value -> "BPM: " + value));
 
         // Prevent incorrect scrolling
         trackListScrollPane.addEventFilter(ScrollEvent.SCROLL, e -> {
@@ -169,6 +167,7 @@ public class AppController implements AutoCloseable {
 
         // Playback-related bindings
         bpmLabel.opacityProperty().bind(playbackEngine.isPlayingProperty().map(b -> b ? 0.25 : 1.0));
+        bpmLabel.mouseTransparentProperty().bind(playbackEngine.isPlayingProperty());
         AnimationTimer playbackTimer = new PlaybackAnimationTimer();
         playbackEngine.isPlayingProperty().addListener((ignored1, ignored2, newValue) -> {
             if (newValue) {
@@ -180,7 +179,6 @@ public class AppController implements AutoCloseable {
                 playButton.setText("Play");
             }
         });
-        bpm.bind(playbackEngine.bpmProperty());
 
         changeCallback = manager.registerChangeCallback(target -> {
             var timeline = target.getTimeline();
@@ -331,7 +329,7 @@ public class AppController implements AutoCloseable {
             return;
         }
         int delta = event.getDeltaY() >= 0 ? 1 : -1;
-        bpm.set(bpm.get() + delta);
+        playbackEngine.setBpm(playbackEngine.getBpm() + delta);
     }
 
     private double bpmDragStartY;
@@ -343,9 +341,9 @@ public class AppController implements AutoCloseable {
         }
         if (event.getEventType() == MouseEvent.MOUSE_PRESSED) {
             bpmDragStartY = event.getScreenY();
-            bpmDragStartValue = bpm.get();
+            bpmDragStartValue = playbackEngine.getBpm();
         } else if (event.getEventType() == MouseEvent.MOUSE_DRAGGED) {
-            bpm.set((int) (bpmDragStartValue - (0.25 * (event.getScreenY() - bpmDragStartY))));
+            playbackEngine.setBpm((int) (bpmDragStartValue - (0.25 * (event.getScreenY() - bpmDragStartY))));
         }
     }
 
