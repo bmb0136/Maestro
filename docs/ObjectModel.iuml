@@ -26,6 +26,7 @@ class ChordBuilder {
 
 'io.github.bmb0136.maestro.core.clip
 class ChordClip {
+	+ {static} create(position: float, duration: float): ChordClip
 	# createCopy(newId: boolean): Clip
 	+ getChordBuilderView(): ChordBuilder.View
 	+ iterator(): Iterator<Note>
@@ -233,6 +234,29 @@ class Scale {
 	+ iterator(): Iterator<PitchName>
 }
 
+'io.github.bmb0136.maestro.core.clip
+class ScaleClip {
+	+ {static} create(position: float, duration: float): ScaleClip
+	# createCopy(newId: boolean): Clip
+	+ getMaxDegree(): int
+	+ getMinDegree(): int
+	+ getMode(): Mode
+	+ getNoteDuration(): float
+	+ getRootOctave(): int
+	+ getRootPitch(): PitchName
+	+ getScale(): ScaleType
+	+ isRepeat(): boolean
+	+ iterator(): Iterator<Note>
+	+ setMaxDegree(maxDegree: int): void
+	+ setMinDegree(minDegree: int): void
+	+ setMode(mode: Mode): void
+	+ setNoteDuration(noteDuration: float): void
+	+ setRepeat(repeat: boolean): void
+	+ setRootOctave(rootOctave: int): void
+	+ setRootPitch(rootPitch: PitchName): void
+	+ setScale(scale: ScaleType): void
+}
+
 'io.github.bmb0136.maestro.core.theory
 class ScaleFactory {
 	+ {static} create(type: ScaleType, root: PitchName): Scale
@@ -298,6 +322,7 @@ abstract class TrackEvent {
 
 Clip <|-- ChordClip
 Clip <|-- PianoRollClip
+Clip <|-- ScaleClip
 Event <|-- ClipEvent
 Event <|-- EventGroup
 Event <|-- ModifierEvent
@@ -336,9 +361,11 @@ Scale <.l. ScaleFactory
 Pitch <.. ChordBuilder
 EventContext <.d. Event
 EventResult <.. Event
+PitchName <.. ScaleClip
 EventContext <.. EventTarget
 PitchName <.. ScaleFactory
 Note <.. AddIntervalAboveModifier
 ScaleType <.d. ScaleFactory
 PitchName <.. ChordBuilder
+ScaleType <.. ScaleClip
 @enduml
