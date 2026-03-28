@@ -3,7 +3,9 @@ package io.github.bmb0136.maestro.core.modifier;
 import io.github.bmb0136.maestro.core.theory.Note;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public class AddIntervalAboveModifier extends Modifier {
 

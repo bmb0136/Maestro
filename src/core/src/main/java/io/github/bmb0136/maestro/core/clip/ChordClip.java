@@ -21,6 +21,15 @@ public class ChordClip extends Clip {
         this.builder = builder;
     }
 
+    public static ChordClip create(float position, float duration) {
+        var clip = new ChordClip();
+        clip.setMutable(true);
+        clip.setPosition(position);
+        clip.setDuration(duration);
+        clip.setMutable(false);
+        return clip;
+    }
+
     public void setRootNote(@NotNull PitchName rootNote) {
         if (!isMutable()) {
             throw new IllegalStateException("ChordClip is immutable");
@@ -65,14 +74,5 @@ public class ChordClip extends Clip {
             notes.add(new Note(pitch, 0f, getDuration()));
         }
         return notes.iterator();
-    }
-
-    public static ChordClip create(float position, float duration) {
-        var clip = new ChordClip();
-        clip.setMutable(true);
-        clip.setPosition(position);
-        clip.setDuration(duration);
-        clip.setMutable(false);
-        return clip;
     }
 }

@@ -27,7 +27,8 @@ public enum ChordQuality {
     public PitchName getKeySignature(@NotNull PitchName rootNote) {
         return switch (this) {
             case MAJOR, AUGMENTED, SUS2, SUS4 -> rootNote;
-            case MINOR, DIMINISHED_TRIAD, DIMINISHED_SEVENTH, HALF_DIMINISHED -> ScaleFactory.create(ScaleType.MINOR, rootNote).getKeySignature();
+            case MINOR, DIMINISHED_TRIAD, DIMINISHED_SEVENTH, HALF_DIMINISHED ->
+                    ScaleFactory.create(ScaleType.MINOR, rootNote).getKeySignature();
         };
     }
 }

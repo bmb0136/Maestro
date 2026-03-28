@@ -64,6 +64,19 @@ public class ScaleClipEditorSubScene extends ClipEditorSubScene<ScaleClip> {
         super(manager, trackId, clipId);
     }
 
+    public static ScaleClipEditorSubScene create(TimelineManager manager, UUID trackId, UUID clipId) {
+        var resource = Objects.requireNonNull(App.class.getResource("/ScaleClip.fxml"));
+        var loader = new FXMLLoader(resource);
+        try {
+            var s = new ScaleClipEditorSubScene(manager, trackId, clipId);
+            loader.setController(s);
+            s.setRoot(loader.load());
+            return s;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @FXML
     private void initialize() {
         root.getStylesheets().add("/DarkMode.css");
@@ -202,19 +215,6 @@ public class ScaleClipEditorSubScene extends ClipEditorSubScene<ScaleClip> {
             }
         } catch (NumberFormatException ignored) {
             noteDurationTextBox.setText(String.valueOf(clip.get().getNoteDuration()));
-        }
-    }
-
-    public static ScaleClipEditorSubScene create(TimelineManager manager, UUID trackId, UUID clipId) {
-        var resource = Objects.requireNonNull(App.class.getResource("/ScaleClip.fxml"));
-        var loader = new FXMLLoader(resource);
-        try {
-            var s = new ScaleClipEditorSubScene(manager, trackId, clipId);
-            loader.setController(s);
-            s.setRoot(loader.load());
-            return s;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
 }

@@ -14,9 +14,9 @@ public abstract class ClipEditorSubScene<T extends Clip> extends SubScene implem
 
     protected final TimelineManager manager;
     protected final UUID trackId, clipId;
+    protected final ReadOnlyObjectProperty<T> clip;
     private final AutoCloseable callback;
     private final ReadOnlyObjectWrapper<T> clipWrapper;
-    protected final ReadOnlyObjectProperty<T> clip;
 
     public ClipEditorSubScene(TimelineManager manager, UUID trackId, UUID clipId) {
         // Dummy node (can't pass null here)

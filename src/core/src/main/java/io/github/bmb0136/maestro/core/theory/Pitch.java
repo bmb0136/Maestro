@@ -13,11 +13,6 @@ public record Pitch(@NotNull PitchName name, int octave) implements Comparable<P
         }
     }
 
-    public int toMidi() {
-        // Middle C (C4) == 60
-        return 60 + (12 * (octave() - 4)) + name().getOctaveOffset();
-    }
-
     public static Pitch fromMidi(int midiNote, boolean useSharps) {
         int semitonesAboveMiddleC = midiNote - 60;
         int octave = Math.floorDiv(semitonesAboveMiddleC, 12) + 4;
@@ -37,14 +32,6 @@ public record Pitch(@NotNull PitchName name, int octave) implements Comparable<P
             default -> throw new AssertionError("Unreachable");
         };
         return new Pitch(name, octave);
-    }
-
-    public Pitch addSemitones(int semitones) {
-        return fromMidi(toMidi() + semitones, name().isSharp());
-    }
-
-    public Pitch addSemitones(int semitones, boolean useSharps) {
-        return fromMidi(toMidi() + semitones, useSharps);
     }
 
     /**
@@ -69,6 +56,19 @@ public record Pitch(@NotNull PitchName name, int octave) implements Comparable<P
                 return Optional.empty();
             }
         });
+    }
+
+    public int toMidi() {
+        // Middle C (C4) == 60
+        return 60 + (12 * (octave() - 4)) + name().getOctaveOffset();
+    }
+
+    public Pitch addSemitones(int semitones) {
+        return fromMidi(toMidi() + semitones, name().isSharp());
+    }
+
+    public Pitch addSemitones(int semitones, boolean useSharps) {
+        return fromMidi(toMidi() + semitones, useSharps);
     }
 
     @Override

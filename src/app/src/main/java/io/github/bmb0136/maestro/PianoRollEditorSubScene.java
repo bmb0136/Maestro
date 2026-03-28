@@ -58,6 +58,19 @@ public class PianoRollEditorSubScene extends ClipEditorSubScene<PianoRollClip> {
         super(manager, trackId, clipId);
     }
 
+    public static PianoRollEditorSubScene create(TimelineManager manager, UUID trackId, UUID clipId) {
+        var resource = Objects.requireNonNull(App.class.getResource("/PianoRoll.fxml"));
+        var loader = new FXMLLoader(resource);
+        try {
+            var s = new PianoRollEditorSubScene(manager, trackId, clipId);
+            loader.setController(s);
+            s.setRoot(loader.load());
+            return s;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @FXML
     private void initialize() {
         root.getStylesheets().add("/DarkMode.css");
@@ -134,7 +147,7 @@ public class PianoRollEditorSubScene extends ClipEditorSubScene<PianoRollClip> {
         // Round position
         switch (e.getButton()) {
             case PRIMARY -> {
-                var notePos = (float)(Math.floor(position.position * gridDivisions.get()) / gridDivisions.get());
+                var notePos = (float) (Math.floor(position.position * gridDivisions.get()) / gridDivisions.get());
                 position = new RollPosition(position.pitch, notePos);
                 var note = new Note(position.pitch, position.position, 1f / gridDivisions.floatValue(), 1f);
                 var result = manager.append(new AddNoteToPianoRollClipEvent(trackId, clipId, note));
@@ -190,19 +203,6 @@ public class PianoRollEditorSubScene extends ClipEditorSubScene<PianoRollClip> {
         gridLines.getColumnConstraints().clear();
         while (gridLines.getColumnCount() < count) {
             gridLines.getColumnConstraints().add(cc);
-        }
-    }
-
-    public static PianoRollEditorSubScene create(TimelineManager manager, UUID trackId, UUID clipId) {
-        var resource = Objects.requireNonNull(App.class.getResource("/PianoRoll.fxml"));
-        var loader = new FXMLLoader(resource);
-        try {
-            var s = new PianoRollEditorSubScene(manager, trackId, clipId);
-            loader.setController(s);
-            s.setRoot(loader.load());
-            return s;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
 

@@ -17,6 +17,20 @@ public class PianoRollClip extends Clip {
         super(id);
     }
 
+    public static PianoRollClip create(float position, float duration) {
+        return create(position, duration, Collections.emptyList());
+    }
+
+    public static PianoRollClip create(float position, float duration, Iterable<Note> notes) {
+        var clip = new PianoRollClip();
+        clip.setMutable(true);
+        clip.setPosition(position);
+        clip.setDuration(duration);
+        notes.forEach(clip::addNote);
+        clip.setMutable(false);
+        return clip;
+    }
+
     /**
      * Add a {@link Note} to this {@link PianoRollClip}
      *
@@ -71,7 +85,7 @@ public class PianoRollClip extends Clip {
      * <br>
      * This method functions as a "remove at cursor" method
      *
-     * @param pitch The pitch of the {@link Note} to remove
+     * @param pitch    The pitch of the {@link Note} to remove
      * @param position The position the removed {@link Note} must contain
      * @return {@code true} if any notes were removed
      */
@@ -153,20 +167,6 @@ public class PianoRollClip extends Clip {
         copy.notes.addAll(notes);
         copy.setMutable(false);
         return copy;
-    }
-
-    public static PianoRollClip create(float position, float duration) {
-        return create(position, duration, Collections.emptyList());
-    }
-
-    public static PianoRollClip create(float position, float duration, Iterable<Note> notes) {
-        var clip = new PianoRollClip();
-        clip.setMutable(true);
-        clip.setPosition(position);
-        clip.setDuration(duration);
-        notes.forEach(clip::addNote);
-        clip.setMutable(false);
-        return clip;
     }
 
     @Override

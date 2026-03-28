@@ -30,6 +30,35 @@ public class EventTarget {
         this.modifierId = modifierId;
     }
 
+    public static EventTarget timeline(@NotNull Timeline timeline) {
+        return new EventTarget(Kind.TIMELINE, timeline, null, null, null);
+    }
+
+    public static EventTarget track(@NotNull Timeline timeline, @NotNull UUID trackId) {
+        return new EventTarget(Kind.TRACK, timeline, trackId, null, null);
+    }
+
+    public static EventTarget clip(@NotNull Timeline timeline, @NotNull UUID trackId, @NotNull UUID clipId) {
+        return new EventTarget(Kind.CLIP, timeline, trackId, clipId, null);
+    }
+
+    private static EventTarget modifier(@NotNull Timeline timeline, @Nullable UUID trackId, @Nullable UUID clipId, UUID modifierId) {
+        return new EventTarget(Kind.MODIFIER, timeline, trackId, clipId, modifierId);
+    }
+
+    public static EventTarget fromEventContext(@NotNull EventContext<?> context) {
+        return switch (context.target()) {
+            case Timeline target -> timeline(target);
+            case Track track -> track(Objects.requireNonNull(context.timeline()), track.getId());
+            case Clip clip ->
+                    clip(Objects.requireNonNull(context.timeline()), Objects.requireNonNull(context.track()).getId(), clip.getId());
+            case Modifier modifier ->
+                    modifier(Objects.requireNonNull(context.timeline()), Objects.requireNonNull(context.track()).getId(), Objects.requireNonNull(context.clip()).getId(), modifier.getId());
+            default ->
+                    throw new IllegalArgumentException("Unknown EventContext.target() value: " + context.target().getClass().getName());
+        };
+    }
+
     public boolean isTimeline() {
         return kind == Kind.TIMELINE;
     }
@@ -61,33 +90,6 @@ public class EventTarget {
 
     public Optional<UUID> getModifierId() {
         return Optional.ofNullable(modifierId);
-    }
-
-    public static EventTarget timeline(@NotNull Timeline timeline) {
-        return new EventTarget(Kind.TIMELINE, timeline, null, null, null);
-    }
-
-    public static EventTarget track(@NotNull Timeline timeline, @NotNull UUID trackId) {
-        return new EventTarget(Kind.TRACK, timeline, trackId, null, null);
-    }
-
-    public static EventTarget clip(@NotNull Timeline timeline, @NotNull UUID trackId, @NotNull UUID clipId) {
-        return new EventTarget(Kind.CLIP, timeline, trackId, clipId, null);
-    }
-
-
-    private static EventTarget modifier(@NotNull Timeline timeline, @Nullable UUID trackId, @Nullable UUID clipId, UUID modifierId) {
-        return new EventTarget(Kind.MODIFIER, timeline, trackId, clipId, modifierId);
-    }
-
-    public static EventTarget fromEventContext(@NotNull EventContext<?> context) {
-        return switch (context.target()) {
-            case Timeline target -> timeline(target);
-            case Track track -> track(Objects.requireNonNull(context.timeline()), track.getId());
-            case Clip clip -> clip(Objects.requireNonNull(context.timeline()), Objects.requireNonNull(context.track()).getId(), clip.getId());
-            case Modifier modifier -> modifier(Objects.requireNonNull(context.timeline()), Objects.requireNonNull(context.track()).getId(), Objects.requireNonNull(context.clip()).getId(), modifier.getId());
-            default -> throw new IllegalArgumentException("Unknown EventContext.target() value: " + context.target().getClass().getName());
-        };
     }
 
     private enum Kind {

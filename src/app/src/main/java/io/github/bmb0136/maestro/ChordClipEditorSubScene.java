@@ -33,6 +33,46 @@ public class ChordClipEditorSubScene extends ClipEditorSubScene<ChordClip> {
         super(manager, trackId, clipId);
     }
 
+    public static ChordClipEditorSubScene create(TimelineManager manager, UUID trackId, UUID clipId) {
+        var resource = Objects.requireNonNull(App.class.getResource("/ChordClip.fxml"));
+        var loader = new FXMLLoader(resource);
+        try {
+            var s = new ChordClipEditorSubScene(manager, trackId, clipId);
+            loader.setController(s);
+            s.setRoot(loader.load());
+            return s;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static String formatChordQuality(ChordQuality quality) {
+        return switch (quality) {
+            case MAJOR -> "Major";
+            case MINOR -> "Minor";
+            case AUGMENTED -> "Augmented";
+            case DIMINISHED_TRIAD -> "Diminished";
+            case DIMINISHED_SEVENTH -> "Diminished 7";
+            case HALF_DIMINISHED -> "Half Diminished";
+            case SUS2 -> "Sus 2";
+            case SUS4 -> "Sus 4";
+        };
+    }
+
+    private static Optional<ChordQuality> getChordQuality(String raw) {
+        return switch (raw) {
+            case "Major" -> Optional.of(ChordQuality.MAJOR);
+            case "Minor" -> Optional.of(ChordQuality.MINOR);
+            case "Augmented" -> Optional.of(ChordQuality.AUGMENTED);
+            case "Diminished" -> Optional.of(ChordQuality.DIMINISHED_TRIAD);
+            case "Diminished 7" -> Optional.of(ChordQuality.DIMINISHED_SEVENTH);
+            case "Half Diminished" -> Optional.of(ChordQuality.HALF_DIMINISHED);
+            case "Sus 2" -> Optional.of(ChordQuality.SUS2);
+            case "Sus 4" -> Optional.of(ChordQuality.SUS4);
+            default -> Optional.empty();
+        };
+    }
+
     @FXML
     private void initialize() {
         root.getStylesheets().add("/DarkMode.css");
@@ -134,45 +174,5 @@ public class ChordClipEditorSubScene extends ClipEditorSubScene<ChordClip> {
         sb.append(view.getChordName());
         sb.append(")");
         notesLabel.setText(sb.toString());
-    }
-
-    public static ChordClipEditorSubScene create(TimelineManager manager, UUID trackId, UUID clipId) {
-        var resource = Objects.requireNonNull(App.class.getResource("/ChordClip.fxml"));
-        var loader = new FXMLLoader(resource);
-        try {
-            var s = new ChordClipEditorSubScene(manager, trackId, clipId);
-            loader.setController(s);
-            s.setRoot(loader.load());
-            return s;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static String formatChordQuality(ChordQuality quality) {
-        return switch (quality) {
-            case MAJOR -> "Major";
-            case MINOR -> "Minor";
-            case AUGMENTED -> "Augmented";
-            case DIMINISHED_TRIAD -> "Diminished";
-            case DIMINISHED_SEVENTH -> "Diminished 7";
-            case HALF_DIMINISHED -> "Half Diminished";
-            case SUS2 -> "Sus 2";
-            case SUS4 -> "Sus 4";
-        };
-    }
-
-    private static Optional<ChordQuality> getChordQuality(String raw) {
-        return switch (raw) {
-            case "Major" -> Optional.of(ChordQuality.MAJOR);
-            case "Minor" -> Optional.of(ChordQuality.MINOR);
-            case "Augmented" -> Optional.of(ChordQuality.AUGMENTED);
-            case "Diminished" -> Optional.of(ChordQuality.DIMINISHED_TRIAD);
-            case "Diminished 7" -> Optional.of(ChordQuality.DIMINISHED_SEVENTH);
-            case "Half Diminished" -> Optional.of(ChordQuality.HALF_DIMINISHED);
-            case "Sus 2" -> Optional.of(ChordQuality.SUS2);
-            case "Sus 4" -> Optional.of(ChordQuality.SUS4);
-            default -> Optional.empty();
-        };
     }
 }

@@ -3,7 +3,8 @@ package io.github.bmb0136.maestro;
 import javafx.scene.control.SpinnerValueFactory;
 
 public final class SpinnerUtil {
-    private SpinnerUtil() {}
+    private SpinnerUtil() {
+    }
 
     public static <T> SpinnerValueFactory<Object> toObjectValueFactory(SpinnerValueFactory<T> base) {
         SpinnerValueFactory<Object> factory = new SpinnerValueFactory<>() {

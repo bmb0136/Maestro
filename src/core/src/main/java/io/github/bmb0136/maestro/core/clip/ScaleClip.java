@@ -27,6 +27,15 @@ public class ScaleClip extends Clip {
         super(id);
     }
 
+    public static ScaleClip create(float position, float duration) {
+        var clip = new ScaleClip();
+        clip.setMutable(true);
+        clip.setPosition(position);
+        clip.setDuration(duration);
+        clip.setMutable(false);
+        return clip;
+    }
+
     public ScaleType getScale() {
         return scale;
     }
@@ -179,15 +188,6 @@ public class ScaleClip extends Clip {
             }
         }
         return notes.iterator();
-    }
-
-    public static ScaleClip create(float position, float duration) {
-        var clip = new ScaleClip();
-        clip.setMutable(true);
-        clip.setPosition(position);
-        clip.setDuration(duration);
-        clip.setMutable(false);
-        return clip;
     }
 
     public enum Mode {

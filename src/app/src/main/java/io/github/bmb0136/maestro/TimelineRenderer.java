@@ -50,13 +50,14 @@ public class TimelineRenderer {
     // Context menus
     private final ContextMenu trackContextMenu = new ContextMenu();
     private final ContextMenu clipContextMenu = new ContextMenu();
-    private double contextMenuX, contextMenuY;
     // Selection related fields
     private final SimpleObjectProperty<UUID> selectedClip = new SimpleObjectProperty<>(null);
     private final SimpleObjectProperty<UUID> clipBeingEdited = new SimpleObjectProperty<>(null);
     // Cache of visible elements
     private final HashMap<UUID, Rectangle2D> visibleClips = new HashMap<>();
     private final HashSet<UUID> visibleTracks = new HashSet<>();
+    private double contextMenuX, contextMenuY;
+    private double timelineDragLastX, timelineDragLastY;
 
     public TimelineRenderer(@NotNull TimelineManager manager, @NotNull Canvas canvas, @NotNull SimpleDoubleProperty pixelsPerBeat, Callback callback) {
         this.manager = manager;
@@ -153,7 +154,7 @@ public class TimelineRenderer {
     }
 
     private void rootContextMenuOnAddClipHandler(ActionEvent e, ClipFactory<?> factory) {
-        float position = (int)localXToBeats(contextMenuX);
+        float position = (int) localXToBeats(contextMenuX);
         float duration = 4;
         var track = manager.get().getTrack((int) localYToTracks(contextMenuY));
         var result = manager.append(new AddClipToTrackEvent(track.getId(), factory.create(position, duration)));
@@ -178,12 +179,12 @@ public class TimelineRenderer {
         return timelineLength.getReadOnlyProperty();
     }
 
-    public void setPlaybackHeadPosition(float beats) {
-        playbackHeadXBeats.set(beats);
-    }
-
     public float getPlaybackHeadPosition() {
         return playbackHeadXBeats.get();
+    }
+
+    public void setPlaybackHeadPosition(float beats) {
+        playbackHeadXBeats.set(beats);
     }
 
     public void draw() {
@@ -279,7 +280,6 @@ public class TimelineRenderer {
         scrollYTracks.set((float) Math.max(0, Math.min(maxScrollY.get(), (e.getDeltaY() / e.getMultiplierY() * -0.1f) + scrollYTracks.get())));
     }
 
-    private double timelineDragLastX, timelineDragLastY;
     private void onMouseDragged(MouseEvent e) {
         if (e.getButton() != MouseButton.MIDDLE) {
             return;

@@ -10,15 +10,116 @@ public class TimelineManager {
     private final int maxHistory;
     private final ArrayDeque<Event<?>> events;
     private final Timeline referencePoint;
+    private final HashMap<UUID, Consumer<EventTarget>> changeCallbacks = new HashMap<>();
     private Timeline current;
     private int undoOffset = 0;
     private boolean currentDirty = true;
-    private final HashMap<UUID, Consumer<EventTarget>> changeCallbacks = new HashMap<>();
 
     public TimelineManager(int maxHistory, @NotNull Timeline referencePoint) {
         this.maxHistory = maxHistory;
         this.referencePoint = referencePoint;
         this.events = new ArrayDeque<>(maxHistory);
+    }
+
+    private static EventResult applyEvents(Timeline timeline, Iterable<Event<?>> events, ResultCheckMode mode) {
+        ArrayList<EventTarget> allTargets = new ArrayList<>();
+        var result = EventResult.OK;
+        for (Event<?> event : events) {
+            switch (event) {
+                case ModifierEvent e -> {
+                    var track = timeline.getTrack(e.getTrackId());
+                    if (track.isEmpty()) {
+                        result = EventResult.UNKNOWN_TRACK;
+                        break;
+                    }
+                    var clip = track.get().getClip(e.getClipId());
+                    if (clip.isEmpty()) {
+                        result = EventResult.UNKNOWN_CLIP;
+                        break;
+                    }
+                    var target = clip.get().getModifiers().getModifier(e.getModifierId());
+                    if (target.isEmpty()) {
+                        result = EventResult.UNKNOWN_MODIFIER;
+                        break;
+                    }
+                    var context = new EventContext<>(target.get(), timeline, track.get(), clip.get());
+                    target.get().setMutable(true);
+                    result = e.apply(context);
+                    target.get().setMutable(false);
+                    if (!result.equals(EventResult.NOOP)) {
+                        allTargets.add(EventTarget.fromEventContext(context));
+                    }
+                }
+                case ClipEvent e -> {
+                    var track = timeline.getTrack(e.getTrackId());
+                    if (track.isEmpty()) {
+                        result = EventResult.UNKNOWN_TRACK;
+                        break;
+                    }
+                    var target = track.get().getClip(e.getClipId());
+                    if (target.isEmpty()) {
+                        result = EventResult.UNKNOWN_CLIP;
+                        break;
+                    }
+                    var context = new EventContext<>(target.get(), timeline, track.get());
+                    target.get().setMutable(true);
+                    result = e.apply(context);
+                    target.get().setMutable(false);
+                    if (!result.equals(EventResult.NOOP)) {
+                        allTargets.add(EventTarget.fromEventContext(context));
+                    }
+                }
+                case TrackEvent e -> {
+                    var target = timeline.getTrack(e.getTrackId());
+                    if (target.isEmpty()) {
+                        result = EventResult.UNKNOWN_TRACK;
+                        break;
+                    }
+                    var context = new EventContext<>(target.get(), timeline);
+                    target.get().setMutable(true);
+                    result = e.apply(context);
+                    target.get().setMutable(false);
+                    if (!result.equals(EventResult.NOOP)) {
+                        allTargets.add(EventTarget.fromEventContext(context));
+                    }
+                }
+                case TimelineEvent e -> {
+                    var context = new EventContext<>(timeline);
+                    timeline.setMutable(true);
+                    result = e.apply(context);
+                    timeline.setMutable(false);
+                    if (!result.equals(EventResult.NOOP)) {
+                        allTargets.add(EventTarget.fromEventContext(context));
+                    }
+                }
+                case EventGroup e -> {
+                    // Never ignore errors within a group, always bail or throw (depending on mode)
+                    result = applyEvents(timeline, e, switch (mode) {
+                        case IGNORE_RESULTS, BAIL_IF_ERROR -> ResultCheckMode.BAIL_IF_ERROR;
+                        case THROW_IF_ERROR -> ResultCheckMode.THROW_IF_ERROR;
+                    });
+                    if (!result.equals(EventResult.NOOP)) {
+                        allTargets.addAll(result.getTargets());
+                    }
+                }
+                // If you got this error, make sure the event extends one of the above and not Event<T> directly
+                default -> throw new IllegalArgumentException("Unknown event type: " + event.getClass().getName());
+            }
+
+            if (!result.isOk()) {
+                switch (mode) {
+                    case THROW_IF_ERROR ->
+                        // If this happens then there was an event that put the Timeline into an invalid state
+                        // The purpose of the event system is to make that impossible
+                        // If you do get this error, something has gone horribly wrong
+                            throw new IllegalStateException("Failed to apply events to Timeline. An intermediate event failed to apply (%s returned %s)".formatted(event.getClass().getSimpleName(), result.getName()));
+                    case BAIL_IF_ERROR -> {
+                        return result.withTargets(allTargets);
+                    }
+                }
+            }
+        }
+        return result.withTargets(allTargets);
     }
 
     public Timeline get() {
@@ -110,105 +211,10 @@ public class TimelineManager {
         return maxHistory;
     }
 
-    private static EventResult applyEvents(Timeline timeline, Iterable<Event<?>> events, ResultCheckMode mode) {
-        ArrayList<EventTarget> allTargets = new ArrayList<>();
-        var result = EventResult.OK;
-        for (Event<?> event : events) {
-            switch (event) {
-                case ModifierEvent e -> {
-                    var track = timeline.getTrack(e.getTrackId());
-                    if (track.isEmpty()) {
-                        result = EventResult.UNKNOWN_TRACK;
-                        break;
-                    }
-                    var clip = track.get().getClip(e.getClipId());
-                    if (clip.isEmpty()) {
-                        result = EventResult.UNKNOWN_CLIP;
-                        break;
-                    }
-                    var target = clip.get().getModifiers().getModifier(e.getModifierId());
-                    if (target.isEmpty()) {
-                        result = EventResult.UNKNOWN_MODIFIER;
-                        break;
-                    }
-                    var context = new EventContext<>(target.get(), timeline, track.get(), clip.get());
-                    target.get().setMutable(true);
-                    result = e.apply(context);
-                    target.get().setMutable(false);
-                    if (!result.equals(EventResult.NOOP)) {
-                        allTargets.add(EventTarget.fromEventContext(context));
-                    }
-                }
-                case ClipEvent e -> {
-                    var track = timeline.getTrack(e.getTrackId());
-                    if (track.isEmpty()) {
-                        result = EventResult.UNKNOWN_TRACK;
-                        break;
-                    }
-                    var target = track.get().getClip(e.getClipId());
-                    if (target.isEmpty()) {
-                        result = EventResult.UNKNOWN_CLIP;
-                        break;
-                    }
-                    var context = new EventContext<>(target.get(), timeline, track.get());
-                    target.get().setMutable(true);
-                    result = e.apply(context);
-                    target.get().setMutable(false);
-                    if (!result.equals(EventResult.NOOP)) {
-                        allTargets.add(EventTarget.fromEventContext(context));
-                    }
-                }
-                case TrackEvent e -> {
-                    var target = timeline.getTrack(e.getTrackId());
-                    if (target.isEmpty()) {
-                        result = EventResult.UNKNOWN_TRACK;
-                        break;
-                    }
-                    var context = new EventContext<>(target.get(), timeline);
-                    target.get().setMutable(true);
-                    result = e.apply(context);
-                    target.get().setMutable(false);
-                    if (!result.equals(EventResult.NOOP)) {
-                        allTargets.add(EventTarget.fromEventContext(context));
-                    }
-                }
-                case TimelineEvent e -> {
-                    var context = new EventContext<>(timeline);
-                    timeline.setMutable(true);
-                    result = e.apply(context);
-                    timeline.setMutable(false);
-                    if (!result.equals(EventResult.NOOP)) {
-                        allTargets.add(EventTarget.fromEventContext(context));
-                    }
-                }
-                case EventGroup e -> {
-                    // Never ignore errors within a group, always bail or throw (depending on mode)
-                    result = applyEvents(timeline, e, switch (mode) {
-                        case IGNORE_RESULTS, BAIL_IF_ERROR -> ResultCheckMode.BAIL_IF_ERROR;
-                        case THROW_IF_ERROR -> ResultCheckMode.THROW_IF_ERROR;
-                    });
-                    if (!result.equals(EventResult.NOOP)) {
-                        allTargets.addAll(result.getTargets());
-                    }
-                }
-                // If you got this error, make sure the event extends one of the above and not Event<T> directly
-                default -> throw new IllegalArgumentException("Unknown event type: " + event.getClass().getName());
-            }
-
-            if (!result.isOk()) {
-                switch (mode) {
-                    case THROW_IF_ERROR ->
-                            // If this happens then there was an event that put the Timeline into an invalid state
-                            // The purpose of the event system is to make that impossible
-                            // If you do get this error, something has gone horribly wrong
-                            throw new IllegalStateException("Failed to apply events to Timeline. An intermediate event failed to apply (%s returned %s)".formatted(event.getClass().getSimpleName(), result.getName()));
-                    case BAIL_IF_ERROR -> {
-                        return result.withTargets(allTargets);
-                    }
-                }
-            }
-        }
-        return result.withTargets(allTargets);
+    private enum ResultCheckMode {
+        IGNORE_RESULTS,
+        THROW_IF_ERROR,
+        BAIL_IF_ERROR
     }
 
     private record ChangeCallbackClosable(TimelineManager manager, UUID id) implements AutoCloseable {
@@ -216,11 +222,5 @@ public class TimelineManager {
         public void close() {
             manager.changeCallbacks.remove(id);
         }
-    }
-
-    private enum ResultCheckMode {
-        IGNORE_RESULTS,
-        THROW_IF_ERROR,
-        BAIL_IF_ERROR
     }
 }

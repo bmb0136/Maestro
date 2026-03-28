@@ -54,6 +54,12 @@ public class AppController implements AutoCloseable {
         MODIFIER_EDITOR_FACTORIES.put(AddIntervalAboveModifier.class, AddIntervalAboveModifierEditor::new);
     }
 
+    private final TimelineManager manager = new TimelineManager(1024, new Timeline());
+    private final SimpleDoubleProperty pixelsPerBeat = new SimpleDoubleProperty(60.0);
+    private final PlaybackEngine playbackEngine = new PlaybackEngine(manager);
+    private final SimpleObjectProperty<Tuple2<UUID, UUID>> selectedClip = new SimpleObjectProperty<>(null);
+    private final HashSet<UUID> knownClips = new HashSet<>();
+    private final ArrayList<UUID> knownTracks = new ArrayList<>();
     @FXML
     private ScrollBar trackScrollBar, timelineScrollBar;
     @FXML
@@ -76,16 +82,12 @@ public class AppController implements AutoCloseable {
     private ChoiceBox<Object> modifierSelector;
     @FXML
     private Button playButton;
-    private final TimelineManager manager = new TimelineManager(1024, new Timeline());
-    private final SimpleDoubleProperty pixelsPerBeat = new SimpleDoubleProperty(60.0);
     private TimelineRenderer timelineRenderer;
-    private final PlaybackEngine playbackEngine = new PlaybackEngine(manager);
     private AutoCloseable changeCallback;
-    private final SimpleObjectProperty<Tuple2<UUID, UUID>> selectedClip = new SimpleObjectProperty<>(null);
-    private final HashSet<UUID> knownClips = new HashSet<>();
-    private final ArrayList<UUID> knownTracks = new ArrayList<>();
     @Nullable
     private UUID lastOpenEditor = null;
+    private double bpmDragStartY;
+    private int bpmDragStartValue;
 
     @FXML
     private void initialize() {
@@ -320,7 +322,6 @@ public class AppController implements AutoCloseable {
         }
     }
 
-
     @FXML
     private void onBpmScrolled(ScrollEvent event) {
         if (playbackEngine.isPlayingProperty().get()) {
@@ -333,8 +334,6 @@ public class AppController implements AutoCloseable {
         playbackEngine.setBpm(playbackEngine.getBpm() + delta);
     }
 
-    private double bpmDragStartY;
-    private int bpmDragStartValue;
     @FXML
     private void onBpmDragged(MouseEvent event) {
         if (playbackEngine.isPlayingProperty().get()) {

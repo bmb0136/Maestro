@@ -6,6 +6,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class ChordBuilder {
+    private final TreeSet<Pitch> pitches = new TreeSet<>(Comparator.comparingInt(Pitch::toMidi));
+    private final View view = new View();
     @NotNull
     private PitchName rootNote = PitchName.C;
     private int inversionNumber = 0;
@@ -13,9 +15,7 @@ public class ChordBuilder {
     private PitchName bassNote = null;
     @NotNull
     private ChordQuality quality = ChordQuality.MAJOR;
-    private final TreeSet<Pitch> pitches = new TreeSet<>(Comparator.comparingInt(Pitch::toMidi));
     private int baseOctave = 4;
-    private final View view = new View();
 
     public View getView() {
         return view;

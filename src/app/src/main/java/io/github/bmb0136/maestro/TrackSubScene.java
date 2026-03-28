@@ -58,6 +58,19 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
         });
     }
 
+    public static TrackSubScene create(TimelineManager manager, UUID trackId, BiConsumer<UUID, TrackCallbackType> callback) {
+        URL resource = Objects.requireNonNull(App.class.getResource("/Track.fxml"));
+        FXMLLoader loader = new FXMLLoader(resource);
+        try {
+            TrackSubScene s = new TrackSubScene(manager, trackId, callback);
+            loader.setController(s);
+            s.setRoot(loader.load());
+            return s;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @FXML
     private void initialize() {
         root.getStylesheets().add("/DarkMode.css");
@@ -102,19 +115,6 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
     @FXML
     private void onDeleteButtonClicked() {
         callback.accept(trackId, TrackCallbackType.DELETE);
-    }
-
-    public static TrackSubScene create(TimelineManager manager, UUID trackId, BiConsumer<UUID, TrackCallbackType> callback) {
-        URL resource = Objects.requireNonNull(App.class.getResource("/Track.fxml"));
-        FXMLLoader loader = new FXMLLoader(resource);
-        try {
-            TrackSubScene s = new TrackSubScene(manager, trackId, callback);
-            loader.setController(s);
-            s.setRoot(loader.load());
-            return s;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @Override

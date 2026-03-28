@@ -13,8 +13,8 @@ import java.util.UUID;
 public abstract class ModifierEditorSubscene<T extends Modifier> extends SubScene implements AutoCloseable {
     protected final TimelineManager manager;
     protected final UUID trackId, clipId, modifierId;
-    private final ReadOnlyObjectWrapper<T> wrapper;
     protected final ReadOnlyObjectProperty<T> modifier;
+    private final ReadOnlyObjectWrapper<T> wrapper;
     private final AutoCloseable callback;
 
 
