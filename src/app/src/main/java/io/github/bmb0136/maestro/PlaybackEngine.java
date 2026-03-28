@@ -20,6 +20,7 @@ public class PlaybackEngine {
 	private final TimelineManager manager;
 	private Synthesizer synth;
 	private MidiChannel[] channels;
+	private int BPM = 120;
 
 	//To Map the UUIDs to individal MIDI channels for the play session
 	private Map<UUID, MidiChannel> trackChannelMap = new HashMap<>();
@@ -165,12 +166,12 @@ public class PlaybackEngine {
 
 		for (NoteEvent event : events) {
 			//Worker Thread
-			float finalClip_position = Clip_position;
+			float finalClipPosition = Clip_position;
 			task = () -> {
 				//System.out.println(event.getTimeExecution());
 				long clipTime = startTime + TimeUnit.MILLISECONDS.toNanos((long) event.getTimeExecution())
-						+ TimeUnit.MILLISECONDS.toNanos((long) (finalClip_position * 1000));
-				long delay = TimeUnit.NANOSECONDS.toMillis(Math.max(0, clipTime - startTime));
+						+ TimeUnit.MILLISECONDS.toNanos((long) (finalClipPosition * 1000));
+				long delay = TimeUnit.NANOSECONDS.toMillis(Math.max(0, (((clipTime - startTime) * 60 )/ BPM)));
 				System.out.println(delay);
 
 				if (delay > 0) {
@@ -182,7 +183,7 @@ public class PlaybackEngine {
 					}
 				}
 				int pitch = event.getNote().pitch().toMidi();
-				int velocity = (int) event.getNote().volume() * 127;
+				int velocity = (int) (event.getNote().volume() * 127);
 				if (event.getType() == NoteEvent.Type.ON) {
 					Pianochannel.noteOn(pitch, velocity);
 					System.out.println("Note ON: " + event.getNote());

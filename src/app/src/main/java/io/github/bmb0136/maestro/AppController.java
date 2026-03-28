@@ -128,6 +128,7 @@ public class AppController {
     @FXML
     private void onPlayButtonClicked() {
         playTimeline();
+
     }
 
     @FXML

@@ -252,9 +252,12 @@ public class TimelineRenderer {
         }
     }
 
-    private void  movePlaybackHead(){
+    public void  movePlaybackHead(){
         float startline = playbackHeadXBeats.get();
-        float endline = playbackHeadXBeats.get() ;
+        float endline = playbackHeadXBeats.get() + 10000;
+        while (endline < playbackHeadXBeats.get()) {
+            playbackHeadXBeats.set(playbackHeadXBeats.get() + 10);
+        }
     }
     private void onScroll(ScrollEvent e) {
         if (e.isControlDown()) {
