@@ -303,6 +303,7 @@ public class AppController implements AutoCloseable {
         }
 
         editorPane.setContent(scene);
+        editorPane.setExpanded(true);
     }
 
     @FXML
