@@ -50,7 +50,7 @@ public enum PitchName {
         }
         PitchName n = this;
         for (int i = 0; i < semitones; i++) {
-            n = this.next();
+            n = n.next();
         }
         return n;
     }

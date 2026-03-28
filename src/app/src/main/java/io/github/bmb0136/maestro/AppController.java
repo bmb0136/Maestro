@@ -3,8 +3,11 @@ package io.github.bmb0136.maestro;
 import io.github.bmb0136.maestro.core.clip.ChordClip;
 import io.github.bmb0136.maestro.core.clip.Clip;
 import io.github.bmb0136.maestro.core.clip.PianoRollClip;
-import io.github.bmb0136.maestro.core.event.*;
 import io.github.bmb0136.maestro.core.clip.ScaleClip;
+import io.github.bmb0136.maestro.core.event.AddModifierToClipEvent;
+import io.github.bmb0136.maestro.core.event.AddTrackToTimelineEvent;
+import io.github.bmb0136.maestro.core.event.RemoveModifierFromClipEvent;
+import io.github.bmb0136.maestro.core.event.RemoveTrackFromTimelineEvent;
 import io.github.bmb0136.maestro.core.modifier.AddIntervalAboveModifier;
 import io.github.bmb0136.maestro.core.modifier.Modifier;
 import io.github.bmb0136.maestro.core.modifier.OffsetByIntervalModifier;
@@ -13,9 +16,10 @@ import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import io.github.bmb0136.maestro.core.timeline.Track;
 import io.github.bmb0136.maestro.core.util.BiHashMap;
 import io.github.bmb0136.maestro.core.util.Tuple2;
+import io.github.bmb0136.maestro.playback.PlaybackEngine;
+import javafx.animation.AnimationTimer;
 import javafx.beans.binding.DoubleExpression;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
@@ -70,10 +74,12 @@ public class AppController implements AutoCloseable {
     private Region timelineParent;
     @FXML
     private ChoiceBox<Object> modifierSelector;
+    @FXML
+    private Button playButton;
     private final TimelineManager manager = new TimelineManager(1024, new Timeline());
-    private final SimpleIntegerProperty bpm = new SimpleIntegerProperty(120);
     private final SimpleDoubleProperty pixelsPerBeat = new SimpleDoubleProperty(60.0);
     private TimelineRenderer timelineRenderer;
+    private final PlaybackEngine playbackEngine = new PlaybackEngine(manager);
     private AutoCloseable changeCallback;
     private final SimpleObjectProperty<Tuple2<UUID, UUID>> selectedClip = new SimpleObjectProperty<>(null);
     private final HashSet<UUID> knownClips = new HashSet<>();
@@ -112,7 +118,7 @@ public class AppController implements AutoCloseable {
         trackScrollBar.setVisible(false);
         //timelineScrollBar.setVisible(false);
 
-        bpmLabel.textProperty().bind(bpm.map(value -> "BPM: " + value));
+        bpmLabel.textProperty().bind(playbackEngine.bpmProperty().map(value -> "BPM: " + value));
 
         // Prevent incorrect scrolling
         trackListScrollPane.addEventFilter(ScrollEvent.SCROLL, e -> {
@@ -157,6 +163,21 @@ public class AppController implements AutoCloseable {
             }
             var clip = manager.get().getTrack(newValue.first()).flatMap(t -> t.getClip(newValue.second())).orElseThrow();
             refreshModifierList(newValue.first(), clip);
+        });
+
+        // Playback-related bindings
+        bpmLabel.opacityProperty().bind(playbackEngine.isPlayingProperty().map(b -> b ? 0.25 : 1.0));
+        bpmLabel.mouseTransparentProperty().bind(playbackEngine.isPlayingProperty());
+        AnimationTimer playbackTimer = new PlaybackAnimationTimer();
+        playbackEngine.isPlayingProperty().addListener((ignored1, ignored2, newValue) -> {
+            if (newValue) {
+                playbackTimer.start();
+                playButton.setText("Stop");
+            } else {
+                playbackTimer.stop();
+                timelineRenderer.setPlaybackHeadPosition(playbackEngine.getPositionInBeats());
+                playButton.setText("Play");
+            }
         });
 
         changeCallback = manager.registerChangeCallback(target -> {
@@ -290,25 +311,40 @@ public class AppController implements AutoCloseable {
         addTrack(new Track());
     }
 
+    @FXML
+    private void onPlayButtonClicked() {
+        if (!playbackEngine.isPlayingProperty().get()) {
+            playbackEngine.start(timelineRenderer.getPlaybackHeadPosition());
+        } else {
+            playbackEngine.stop();
+        }
+    }
+
 
     @FXML
     private void onBpmScrolled(ScrollEvent event) {
+        if (playbackEngine.isPlayingProperty().get()) {
+            return;
+        }
         if (Math.abs(event.getDeltaY()) < 1e-6) {
             return;
         }
         int delta = event.getDeltaY() >= 0 ? 1 : -1;
-        bpm.set(bpm.get() + delta);
+        playbackEngine.setBpm(playbackEngine.getBpm() + delta);
     }
 
     private double bpmDragStartY;
     private int bpmDragStartValue;
     @FXML
     private void onBpmDragged(MouseEvent event) {
+        if (playbackEngine.isPlayingProperty().get()) {
+            return;
+        }
         if (event.getEventType() == MouseEvent.MOUSE_PRESSED) {
             bpmDragStartY = event.getScreenY();
-            bpmDragStartValue = bpm.get();
+            bpmDragStartValue = playbackEngine.getBpm();
         } else if (event.getEventType() == MouseEvent.MOUSE_DRAGGED) {
-            bpm.set((int) (bpmDragStartValue - (0.25 * (event.getScreenY() - bpmDragStartY))));
+            playbackEngine.setBpm((int) (bpmDragStartValue - (0.25 * (event.getScreenY() - bpmDragStartY))));
         }
     }
 
@@ -331,7 +367,7 @@ public class AppController implements AutoCloseable {
         }
     }
 
-    private void timelineCallback(@Nullable UUID trackId, @Nullable UUID clipId, TimelineRenderer.CallbackType type) {
+    private void timelineCallback(@Nullable UUID trackId, @Nullable UUID clipId, float position, TimelineRenderer.CallbackType type) {
         switch (type) {
             case OPEN_EDITOR -> {
                 assert trackId != null;
@@ -345,6 +381,7 @@ public class AppController implements AutoCloseable {
                     selectedClip.set(null);
                 }
             }
+            case SEEK -> playbackEngine.seek(position);
             case null, default -> throw new IllegalArgumentException();
         }
     }
@@ -413,5 +450,13 @@ public class AppController implements AutoCloseable {
     @Override
     public void close() throws Exception {
         changeCallback.close();
+        playbackEngine.close();
+    }
+
+    private class PlaybackAnimationTimer extends AnimationTimer {
+        @Override
+        public void handle(long now) {
+            timelineRenderer.setPlaybackHeadPosition(playbackEngine.getPositionInBeats());
+        }
     }
 }
