@@ -1,4 +1,4 @@
-package io.github.bmb0136.maestro;
+package io.github.bmb0136.maestro.editors.clip;
 
 import io.github.bmb0136.maestro.core.clip.Clip;
 import io.github.bmb0136.maestro.core.event.EventTarget;

@@ -1,4 +1,4 @@
-package io.github.bmb0136.maestro;
+package io.github.bmb0136.maestro.editors.modifier;
 
 import io.github.bmb0136.maestro.core.event.SetAddIntervalAboveModifierSemitonesEvent;
 import io.github.bmb0136.maestro.core.modifier.AddIntervalAboveModifier;

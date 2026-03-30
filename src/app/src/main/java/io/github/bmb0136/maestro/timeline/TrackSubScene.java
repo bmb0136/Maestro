@@ -1,5 +1,6 @@
-package io.github.bmb0136.maestro;
+package io.github.bmb0136.maestro.timeline;
 
+import io.github.bmb0136.maestro.App;
 import io.github.bmb0136.maestro.core.event.SetTrackNameEvent;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import javafx.beans.binding.Bindings;
@@ -26,7 +27,7 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
 
     private final TimelineManager manager;
     private final UUID trackId;
-    private final BiConsumer<UUID, TrackCallbackType> callback;
+    private final BiConsumer<UUID, CallbackType> callback;
     private final AutoCloseable changeCallback;
 
     @FXML
@@ -37,7 +38,7 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
     private TextField nameEditField;
     private String lastName = "???";
 
-    private TrackSubScene(TimelineManager manager, UUID trackId, BiConsumer<UUID, TrackCallbackType> callback) {
+    private TrackSubScene(TimelineManager manager, UUID trackId, BiConsumer<UUID, CallbackType> callback) {
         // Dummy node (can't pass null here)
         super(new Pane(), 240, HEIGHT);
         this.manager = manager;
@@ -58,7 +59,7 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
         });
     }
 
-    public static TrackSubScene create(TimelineManager manager, UUID trackId, BiConsumer<UUID, TrackCallbackType> callback) {
+    public static TrackSubScene create(TimelineManager manager, UUID trackId, BiConsumer<UUID, CallbackType> callback) {
         URL resource = Objects.requireNonNull(App.class.getResource("/Track.fxml"));
         FXMLLoader loader = new FXMLLoader(resource);
         try {
@@ -114,11 +115,15 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
 
     @FXML
     private void onDeleteButtonClicked() {
-        callback.accept(trackId, TrackCallbackType.DELETE);
+        callback.accept(trackId, CallbackType.DELETE);
     }
 
     @Override
     public void close() throws Exception {
         changeCallback.close();
+    }
+
+    public enum CallbackType {
+        DELETE
     }
 }

@@ -16,7 +16,15 @@ import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import io.github.bmb0136.maestro.core.timeline.Track;
 import io.github.bmb0136.maestro.core.util.BiHashMap;
 import io.github.bmb0136.maestro.core.util.Tuple2;
+import io.github.bmb0136.maestro.editors.clip.ChordClipEditor;
+import io.github.bmb0136.maestro.editors.clip.PianoRollEditor;
+import io.github.bmb0136.maestro.editors.clip.ScaleClipEditor;
+import io.github.bmb0136.maestro.editors.modifier.AddIntervalAboveModifierEditor;
+import io.github.bmb0136.maestro.editors.modifier.ModifierEditorSubscene;
+import io.github.bmb0136.maestro.editors.modifier.OffsetByIntervalModifierEditor;
 import io.github.bmb0136.maestro.playback.PlaybackEngine;
+import io.github.bmb0136.maestro.timeline.TimelineRenderer;
+import io.github.bmb0136.maestro.timeline.TrackSubScene;
 import javafx.animation.AnimationTimer;
 import javafx.beans.binding.DoubleExpression;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -286,9 +294,9 @@ public class AppController implements AutoCloseable {
 
         SubScene scene;
         switch (clip) {
-            case PianoRollClip c -> scene = PianoRollEditorSubScene.create(manager, trackId, c.getId());
-            case ChordClip c -> scene = ChordClipEditorSubScene.create(manager, trackId, c.getId());
-            case ScaleClip c -> scene = ScaleClipEditorSubScene.create(manager, trackId, c.getId());
+            case PianoRollClip c -> scene = PianoRollEditor.create(manager, trackId, c.getId());
+            case ChordClip c -> scene = ChordClipEditor.create(manager, trackId, c.getId());
+            case ScaleClip c -> scene = ScaleClipEditor.create(manager, trackId, c.getId());
             default -> throw new IllegalArgumentException("Unknown clip type: " + clip.getClass().getName());
         }
 
@@ -354,7 +362,7 @@ public class AppController implements AutoCloseable {
         }
     }
 
-    private void trackCallback(UUID trackId, TrackCallbackType type) {
+    private void trackCallback(UUID trackId, TrackSubScene.CallbackType type) {
         switch (type) {
             case DELETE -> {
                 var result = manager.append(new RemoveTrackFromTimelineEvent(trackId));

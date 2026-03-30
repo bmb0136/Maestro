@@ -1,4 +1,4 @@
-package io.github.bmb0136.maestro;
+package io.github.bmb0136.maestro.util;
 
 import javafx.scene.control.SpinnerValueFactory;
 

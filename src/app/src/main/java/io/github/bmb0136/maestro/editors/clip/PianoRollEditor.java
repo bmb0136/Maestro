@@ -1,5 +1,6 @@
-package io.github.bmb0136.maestro;
+package io.github.bmb0136.maestro.editors.clip;
 
+import io.github.bmb0136.maestro.App;
 import io.github.bmb0136.maestro.core.clip.PianoRollClip;
 import io.github.bmb0136.maestro.core.event.AddNoteToPianoRollClipEvent;
 import io.github.bmb0136.maestro.core.event.RemoveNoteFromPianoRollClipEvent;
@@ -29,7 +30,7 @@ import java.util.Objects;
 import java.util.OptionalDouble;
 import java.util.UUID;
 
-public class PianoRollEditorSubScene extends ClipEditorSubScene<PianoRollClip> {
+public class PianoRollEditor extends ClipEditorSubScene<PianoRollClip> {
 
     private static final double PIXELS_PER_PITCH = 20.0;
     private static final HashMap<Pitch, Double> PITCH_TO_Y = new HashMap<>();
@@ -54,15 +55,15 @@ public class PianoRollEditorSubScene extends ClipEditorSubScene<PianoRollClip> {
     @FXML
     private GridPane gridLines;
 
-    public PianoRollEditorSubScene(TimelineManager manager, UUID trackId, UUID clipId) {
+    public PianoRollEditor(TimelineManager manager, UUID trackId, UUID clipId) {
         super(manager, trackId, clipId);
     }
 
-    public static PianoRollEditorSubScene create(TimelineManager manager, UUID trackId, UUID clipId) {
+    public static PianoRollEditor create(TimelineManager manager, UUID trackId, UUID clipId) {
         var resource = Objects.requireNonNull(App.class.getResource("/PianoRoll.fxml"));
         var loader = new FXMLLoader(resource);
         try {
-            var s = new PianoRollEditorSubScene(manager, trackId, clipId);
+            var s = new PianoRollEditor(manager, trackId, clipId);
             loader.setController(s);
             s.setRoot(loader.load());
             return s;

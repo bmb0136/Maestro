@@ -1,5 +1,7 @@
-package io.github.bmb0136.maestro;
+package io.github.bmb0136.maestro.editors.clip;
 
+import io.github.bmb0136.maestro.App;
+import io.github.bmb0136.maestro.util.SpinnerUtil;
 import io.github.bmb0136.maestro.core.clip.ScaleClip;
 import io.github.bmb0136.maestro.core.event.*;
 import io.github.bmb0136.maestro.core.theory.Pitch;
@@ -16,7 +18,7 @@ import javafx.scene.layout.Region;
 import java.util.Objects;
 import java.util.UUID;
 
-public class ScaleClipEditorSubScene extends ClipEditorSubScene<ScaleClip> {
+public class ScaleClipEditor extends ClipEditorSubScene<ScaleClip> {
 
     private static final BiHashMap<String, ScaleType> SCALE_MAP = new BiHashMap<>();
     private static final BiHashMap<String, PitchName> PITCH_MAP = new BiHashMap<>();
@@ -60,15 +62,15 @@ public class ScaleClipEditorSubScene extends ClipEditorSubScene<ScaleClip> {
     @FXML
     private Spinner<Object> minDegreeSpinner, maxDegreeSpinner, rootOctaveSpinner;
 
-    public ScaleClipEditorSubScene(TimelineManager manager, UUID trackId, UUID clipId) {
+    public ScaleClipEditor(TimelineManager manager, UUID trackId, UUID clipId) {
         super(manager, trackId, clipId);
     }
 
-    public static ScaleClipEditorSubScene create(TimelineManager manager, UUID trackId, UUID clipId) {
+    public static ScaleClipEditor create(TimelineManager manager, UUID trackId, UUID clipId) {
         var resource = Objects.requireNonNull(App.class.getResource("/ScaleClip.fxml"));
         var loader = new FXMLLoader(resource);
         try {
-            var s = new ScaleClipEditorSubScene(manager, trackId, clipId);
+            var s = new ScaleClipEditor(manager, trackId, clipId);
             loader.setController(s);
             s.setRoot(loader.load());
             return s;

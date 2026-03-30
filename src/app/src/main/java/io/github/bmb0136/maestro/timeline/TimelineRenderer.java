@@ -1,4 +1,4 @@
-package io.github.bmb0136.maestro;
+package io.github.bmb0136.maestro.timeline;
 
 import io.github.bmb0136.maestro.core.clip.ChordClip;
 import io.github.bmb0136.maestro.core.clip.ClipFactory;

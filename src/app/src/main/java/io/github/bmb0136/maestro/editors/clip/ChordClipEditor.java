@@ -1,5 +1,7 @@
-package io.github.bmb0136.maestro;
+package io.github.bmb0136.maestro.editors.clip;
 
+import io.github.bmb0136.maestro.App;
+import io.github.bmb0136.maestro.util.SpinnerUtil;
 import io.github.bmb0136.maestro.core.clip.ChordClip;
 import io.github.bmb0136.maestro.core.event.SetChordClipBaseOctaveEvent;
 import io.github.bmb0136.maestro.core.event.SetChordClipQualityEvent;
@@ -16,7 +18,7 @@ import javafx.scene.layout.Region;
 
 import java.util.*;
 
-public class ChordClipEditorSubScene extends ClipEditorSubScene<ChordClip> {
+public class ChordClipEditor extends ClipEditorSubScene<ChordClip> {
 
     private static final String NO_SLASH_NOTE = "None";
 
@@ -29,15 +31,15 @@ public class ChordClipEditorSubScene extends ClipEditorSubScene<ChordClip> {
     @FXML
     private Spinner<Object> baseOctaveSpinner;
 
-    public ChordClipEditorSubScene(TimelineManager manager, UUID trackId, UUID clipId) {
+    public ChordClipEditor(TimelineManager manager, UUID trackId, UUID clipId) {
         super(manager, trackId, clipId);
     }
 
-    public static ChordClipEditorSubScene create(TimelineManager manager, UUID trackId, UUID clipId) {
+    public static ChordClipEditor create(TimelineManager manager, UUID trackId, UUID clipId) {
         var resource = Objects.requireNonNull(App.class.getResource("/ChordClip.fxml"));
         var loader = new FXMLLoader(resource);
         try {
-            var s = new ChordClipEditorSubScene(manager, trackId, clipId);
+            var s = new ChordClipEditor(manager, trackId, clipId);
             loader.setController(s);
             s.setRoot(loader.load());
             return s;
