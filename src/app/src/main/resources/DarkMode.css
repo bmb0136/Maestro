@@ -1686,20 +1686,14 @@ Text {
 
 .radio-menu-item:checked > .left-container > .radio,
 .check-menu-item:checked > .left-container > .check {
-  -fx-shape: "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z";
-  -fx-scale-shape: true;
-  -fx-background-color: -color-fg-muted;
-  -fx-min-height: 0.85em;
-  -fx-min-width: 0.85em;
-  -fx-max-height: 0.85em;
-  -fx-max-width: 0.85em;
+  -fx-background-color: transparent;
 }
 
 .radio-menu-item:hover:checked > .left-container > .radio,
 .radio-menu-item:focused:checked > .left-container > .radio,
 .check-menu-item:hover:checked > .left-container > .check,
 .check-menu-item:focused:checked > .left-container > .check {
-  -fx-background-color: -color-fg-emphasis;
+  -fx-background-color: transparent;
 }
 
 .caption-menu-item {
