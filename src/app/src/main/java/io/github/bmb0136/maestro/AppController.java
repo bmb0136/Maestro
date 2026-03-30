@@ -363,7 +363,7 @@ public class AppController implements AutoCloseable {
             case DELETE -> {
                 var result = manager.append(new RemoveTrackFromTimelineEvent(trackId));
                 if (!result.isOk()) {
-                    new Alert(Alert.AlertType.ERROR, "Failed to add track: " + result, ButtonType.OK).showAndWait();
+                    new Alert(Alert.AlertType.ERROR, "Failed to delete track: " + result, ButtonType.OK).showAndWait();
                 }
             }
             case null, default -> throw new IllegalArgumentException();
