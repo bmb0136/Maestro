@@ -318,7 +318,10 @@ public class AppController implements AutoCloseable {
 
     @FXML
     private void onAddTrackButtonClicked() {
-        addTrack(new Track());
+        var result = manager.append(new AddTrackToTimelineEvent(track));
+        if (!result.isOk()) {
+            new Alert(Alert.AlertType.ERROR, "Failed to add track: " + result, ButtonType.OK).showAndWait();
+        }
     }
 
     @FXML
@@ -352,13 +355,6 @@ public class AppController implements AutoCloseable {
             bpmDragStartValue = playbackEngine.getBpm();
         } else if (event.getEventType() == MouseEvent.MOUSE_DRAGGED) {
             playbackEngine.setBpm((int) (bpmDragStartValue - (0.25 * (event.getScreenY() - bpmDragStartY))));
-        }
-    }
-
-    private void addTrack(@NotNull Track track) {
-        var result = manager.append(new AddTrackToTimelineEvent(track));
-        if (!result.isOk()) {
-            new Alert(Alert.AlertType.ERROR, "Failed to add track: " + result, ButtonType.OK).showAndWait();
         }
     }
 
