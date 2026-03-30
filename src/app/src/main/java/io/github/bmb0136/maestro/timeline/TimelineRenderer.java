@@ -376,7 +376,8 @@ public class TimelineRenderer {
 
     public enum CallbackType {
         OPEN_EDITOR,
-        SEEK, CLIP_SELECTION_CHANGED
+        SEEK,
+        CLIP_SELECTION_CHANGED
     }
 
     @FunctionalInterface
