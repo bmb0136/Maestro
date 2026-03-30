@@ -1,7 +1,6 @@
 package io.github.bmb0136.maestro.editors.clip;
 
 import io.github.bmb0136.maestro.App;
-import io.github.bmb0136.maestro.util.SpinnerUtil;
 import io.github.bmb0136.maestro.core.clip.ChordClip;
 import io.github.bmb0136.maestro.core.event.SetChordClipBaseOctaveEvent;
 import io.github.bmb0136.maestro.core.event.SetChordClipQualityEvent;
@@ -11,6 +10,7 @@ import io.github.bmb0136.maestro.core.theory.ChordQuality;
 import io.github.bmb0136.maestro.core.theory.Pitch;
 import io.github.bmb0136.maestro.core.theory.PitchName;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
+import io.github.bmb0136.maestro.util.SpinnerUtil;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;

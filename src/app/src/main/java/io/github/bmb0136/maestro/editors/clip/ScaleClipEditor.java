@@ -1,7 +1,6 @@
 package io.github.bmb0136.maestro.editors.clip;
 
 import io.github.bmb0136.maestro.App;
-import io.github.bmb0136.maestro.util.SpinnerUtil;
 import io.github.bmb0136.maestro.core.clip.ScaleClip;
 import io.github.bmb0136.maestro.core.event.*;
 import io.github.bmb0136.maestro.core.theory.Pitch;
@@ -9,6 +8,7 @@ import io.github.bmb0136.maestro.core.theory.PitchName;
 import io.github.bmb0136.maestro.core.theory.ScaleType;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import io.github.bmb0136.maestro.core.util.BiHashMap;
+import io.github.bmb0136.maestro.util.SpinnerUtil;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
