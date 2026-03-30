@@ -39,7 +39,6 @@ import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.*;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -318,7 +317,7 @@ public class AppController implements AutoCloseable {
 
     @FXML
     private void onAddTrackButtonClicked() {
-        var result = manager.append(new AddTrackToTimelineEvent(track));
+        var result = manager.append(new AddTrackToTimelineEvent(new Track()));
         if (!result.isOk()) {
             new Alert(Alert.AlertType.ERROR, "Failed to add track: " + result, ButtonType.OK).showAndWait();
         }
