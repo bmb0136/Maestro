@@ -49,7 +49,7 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
             if (!target.isTrack()) {
                 return;
             }
-            if (target.getTrackId().map(id -> id.equals(trackId)).orElse(false)) {
+            if (!target.getTrackId().map(id -> id.equals(trackId)).orElse(false)) {
                 return;
             }
             var track = target.getTrackId().flatMap(target.getTimeline()::getTrack).orElseThrow();
