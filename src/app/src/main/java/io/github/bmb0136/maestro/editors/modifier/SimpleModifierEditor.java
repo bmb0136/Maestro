@@ -86,6 +86,20 @@ public class SimpleModifierEditor<T extends Modifier> extends ModifierEditorSubs
         addLabeled(text, check);
     }
 
+    protected void addButton(String text, Runnable onClick) {
+        var button = new Button(text);
+        button.setOnAction(e -> onClick.run());
+        button.maxWidthProperty().bind(components.widthProperty());
+
+        HBox hbox = new HBox();
+        hbox.setPadding(new Insets(0, 8, 0, 8));
+        hbox.getChildren().add(button);
+        HBox.setHgrow(button, Priority.ALWAYS);
+
+        components.getChildren().add(hbox);
+        hbox.heightProperty().addListener(this::recalculateHeight);
+    }
+
     protected void addLabeled(String text, Node node) {
         HBox hbox = new HBox();
         hbox.setPadding(new Insets(0, 8, 0, 8));
