@@ -74,6 +74,18 @@ public class SimpleModifierEditor<T extends Modifier> extends ModifierEditorSubs
         addLabeled(text, box);
     }
 
+    protected void addBoolean(String text, ObservableValue<Boolean> getter, Consumer<Boolean> valueChanged) {
+        var check = new CheckBox();
+        getter.addListener((ignored1, ignored2, newValue) ->
+                check.setSelected(newValue));
+        check.selectedProperty().addListener((ignored1, oldValue, newValue) -> {
+            if (!Objects.equals(oldValue, newValue)) {
+                valueChanged.accept(newValue);
+            }
+        });
+        addLabeled(text, check);
+    }
+
     protected void addLabeled(String text, Node node) {
         HBox hbox = new HBox();
         hbox.setPadding(new Insets(0, 8, 0, 8));
