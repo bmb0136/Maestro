@@ -2,16 +2,15 @@ package io.github.bmb0136.maestro.editors.modifier;
 
 import io.github.bmb0136.maestro.core.modifier.Modifier;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
+import io.github.bmb0136.maestro.core.util.BiHashMap;
 import javafx.beans.Observable;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.scene.control.Spinner;
-import javafx.scene.control.SpinnerValueFactory;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.*;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -60,6 +59,19 @@ public class SimpleModifierEditor<T extends Modifier> extends ModifierEditorSubs
             }
         });
         addLabeled(text, field);
+    }
+
+    protected <E extends Enum<E>> void addEnum(String text, BiHashMap<String, E> converter, List<String> order, ObservableValue<E> getter, Consumer<E> valueChanged) {
+        var box = new ChoiceBox<String>();
+        order.forEach(box.getItems()::add);
+        getter.addListener((ignored1, ignored2, newValue) ->
+                box.setValue(converter.get2(newValue)));
+        box.valueProperty().addListener((ignored1, oldValue, newValue) -> {
+            if (!Objects.equals(oldValue, newValue) && converter.contains1(newValue)) {
+                valueChanged.accept(converter.get1(newValue));
+            }
+        });
+        addLabeled(text, box);
     }
 
     protected void addLabeled(String text, Node node) {
