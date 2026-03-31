@@ -9,6 +9,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.SpinnerValueFactory;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 
 import java.util.Objects;
@@ -40,6 +41,25 @@ public class SimpleModifierEditor<T extends Modifier> extends ModifierEditorSubs
             }
         });
         addLabeled(text, spinner);
+    }
+
+    protected void addFloat(String text, float min, float max, ObservableValue<Float> getter, Consumer<Float> valueChanged) {
+        var field = new TextField();
+        getter.addListener((ignored1, ignored2, newValue) ->
+                field.setText(newValue.toString()));
+        field.setOnAction(e -> {
+            try {
+                var value = Float.parseFloat(field.getText());
+                if (value >= min && value <= max) {
+                    valueChanged.accept(value);
+                } else {
+                    field.setText(getter.getValue().toString());
+                }
+            } catch (NumberFormatException ignored) {
+                field.setText(getter.getValue().toString());
+            }
+        });
+        addLabeled(text, field);
     }
 
     protected void addLabeled(String text, Node node) {
