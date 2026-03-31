@@ -323,8 +323,13 @@ public class TimelineRenderer {
                     selectedClip.set(clipId);
                     if (e.getClickCount() == 2) {
                         var trackId = manager.get().getTrackForClip(clipId).orElseThrow();
-                        clipBeingEdited.set(clipId);
-                        callback.run(trackId, clipId, 0, CallbackType.OPEN_EDITOR);
+                        if (clipId.equals(clipBeingEdited.get())) {
+                            clipBeingEdited.set(null);
+                            callback.run(trackId, null, 0, CallbackType.CLOSE_EDITOR);
+                        } else {
+                            clipBeingEdited.set(clipId);
+                            callback.run(trackId, clipId, 0, CallbackType.OPEN_EDITOR);
+                        }
                     }
                 }, () -> selectedClip.set(null));
                 case SECONDARY -> {
@@ -377,6 +382,7 @@ public class TimelineRenderer {
     public enum CallbackType {
         OPEN_EDITOR,
         SEEK,
+        CLOSE_EDITOR,
         CLIP_SELECTION_CHANGED
     }
 

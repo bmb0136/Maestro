@@ -376,6 +376,7 @@ public class AppController implements AutoCloseable {
                 assert clipId != null;
                 setupEditorFor(trackId, manager.get().getClip(clipId).orElseThrow());
             }
+            case CLOSE_EDITOR -> setupEditorFor(null, null);
             case CLIP_SELECTION_CHANGED -> {
                 if (trackId != null && clipId != null) {
                     selectedClip.set(new Tuple2<>(trackId, clipId));
