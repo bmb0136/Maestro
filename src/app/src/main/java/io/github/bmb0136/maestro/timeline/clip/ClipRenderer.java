@@ -6,16 +6,17 @@ import io.github.bmb0136.maestro.core.clip.PianoRollClip;
 import io.github.bmb0136.maestro.core.clip.ScaleClip;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.paint.Color;
 import org.jetbrains.annotations.NotNull;
 
 public final class ClipRenderer {
     private ClipRenderer() {}
 
-    public static void renderClip(@NotNull Clip clip, @NotNull GraphicsContext gc, @NotNull Rectangle2D area) {
+    public static void renderClip(@NotNull Clip clip, @NotNull GraphicsContext gc, @NotNull Rectangle2D area, @NotNull Color baseColor) {
         switch (clip) {
-            case PianoRollClip c -> PianoRollClipRenderer.render(c, gc, area);
-            case ChordClip c -> ChordClipRenderer.render(c, gc, area);
-            case ScaleClip c -> ScaleClipRenderer.render(c, gc, area);
+            case PianoRollClip c -> PianoRollClipRenderer.render(c, gc, area, baseColor);
+            case ChordClip c -> ChordClipRenderer.render(c, gc, area, baseColor);
+            case ScaleClip c -> ScaleClipRenderer.render(c, gc, area, baseColor);
             default -> throw new IllegalArgumentException("Unknown clip type: " + clip.getClass().getName());
         }
     }

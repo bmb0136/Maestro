@@ -266,10 +266,7 @@ public class TimelineRenderer {
                 gc.rect(rect.getMinX(), rect.getMinY(), rect.getWidth(), rect.getHeight());
                 gc.clip();
 
-                gc.setFill(baseColor);
-                gc.setStroke(baseColor);
-                ClipRenderer.renderClip(clip, gc, inside);
-
+                ClipRenderer.renderClip(clip, gc, inside, baseColor);
                 gc.restore();
 
                 gc.setLineWidth(3);
