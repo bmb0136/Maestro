@@ -7,6 +7,7 @@ import io.github.bmb0136.maestro.core.clip.ScaleClip;
 import io.github.bmb0136.maestro.core.event.AddClipToTrackEvent;
 import io.github.bmb0136.maestro.core.event.RemoveClipFromTrackEvent;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
+import io.github.bmb0136.maestro.timeline.clip.ClipRenderer;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleExpression;
 import javafx.beans.property.*;
@@ -241,9 +242,35 @@ public class TimelineRenderer {
                 var rect = new Rectangle2D(startX, tracksToLocalY(trackIndex), endX - startX, TrackSubScene.HEIGHT);
                 visibleClips.put(clip.getId(), rect);
 
-                gc.setFill(clip.getId().equals(clipBeingEdited.get()) ? Color.ORANGE : Color.BLUE);
+                gc.save();
 
-                gc.fillRect(rect.getMinX(), rect.getMinY(), rect.getWidth(), rect.getHeight());
+
+                // Set "base color" based on if the clip is selected or not
+                var baseColor = clip.getId().equals(clipBeingEdited.get()) ? Color.ORANGE : Color.BLUE;
+
+                // Fill header + background
+                final double PAD = 3;
+                final double HEADER_SIZE = gc.getFont().getSize() + (2 * PAD);
+                var inside = new Rectangle2D(rect.getMinX(), rect.getMinY() + HEADER_SIZE, rect.getWidth(), rect.getHeight() - HEADER_SIZE);
+
+                gc.setFill(baseColor);
+                gc.fillRect(rect.getMinX(), rect.getMinY(), rect.getWidth(), HEADER_SIZE);
+                gc.setFill(baseColor.darker());
+                gc.fillRect(inside.getMinX(), inside.getMinY(), inside.getWidth(), inside.getHeight());
+
+                gc.setFill(Color.WHITE);
+                gc.fillText(ClipRenderer.getHeaderText(clip), rect.getMinX() + PAD, rect.getMinY() + HEADER_SIZE - PAD);
+
+                // Ensure everything stays inside
+                gc.beginPath();
+                gc.rect(rect.getMinX(), rect.getMinY(), rect.getWidth(), rect.getHeight());
+                gc.clip();
+
+                gc.setFill(baseColor);
+                gc.setStroke(baseColor);
+                ClipRenderer.renderClip(clip, gc, inside);
+
+                gc.restore();
 
                 gc.setLineWidth(3);
                 if (clip.getId().equals(selectedClip.get())) {
