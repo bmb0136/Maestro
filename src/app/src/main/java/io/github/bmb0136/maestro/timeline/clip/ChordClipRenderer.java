@@ -31,16 +31,18 @@ public class ChordClipRenderer {
         Rectangle2D new_area =
                 new Rectangle2D(area.getMinX(), area.getMinY(), area.getWidth() / 2, area.getHeight()/4);
 
-        gc.strokeRect(new_area.getMinX(), new_area.getMinY(), new_area.getWidth() , new_area.getHeight());
-         updateModifierCount(gc, new_area, baseColor = Color.WHITE, clip);
-         new_area = new Rectangle2D(new_area.getMinX(), (new_area.getMinY() + 4) + new_area.getHeight(), new_area.getWidth(), new_area.getHeight());
+        //gc.strokeRect(new_area.getMinX(), new_area.getMinY(), new_area.getWidth() , new_area.getHeight());
+         updateModifierCount(gc, area, baseColor = Color.WHITE, clip);
+         //new_area = new Rectangle2D(new_area.getMinX(), (new_area.getMinY() + 4) + new_area.getHeight(), new_area.getWidth(), new_area.getHeight());
         gc.strokeRect(new_area.getMinX(), new_area.getMinY(), new_area.getWidth() , new_area.getHeight());
 
          NoteUpdater(gc, new_area , baseColor = Color.WHITE, clip);
         gc.restore();
 
     }
-
+    //Grabs the NoteList assigned to Chord; grabbed through  ChordBuilderView
+    ///Area - The New designated Area of the NoteList
+    ///Color - Color of Text
     private static void NoteUpdater(@NotNull GraphicsContext gc, @NotNull Rectangle2D area, @NotNull Color color, @NotNull ChordClip clip) {
     gc.clearRect(0, 0, area.getWidth(), area.getHeight());
     gc.setFill(color);
@@ -63,22 +65,23 @@ public class ChordClipRenderer {
 
     // case ChordClip c -> ChordClipRenderer.render(c, gc, area, baseColor);
     //Purpose: Updates the Modifier count for the Selected Clip
-    //
+    ////Area - The New designated Area of the NoteList
+    ///Color - Color of Text
     private static void updateModifierCount(GraphicsContext gc,Rectangle2D area, Color baseColor, ChordClip clip) {
 
 
         gc.clearRect(0, 0, area.getWidth(), area.getHeight());
 
-        Label CountModifiers = new Label("Modifier Count: " + clip.getModifiers().size());
+        Label CountModifiers = new Label("Mods:" + clip.getModifiers().size());
 
         CountModifiers.setFont(gc.getFont());
-        CountModifiers.setMaxSize(area.getWidth(), area.getHeight());
+        //CountModifiers.setMaxSize(area.getWidth(), area.getHeight());
         gc.setFill(baseColor);
-        Font font = new Font(gc.getFont().getName(), Math.sqrt(area.getHeight() * area.getWidth()) / 3);
+        Font font = new Font(gc.getFont().getName(), 14);
         gc.setFont(font);
 
         //Only needs the Width of the new Rectangle to stay within Y-Boundaries
-        gc.fillText(CountModifiers.getText(), area.getMinX(), area.getMaxY() - 1, area.getWidth());
+        gc.fillText(CountModifiers.getText(), area.getMaxX()-45, area.getMinY());
 
 
 
