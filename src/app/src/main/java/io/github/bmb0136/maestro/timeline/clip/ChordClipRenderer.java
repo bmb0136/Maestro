@@ -4,6 +4,7 @@ import io.github.bmb0136.maestro.core.clip.ChordClip;
 import io.github.bmb0136.maestro.core.theory.Note;
 import io.github.bmb0136.maestro.core.theory.Pitch;
 import javafx.geometry.Rectangle2D;
+import javafx.geometry.VPos;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Label;
 import javafx.scene.paint.Color;
@@ -34,9 +35,8 @@ public class ChordClipRenderer {
         //gc.strokeRect(new_area.getMinX(), new_area.getMinY(), new_area.getWidth() , new_area.getHeight());
          updateModifierCount(gc, area, baseColor = Color.WHITE, clip);
          //new_area = new Rectangle2D(new_area.getMinX(), (new_area.getMinY() + 4) + new_area.getHeight(), new_area.getWidth(), new_area.getHeight());
-        gc.strokeRect(new_area.getMinX(), new_area.getMinY(), new_area.getWidth() , new_area.getHeight());
 
-         NoteUpdater(gc, new_area , baseColor = Color.WHITE, clip);
+         NoteUpdater(gc, area , baseColor = Color.WHITE, clip);
         gc.restore();
 
     }
@@ -50,17 +50,32 @@ public class ChordClipRenderer {
     //Grabbing the Notes for the Chord **Code Stolen from ChordClipEditor**
     Label NoteList = new Label();
     String Notes = "";
+
         for (Pitch pitch : clip.getChordBuilderView()) {
             Notes += pitch.name() + ", ";
+
         }
+        //I'm Lazy(Gets rid of the last Comma) - Trent
+        Notes = Notes.substring(0, Notes.length() - 2);
     //Grabbing The Major of the Chord
-    Notes += "(" + clip.getChordBuilderView().getChordName() + ")";
+    String Chord_name = "Chord: " + clip.getChordBuilderView().getChordName();
     NoteList.setText(Notes);
 
         //Boundary Settings
-        Font font = new Font(gc.getFont().getName(), 18);
-        gc.setFont(font);
-        gc.fillText(NoteList.getText(), area.getMinX(), (area.getMinY() +  (area.getMaxY() - area.getMinY() ) / 2) + 6, area.getWidth());
+        Font Notelist_font = new Font(gc.getFont().getName(), 32);
+        Font Chord_font = new Font(gc.getFont().getName(), 16);
+        gc.setTextAlign(TextAlignment.CENTER);
+        gc.setTextBaseline(VPos.CENTER);
+
+        double length = ( area.getMaxX() - area.getMinX()); //Due to how the canvas is rendered, using MaxX & MaxY won't lock the text in-place.
+        double width = ( area.getMaxY() - area.getMinY());
+
+        gc.setFont(Notelist_font);
+        gc.fillText(NoteList.getText(), area.getMinX() +(length / 2), area.getMinY() +(width / 2));
+
+        gc.setFont(Chord_font);
+        gc.fillText(Chord_name, area.getMinX() + (length / 2), area.getMinY() + (width - 15) );
+
     }
 
     // case ChordClip c -> ChordClipRenderer.render(c, gc, area, baseColor);
