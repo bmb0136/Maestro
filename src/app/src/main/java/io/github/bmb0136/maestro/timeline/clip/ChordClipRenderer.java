@@ -34,12 +34,11 @@ public class ChordClipRenderer {
         gc.strokeRect(new_area.getMinX(), new_area.getMinY(), new_area.getWidth() , new_area.getHeight());
          updateModifierCount(gc, new_area, baseColor = Color.WHITE, clip);
          new_area = new Rectangle2D(new_area.getMinX(), (new_area.getMinY() + 4) + new_area.getHeight(), new_area.getWidth(), new_area.getHeight());
-     gc.strokeRect(new_area.getMinX(), new_area.getMinY(), new_area.getWidth() , new_area.getHeight());
+        gc.strokeRect(new_area.getMinX(), new_area.getMinY(), new_area.getWidth() , new_area.getHeight());
 
          NoteUpdater(gc, new_area , baseColor = Color.WHITE, clip);
         gc.restore();
-        //Grab Modifiers clip.getModifiers();
-        //Grab Notes
+
     }
 
     private static void NoteUpdater(@NotNull GraphicsContext gc, @NotNull Rectangle2D area, @NotNull Color color, @NotNull ChordClip clip) {
@@ -52,10 +51,11 @@ public class ChordClipRenderer {
         for (Pitch pitch : clip.getChordBuilderView()) {
             Notes += pitch.name() + ", ";
         }
+    //Grabbing The Major of the Chord
     Notes += "(" + clip.getChordBuilderView().getChordName() + ")";
     NoteList.setText(Notes);
 
-
+        //Boundary Settings
         Font font = new Font(gc.getFont().getName(), 10);
         gc.setFont(font);
         gc.fillText(NoteList.getText(), area.getMinX(), area.getMinY() +  (area.getMaxY() - area.getMinY()) / 2);
@@ -76,20 +76,12 @@ public class ChordClipRenderer {
         gc.setFill(baseColor);
         Font font = new Font(gc.getFont().getName(), Math.sqrt(area.getHeight() * area.getWidth()) / 3);
         gc.setFont(font);
+
         //Only needs the Width of the new Rectangle to stay within Y-Boundaries
         gc.fillText(CountModifiers.getText(), area.getMinX(), area.getMaxY() - 1, area.getWidth());
 
 
-        /*
-        for(int i = 0; i < 4; i++){
-            gc.fillRect(area2.getMinX(), area2.getMinY(), area2.getWidth(), area2.getHeight());
-            gc.save();
-            updateModifierCount(gc, clip, area2);
-            gc.restore();
 
-            area2 = new Rectangle2D(area2.getMinX(), (area2.getMinY() + 4) + area2.getHeight(), area2.getWidth(), area2.getHeight());
-        }
-         */
 
 
 
