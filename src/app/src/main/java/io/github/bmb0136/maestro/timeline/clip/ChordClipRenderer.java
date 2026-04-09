@@ -5,8 +5,12 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Label;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+
 import javafx.scene.text.TextAlignment;
 import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
 
 public class ChordClipRenderer {
     /**
@@ -23,41 +27,46 @@ public class ChordClipRenderer {
     // color baseColor;
     public static void render(@NotNull ChordClip clip, @NotNull GraphicsContext gc, @NotNull Rectangle2D area, @NotNull Color baseColor) {
 
-
-         paintAreaChord(gc, area, baseColor = Color.BLACK);
-        // updateModifierCount(gc, clip, area);
+        gc.save();
+         updateModifierCount(gc, area, baseColor = Color.BLACK, clip);
+        gc.restore();
         //gc.fillRect(area.getWidth() / 2, area.getHeight() / 2, area.getWidth(), area.getHeight());
         //Grab Modifiers clip.getModifiers();
         //Grab Notes
     }
     // case ChordClip c -> ChordClipRenderer.render(c, gc, area, baseColor);
+    //Purpose: Updates the Modifier count for the Selected Clip
+    //
+    private static void updateModifierCount(GraphicsContext gc,Rectangle2D area, Color baseColor, ChordClip clip) {
 
-    private static void updateModifierCount(GraphicsContext gc, ChordClip clip, Rectangle2D area) {
+
         gc.clearRect(0, 0, area.getWidth(), area.getHeight());
-        Label CountModifiers = new Label(clip.getModifiers().size() + "");
-        gc.setFill(Color.RED);
-
-        gc.fillText(CountModifiers.getText(), area.getWidth()-4, area.getMinY() + gc.getFont().getSize() * 3);
-        //CountModifiers.setLayoutX(area.getWidth());
-        //CountModifiers.setLayoutY(area.getHeight());
-    }
-
-    private static void paintAreaChord(GraphicsContext gc,Rectangle2D area, Color baseColor){
-        gc.setFill(baseColor);
-        System.out.print(area);
-        // gc.fillRect(area.getMinX(), area.getMinY(), area.getWidth() / 2 , area.getHeight() / 4);
+        gc.setStroke(baseColor);
         Rectangle2D area2 =
-                new Rectangle2D(area.getMinX(), area.getMinY(), area.getWidth() / 3, area.getHeight() / 5);
+                new Rectangle2D(area.getMinX(), area.getMinY(), area.getWidth() / 2, area.getHeight()/4);
+            gc.strokeRect(area.getMinX(), area.getMinY(), area2.getWidth() , area2.getHeight());
+        Label CountModifiers = new Label("Modifier Count: " + clip.getModifiers().size() + "");
+        CountModifiers.setFont(gc.getFont());
+        gc.setFill(Color.WHITE);
+        Font font = new Font(gc.getFont().getName(), 18);
+        gc.setFont(font);
+        gc.fillText(CountModifiers.getText(), area2.getMinX(), area2.getMaxY(), 100);
+
+        //gc.setTextAlign(TextAlignment.RIGHT);
+        //gc.fillText("Modifiers", area2.getMaxX(), area2.getMaxY());
+
+        /*
         for(int i = 0; i < 4; i++){
             gc.fillRect(area2.getMinX(), area2.getMinY(), area2.getWidth(), area2.getHeight());
+            gc.save();
+            updateModifierCount(gc, clip, area2);
+            gc.restore();
 
             area2 = new Rectangle2D(area2.getMinX(), (area2.getMinY() + 4) + area2.getHeight(), area2.getWidth(), area2.getHeight());
         }
-        //gc.fillRect(area2.getMinX(), area2.getMinY(), area2.getWidth(), area2.getHeight());
-        //gc.fillRect(area.getWidth(), area.getHeight(), area.getWidth() /2, area.getHeight());
-        // updateModifierCount(
-        //gc.fillRoundRect(area.getWidth()/2, area.getWidth(), area.getWidth(), area.getHeight(), 20, 20);
-        Label CountModifiers = new Label();
+         */
+
+
 
     }
 }
