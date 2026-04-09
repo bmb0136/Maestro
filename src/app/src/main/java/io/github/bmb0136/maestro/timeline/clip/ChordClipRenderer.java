@@ -75,13 +75,13 @@ public class ChordClipRenderer {
         Label CountModifiers = new Label("Mods:" + clip.getModifiers().size());
 
         CountModifiers.setFont(gc.getFont());
-        //CountModifiers.setMaxSize(area.getWidth(), area.getHeight());
         gc.setFill(baseColor);
-        Font font = new Font(gc.getFont().getName(), 14);
+
+        Font font = new Font(gc.getFont().getName(), 12  + (Math.sqrt(area.getHeight() / 4)));
         gc.setFont(font);
 
         //Only needs the Width of the new Rectangle to stay within Y-Boundaries
-        gc.fillText(CountModifiers.getText(), area.getMaxX()-45, area.getMinY());
+        gc.fillText(CountModifiers.getText(), area.getMaxX()-60, area.getMinY(), area.getWidth());
 
 
 
