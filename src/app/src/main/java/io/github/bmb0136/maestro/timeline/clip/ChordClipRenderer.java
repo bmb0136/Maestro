@@ -21,19 +21,31 @@ public class ChordClipRenderer {
      * @param area The area of the timeline canvas to draw to
      * @param baseColor The primary accent color to render things in
      */
-    // final ChordClip clip;
-    // final GraphicsContext gc;
-    // REctangle2D area;
-    // color baseColor;
     public static void render(@NotNull ChordClip clip, @NotNull GraphicsContext gc, @NotNull Rectangle2D area, @NotNull Color baseColor) {
 
         gc.save();
-         updateModifierCount(gc, area, baseColor = Color.BLACK, clip);
+        gc.setStroke(Color.BLACK);
+
+        Rectangle2D new_area =
+                new Rectangle2D(area.getMinX(), area.getMinY(), area.getWidth() / 2, area.getHeight()/4);
+
+        gc.strokeRect(new_area.getMinX(), new_area.getMinY(), new_area.getWidth() , new_area.getHeight());
+         updateModifierCount(gc, new_area, baseColor = Color.WHITE, clip);
+         new_area = new Rectangle2D(new_area.getMinX(), (new_area.getMinY() + 4) + new_area.getHeight(), new_area.getWidth(), new_area.getHeight());
+         System.out.println(Math.sqrt(new_area.getWidth() * new_area.getHeight()) / 3);
+     gc.strokeRect(new_area.getMinX(), new_area.getMinY(), new_area.getWidth() , new_area.getHeight());
+
+         NoteUpdater(gc, area , baseColor = Color.BLACK, clip);
         gc.restore();
-        //gc.fillRect(area.getWidth() / 2, area.getHeight() / 2, area.getWidth(), area.getHeight());
         //Grab Modifiers clip.getModifiers();
         //Grab Notes
     }
+
+    private static void NoteUpdater(@NotNull GraphicsContext gc, @NotNull Rectangle2D area, @NotNull Color color, @NotNull ChordClip clip) {
+    gc.clearRect(0, 0, area.getWidth(), area.getHeight());
+    gc.setFill(color);
+    }
+
     // case ChordClip c -> ChordClipRenderer.render(c, gc, area, baseColor);
     //Purpose: Updates the Modifier count for the Selected Clip
     //
@@ -41,16 +53,18 @@ public class ChordClipRenderer {
 
 
         gc.clearRect(0, 0, area.getWidth(), area.getHeight());
-        gc.setStroke(baseColor);
-        Rectangle2D area2 =
-                new Rectangle2D(area.getMinX(), area.getMinY(), area.getWidth() / 2, area.getHeight()/4);
-            gc.strokeRect(area.getMinX(), area.getMinY(), area2.getWidth() , area2.getHeight());
+
+
+
         Label CountModifiers = new Label("Modifier Count: " + clip.getModifiers().size() + "");
+
         CountModifiers.setFont(gc.getFont());
-        gc.setFill(Color.WHITE);
-        Font font = new Font(gc.getFont().getName(), 18);
+        CountModifiers.setMaxSize(area.getWidth(), area.getHeight());
+        gc.setFill(baseColor);
+        //System.out.println(Math.sqrt((area.getMaxX() * area.getMaxY()) / area.getHeight())  );
+        Font font = new Font(gc.getFont().getName(), Math.sqrt(area.getHeight() * area.getWidth()) / 3);
         gc.setFont(font);
-        gc.fillText(CountModifiers.getText(), area2.getMinX(), area2.getMaxY(), 100);
+        gc.fillText(CountModifiers.getText(), area.getMinX(), area.getMaxY() - 1, area.getWidth());
 
         //gc.setTextAlign(TextAlignment.RIGHT);
         //gc.fillText("Modifiers", area2.getMaxX(), area2.getMaxY());
