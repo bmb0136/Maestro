@@ -1,6 +1,8 @@
 package io.github.bmb0136.maestro.timeline.clip;
 
 import io.github.bmb0136.maestro.core.clip.ChordClip;
+import io.github.bmb0136.maestro.core.theory.Note;
+import io.github.bmb0136.maestro.core.theory.Pitch;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Label;
@@ -32,10 +34,9 @@ public class ChordClipRenderer {
         gc.strokeRect(new_area.getMinX(), new_area.getMinY(), new_area.getWidth() , new_area.getHeight());
          updateModifierCount(gc, new_area, baseColor = Color.WHITE, clip);
          new_area = new Rectangle2D(new_area.getMinX(), (new_area.getMinY() + 4) + new_area.getHeight(), new_area.getWidth(), new_area.getHeight());
-         System.out.println(Math.sqrt(new_area.getWidth() * new_area.getHeight()) / 3);
      gc.strokeRect(new_area.getMinX(), new_area.getMinY(), new_area.getWidth() , new_area.getHeight());
 
-         NoteUpdater(gc, area , baseColor = Color.BLACK, clip);
+         NoteUpdater(gc, new_area , baseColor = Color.WHITE, clip);
         gc.restore();
         //Grab Modifiers clip.getModifiers();
         //Grab Notes
@@ -44,6 +45,20 @@ public class ChordClipRenderer {
     private static void NoteUpdater(@NotNull GraphicsContext gc, @NotNull Rectangle2D area, @NotNull Color color, @NotNull ChordClip clip) {
     gc.clearRect(0, 0, area.getWidth(), area.getHeight());
     gc.setFill(color);
+
+    //Grabbing the Notes for the Chord **Code Stolen from ChordClipEditor**
+    Label NoteList = new Label();
+    String Notes = "";
+        for (Pitch pitch : clip.getChordBuilderView()) {
+            Notes += pitch.name() + ", ";
+        }
+    Notes += "(" + clip.getChordBuilderView().getChordName() + ")";
+    NoteList.setText(Notes);
+
+
+        Font font = new Font(gc.getFont().getName(), 10);
+        gc.setFont(font);
+        gc.fillText(NoteList.getText(), area.getMinX(), area.getMinY() +  (area.getMaxY() - area.getMinY()) / 2);
     }
 
     // case ChordClip c -> ChordClipRenderer.render(c, gc, area, baseColor);
@@ -54,20 +69,16 @@ public class ChordClipRenderer {
 
         gc.clearRect(0, 0, area.getWidth(), area.getHeight());
 
-
-
-        Label CountModifiers = new Label("Modifier Count: " + clip.getModifiers().size() + "");
+        Label CountModifiers = new Label("Modifier Count: " + clip.getModifiers().size());
 
         CountModifiers.setFont(gc.getFont());
         CountModifiers.setMaxSize(area.getWidth(), area.getHeight());
         gc.setFill(baseColor);
-        //System.out.println(Math.sqrt((area.getMaxX() * area.getMaxY()) / area.getHeight())  );
         Font font = new Font(gc.getFont().getName(), Math.sqrt(area.getHeight() * area.getWidth()) / 3);
         gc.setFont(font);
+        //Only needs the Width of the new Rectangle to stay within Y-Boundaries
         gc.fillText(CountModifiers.getText(), area.getMinX(), area.getMaxY() - 1, area.getWidth());
 
-        //gc.setTextAlign(TextAlignment.RIGHT);
-        //gc.fillText("Modifiers", area2.getMaxX(), area2.getMaxY());
 
         /*
         for(int i = 0; i < 4; i++){
