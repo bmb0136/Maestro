@@ -56,9 +56,9 @@ public class ChordClipRenderer {
     NoteList.setText(Notes);
 
         //Boundary Settings
-        Font font = new Font(gc.getFont().getName(), 10);
+        Font font = new Font(gc.getFont().getName(), 18);
         gc.setFont(font);
-        gc.fillText(NoteList.getText(), area.getMinX(), area.getMinY() +  (area.getMaxY() - area.getMinY()) / 2);
+        gc.fillText(NoteList.getText(), area.getMinX(), (area.getMinY() +  (area.getMaxY() - area.getMinY() ) / 2) + 6);
     }
 
     // case ChordClip c -> ChordClipRenderer.render(c, gc, area, baseColor);
