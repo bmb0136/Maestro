@@ -28,7 +28,7 @@ public class RemoveAlterationFromChordClipEvent extends ClipEvent {
             return EventResult.WRONG_CLIP_TYPE;
         }
         var oldAlteration = target.getChordBuilderView().getAlteration(scaleDegree);
-        if (oldAlteration.map(a -> a == accidental).orElse(false)) {
+        if (oldAlteration.isEmpty()) {
             return EventResult.NOOP;
         }
         if (accidental != null) {
