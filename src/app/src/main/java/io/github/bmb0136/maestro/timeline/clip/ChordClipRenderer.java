@@ -16,92 +16,88 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 public class ChordClipRenderer {
-    /**
-     * Render the inside of the given clip onto the timeline
-     *
-     * @param clip The clip being rendered
-     * @param gc The {@link GraphicsContext} associated with the timeline canvas
-     * @param area The area of the timeline canvas to draw to
-     * @param baseColor The primary accent color to render things in
-     */
-    public static void render(@NotNull ChordClip clip, @NotNull GraphicsContext gc, @NotNull Rectangle2D area, @NotNull Color baseColor) {
+	/**
+	 * Render the inside of the given clip onto the timeline
+	 *
+	 * @param clip      The clip being rendered
+	 * @param gc        The {@link GraphicsContext} associated with the timeline canvas
+	 * @param area      The area of the timeline canvas to draw to
+	 * @param baseColor The primary accent color to render things in
+	 */
+	public static void render(@NotNull ChordClip clip, @NotNull GraphicsContext gc, @NotNull Rectangle2D area, @NotNull Color baseColor) {
 
-        gc.save();
-        gc.setStroke(Color.BLACK);
-
-        Rectangle2D new_area =
-                new Rectangle2D(area.getMinX(), area.getMinY(), area.getWidth() / 2, area.getHeight()/4);
-
-        //gc.strokeRect(new_area.getMinX(), new_area.getMinY(), new_area.getWidth() , new_area.getHeight());
-         updateModifierCount(gc, area, baseColor = Color.WHITE, clip);
-         //new_area = new Rectangle2D(new_area.getMinX(), (new_area.getMinY() + 4) + new_area.getHeight(), new_area.getWidth(), new_area.getHeight());
-
-         NoteUpdater(gc, area , baseColor = Color.WHITE, clip);
-        gc.restore();
-
-    }
-    //Grabs the NoteList assigned to Chord; grabbed through  ChordBuilderView
-    ///Area - The New designated Area of the NoteList
-    ///Color - Color of Text
-    private static void NoteUpdater(@NotNull GraphicsContext gc, @NotNull Rectangle2D area, @NotNull Color color, @NotNull ChordClip clip) {
-    gc.clearRect(0, 0, area.getWidth(), area.getHeight());
-    gc.setFill(color);
-
-    //Grabbing the Notes for the Chord **Code Stolen from ChordClipEditor**
-    Label NoteList = new Label();
-    String Notes = "";
-
-        for (Pitch pitch : clip.getChordBuilderView()) {
-            Notes += pitch.name() + ", ";
-
-        }
-        //I'm Lazy(Gets rid of the last Comma) - Trent
-        Notes = Notes.substring(0, Notes.length() - 2);
-    //Grabbing The Major of the Chord
-    String Chord_name = "Chord: " + clip.getChordBuilderView().getChordName();
-    NoteList.setText(Notes);
-
-        //Boundary Settings
-        Font Notelist_font = new Font(gc.getFont().getName(), 32);
-        Font Chord_font = new Font(gc.getFont().getName(), 16);
-        gc.setTextAlign(TextAlignment.CENTER);
-        gc.setTextBaseline(VPos.CENTER);
-
-        double length = ( area.getMaxX() - area.getMinX()); //Due to how the canvas is rendered, using MaxX & MaxY won't lock the text in-place.
-        double width = ( area.getMaxY() - area.getMinY());
-
-        gc.setFont(Notelist_font);
-        gc.fillText(NoteList.getText(), area.getMinX() +(length / 2), area.getMinY() +(width / 2));
-
-        gc.setFont(Chord_font);
-        gc.fillText(Chord_name, area.getMinX() + (length / 2), area.getMinY() + (width - 15) );
-
-    }
-
-    // case ChordClip c -> ChordClipRenderer.render(c, gc, area, baseColor);
-    //Purpose: Updates the Modifier count for the Selected Clip
-    ////Area - The New designated Area of the NoteList
-    ///Color - Color of Text
-    private static void updateModifierCount(GraphicsContext gc,Rectangle2D area, Color baseColor, ChordClip clip) {
+		gc.save();
+		gc.setFill(baseColor.invert());
+		gc.fillRect(area.getMinX(), area.getMinY(), area.getWidth(), area.getHeight());
 
 
-        gc.clearRect(0, 0, area.getWidth(), area.getHeight());
+		Color clipTextColor = baseColor;
 
-        Label CountModifiers = new Label("Mods:" + clip.getModifiers().size());
+		updateModifierCount(gc, area, clipTextColor.invert(), clip);
 
-        CountModifiers.setFont(gc.getFont());
-        gc.setFill(baseColor);
+		NoteUpdater(gc, area, clipTextColor, clip);
+		gc.restore();
 
-        Font font = new Font(gc.getFont().getName(), 12  + (Math.sqrt(area.getHeight() / 4)));
-        gc.setFont(font);
+	}
+	//Grabs the NoteList assigned to Chord; grabbed through  ChordBuilderView
+	/// Area - The New designated Area of the NoteList
+	/// Color - Color of Text
+	private static void NoteUpdater(@NotNull GraphicsContext gc, @NotNull Rectangle2D area, @NotNull Color color, @NotNull ChordClip clip) {
+		gc.clearRect(0, 0, area.getWidth(), area.getHeight());
+		gc.setFill(color);
 
-        //Only needs the Width of the new Rectangle to stay within Y-Boundaries
-        gc.fillText(CountModifiers.getText(), area.getMaxX()-60, area.getMinY(), area.getWidth());
+		//Grabbing the Notes for the Chord **Code Stolen from ChordClipEditor**
+		Label NoteList = new Label();
+		String Notes = "";
+
+		for (Pitch pitch : clip.getChordBuilderView()) {
+			Notes += pitch.name() + ", ";
+
+		}
+		//I'm Lazy(Gets rid of the last Comma) - Trent
+		Notes = Notes.substring(0, Notes.length() - 2);
+
+		//Grabbing The Name of the Chord
+		String Chord_name = "Chord: " + clip.getChordBuilderView().getChordName();
+		NoteList.setText(Notes);
+
+		//Boundary Settings
+		Font Notelist_font = new Font(gc.getFont().getName(), 32);
+		Font Chord_font = new Font(gc.getFont().getName(), 16);
+		gc.setTextAlign(TextAlignment.CENTER);
+		gc.setTextBaseline(VPos.CENTER);
+
+		double length = (area.getMaxX() - area.getMinX()); //Due to how the canvas is rendered, using MaxX & MaxY won't lock the text in-place.
+		double width = (area.getMaxY() - area.getMinY());
+
+		gc.setFont(Notelist_font);
+		gc.fillText(NoteList.getText(), area.getMinX() + (length / 2), area.getMinY() + (width / 2));
+
+		gc.setFont(Chord_font);
+		gc.fillText(Chord_name, area.getMinX() + (length / 2), area.getMinY() + (width - 15));
+
+	}
+
+	// case ChordClip c -> ChordClipRenderer.render(c, gc, area, baseColor);
+	//Purpose: Updates the Modifier count for the Selected Clip
+	/// /Area - The New designated Area of the NoteList
+	/// Color - Color of Text
+	private static void updateModifierCount(GraphicsContext gc, Rectangle2D area, Color color, ChordClip clip) {
 
 
+		gc.clearRect(0, 0, area.getWidth(), area.getHeight());
+		gc.setFill(color);
+
+		Label CountModifiers = new Label("Mods:" + clip.getModifiers().size());
+
+		CountModifiers.setFont(gc.getFont());
+
+		Font font = new Font(gc.getFont().getName(), 12 + (Math.sqrt(area.getHeight() / 4)));
+		gc.setFont(font);
+
+		//Only needs the Width of the new Rectangle to stay within Y-Boundaries
+		gc.fillText(CountModifiers.getText(), area.getMaxX() - 60, area.getMinY(), area.getWidth());
 
 
-
-
-    }
+	}
 }
