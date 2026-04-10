@@ -9,6 +9,7 @@ import java.util.*;
 public class ChordBuilder {
     private final TreeSet<Pitch> pitches = new TreeSet<>(Comparator.comparingInt(Pitch::toMidi));
     private final View view = new View();
+    private final HashMap<Integer, Accidental> alterations = new HashMap<>();
     @NotNull
     private PitchName rootNote = PitchName.C;
     private int inversionNumber = 0;
@@ -17,7 +18,6 @@ public class ChordBuilder {
     @NotNull
     private ChordQuality quality = ChordQuality.MAJOR;
     private int baseOctave = 4;
-    private final HashMap<Integer, Accidental> alterations = new HashMap<>();
 
     public View getView() {
         return view;
@@ -109,7 +109,8 @@ public class ChordBuilder {
             switch (alt.getValue()) {
                 case SHARP -> pitch = pitch.addSemitones(1, true);
                 case FLAT -> pitch = pitch.addSemitones(-1, false);
-                default -> {}
+                default -> {
+                }
             }
             var name = pitch.name();
             pitches.removeIf(p -> p.name().isEnharmonicallyEquivalentTo(name));
