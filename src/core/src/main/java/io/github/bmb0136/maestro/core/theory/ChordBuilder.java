@@ -181,13 +181,13 @@ public class ChordBuilder {
         if (addParens) {
             sb.append('(');
         }
-        for (var it = alterations.entrySet().iterator(); it.hasNext(); ) {
+        for (var it = view.getAlterations().iterator(); it.hasNext(); ) {
             var alt = it.next();
-            switch (alt.getValue()) {
+            switch (alt.first()) {
                 case SHARP -> sb.append('#');
                 case FLAT -> sb.append('b');
             }
-            sb.append(alt.getKey());
+            sb.append(alt.second());
             if (it.hasNext()) {
                 sb.append(',');
             }
@@ -234,12 +234,12 @@ public class ChordBuilder {
             return ChordBuilder.this.getChordName();
         }
 
-        public List<Tuple2<Integer, Accidental>> getAlterations() {
-            var list = new ArrayList<Tuple2<Integer, Accidental>>(alterations.size());
+        public List<Tuple2<Accidental, Integer>> getAlterations() {
+            var list = new ArrayList<Tuple2<Accidental, Integer>>(alterations.size());
             for (var alt : alterations.entrySet()) {
-                list.add(new Tuple2<>(alt.getKey(), alt.getValue()));
+                list.add(new Tuple2<>(alt.getValue(), alt.getKey()));
             }
-            list.sort(Comparator.comparingInt(Tuple2::first));
+            list.sort(Comparator.comparingInt(Tuple2::second));
             return Collections.unmodifiableList(list);
         }
 
