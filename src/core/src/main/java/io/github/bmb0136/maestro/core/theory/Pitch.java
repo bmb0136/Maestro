@@ -63,6 +63,22 @@ public record Pitch(@NotNull PitchName name, int octave) implements Comparable<P
         return 60 + (12 * (octave() - 4)) + name().getOctaveOffset();
     }
 
+    public Pitch nextAbove(PitchName name) {
+        var output = new Pitch(name, this.octave());
+        if (output.toMidi() > this.toMidi()) {
+            return output;
+        }
+        return new Pitch(name, this.octave() + 1);
+    }
+
+    public Pitch nextBelow(PitchName name) {
+        var output = new Pitch(name, this.octave());
+        if (output.toMidi() < this.toMidi()) {
+            return output;
+        }
+        return new Pitch(name, this.octave() - 1);
+    }
+
     public Pitch addSemitones(int semitones) {
         return fromMidi(toMidi() + semitones, name().isSharp());
     }

@@ -1,19 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Spinner?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/21.0.3-internal" xmlns:fx="http://javafx.com/fxml/1">
-   <children>
-      <VBox spacing="24.0" AnchorPane.bottomAnchor="16.0" AnchorPane.leftAnchor="16.0" AnchorPane.rightAnchor="16.0" AnchorPane.topAnchor="16.0">
+<ScrollPane fx:id="root" hbarPolicy="NEVER" hmax="0.0" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/21.0.3-internal" xmlns:fx="http://javafx.com/fxml/1">
+   <content>
+      <VBox fx:id="optionsList" spacing="8.0">
          <children>
             <HBox spacing="8.0">
                <children>
-                  <AnchorPane prefWidth="100.0">
+                  <AnchorPane prefWidth="100.0" HBox.hgrow="ALWAYS">
                      <children>
                         <Label prefWidth="80.0" text="Root Note" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                      </children>
@@ -21,29 +24,33 @@
                   <ChoiceBox fx:id="rootChoiceBox" prefWidth="150.0" />
                </children>
             </HBox>
-            <HBox spacing="8.0">
+            <HBox>
                <children>
-                  <AnchorPane prefWidth="100.0">
+                  <AnchorPane prefWidth="100.0" HBox.hgrow="ALWAYS">
                      <children>
-                        <Label text="Quality" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                        <Label text="Base Octave" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                      </children>
                   </AnchorPane>
                   <ChoiceBox fx:id="qualityChoiceBox" prefWidth="150.0" />
                </children>
             </HBox>
-            <HBox layoutX="10.0" layoutY="58.0" spacing="8.0">
+            <HBox spacing="8.0">
                <children>
-                  <AnchorPane prefWidth="100.0">
+                  <AnchorPane prefWidth="100.0" HBox.hgrow="ALWAYS">
                      <children>
-                        <Label text="Base Octave" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                        <Label text="Quality" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                      </children>
                   </AnchorPane>
-                  <Spinner fx:id="baseOctaveSpinner" prefWidth="150.0" />
+                  <HBox spacing="8.0">
+                     <children>
+                        <Spinner fx:id="baseOctaveSpinner" prefWidth="150.0" />
+                     </children>
+                  </HBox>
                </children>
             </HBox>
             <HBox layoutX="10.0" layoutY="58.0" spacing="8.0">
                <children>
-                  <AnchorPane prefWidth="100.0">
+                  <AnchorPane prefWidth="100.0" HBox.hgrow="ALWAYS">
                      <children>
                         <Label text="Slash Note" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                      </children>
@@ -51,12 +58,26 @@
                   <ChoiceBox fx:id="slashNoteChoiceBox" prefWidth="150.0" />
                </children>
             </HBox>
+            <HBox layoutX="10.0" layoutY="154.0" spacing="8.0">
+               <children>
+                  <AnchorPane prefWidth="100.0" HBox.hgrow="ALWAYS">
+                     <children>
+                        <Label text="Extensions/Alterations" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                     </children>
+                  </AnchorPane>
+                  <ChoiceBox fx:id="alterationChoiceBox" prefWidth="150.0" />
+               </children>
+            </HBox>
+            <FlowPane fx:id="alterationsList" />
             <AnchorPane>
                <children>
                   <Label fx:id="notesLabel" text="Notes: ???" />
                </children>
             </AnchorPane>
          </children>
+         <padding>
+            <Insets left="16.0" right="16.0" top="16.0" />
+         </padding>
       </VBox>
-   </children>
-</AnchorPane>
+   </content>
+</ScrollPane>

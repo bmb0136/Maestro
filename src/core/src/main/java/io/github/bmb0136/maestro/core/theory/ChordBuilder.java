@@ -1,5 +1,6 @@
 package io.github.bmb0136.maestro.core.theory;
 
+import io.github.bmb0136.maestro.core.util.Tuple2;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -8,6 +9,7 @@ import java.util.*;
 public class ChordBuilder {
     private final TreeSet<Pitch> pitches = new TreeSet<>(Comparator.comparingInt(Pitch::toMidi));
     private final View view = new View();
+    private final HashMap<Integer, Accidental> alterations = new HashMap<>();
     @NotNull
     private PitchName rootNote = PitchName.C;
     private int inversionNumber = 0;
@@ -20,7 +22,6 @@ public class ChordBuilder {
     public View getView() {
         return view;
     }
-
 
     public ChordBuilder setRootNote(@NotNull PitchName pitch) {
         rootNote = pitch;
@@ -71,6 +72,27 @@ public class ChordBuilder {
         return this;
     }
 
+    public ChordBuilder addAlteration(@NotNull Accidental accidental, int scaleDegree) {
+        if (scaleDegree < 1 || scaleDegree > 15) {
+            throw new IllegalArgumentException("Invalid chord alteration scale degree: " + scaleDegree);
+        }
+        alterations.put(scaleDegree, accidental);
+        return this;
+    }
+
+    public ChordBuilder removeAlteration(@NotNull Accidental accidental, int scaleDegree) {
+        Accidental removed = alterations.remove(scaleDegree);
+        if (accidental != removed) {
+            return addAlteration(removed, scaleDegree);
+        }
+        return this;
+    }
+
+    public ChordBuilder removeAlteration(int scaleDegree) {
+        alterations.remove(scaleDegree);
+        return this;
+    }
+
     private void recalculatePitches() {
         pitches.clear();
         var rootPitch = new Pitch(rootNote, baseOctave);
@@ -81,7 +103,19 @@ public class ChordBuilder {
             pitches.add(rootPitch.addSemitones(interval, quality.getKeySignature(rootNote).isSharpKey()));
         }
 
-        // TODO: add extensions
+        var scale = ScaleFactory.create(ScaleType.MAJOR, rootNote);
+        for (var alt : alterations.entrySet()) {
+            var pitch = rootPitch.nextAbove(scale.getDegree(alt.getKey() - 1));
+            switch (alt.getValue()) {
+                case SHARP -> pitch = pitch.addSemitones(1, true);
+                case FLAT -> pitch = pitch.addSemitones(-1, false);
+                default -> {
+                }
+            }
+            var name = pitch.name();
+            pitches.removeIf(p -> p.name().isEnharmonicallyEquivalentTo(name));
+            pitches.add(pitch);
+        }
 
         // Invert
         for (int i = 0; i < inversionNumber; i++) {
@@ -110,6 +144,7 @@ public class ChordBuilder {
         b.inversionNumber = inversionNumber;
         b.bassNote = bassNote;
         b.baseOctave = baseOctave;
+        b.alterations.putAll(alterations);
         b.recalculatePitches();
         return b;
     }
@@ -141,6 +176,26 @@ public class ChordBuilder {
             case SUS2 -> "sus2";
             case SUS4 -> "sus4";
         });
+
+        // Append extensions/alterations
+        boolean addParens = alterations.size() > 1;
+        if (addParens) {
+            sb.append('(');
+        }
+        for (var it = view.getAlterations().iterator(); it.hasNext(); ) {
+            var alt = it.next();
+            switch (alt.first()) {
+                case SHARP -> sb.append('#');
+                case FLAT -> sb.append('b');
+            }
+            sb.append(alt.second());
+            if (it.hasNext()) {
+                sb.append(',');
+            }
+        }
+        if (addParens) {
+            sb.append(')');
+        }
 
         // Get slash note (either bass note or inversion) and append
         PitchName slashNote = view.getSlashNote();
@@ -178,6 +233,19 @@ public class ChordBuilder {
 
         public String getChordName() {
             return ChordBuilder.this.getChordName();
+        }
+
+        public Optional<Accidental> getAlteration(int scaleDegree) {
+            return Optional.ofNullable(alterations.getOrDefault(scaleDegree, null));
+        }
+
+        public List<Tuple2<Accidental, Integer>> getAlterations() {
+            var list = new ArrayList<Tuple2<Accidental, Integer>>(alterations.size());
+            for (var alt : alterations.entrySet()) {
+                list.add(new Tuple2<>(alt.getValue(), alt.getKey()));
+            }
+            list.sort(Comparator.comparingInt(Tuple2::second));
+            return Collections.unmodifiableList(list);
         }
 
         @Override
