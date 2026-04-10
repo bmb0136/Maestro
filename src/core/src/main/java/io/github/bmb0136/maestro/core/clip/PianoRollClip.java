@@ -31,6 +31,14 @@ public class PianoRollClip extends Clip {
         return clip;
     }
 
+    @Override
+    public void setDuration(float duration) {
+        float oldDuration = getDuration();
+        super.setDuration(duration);
+        float ratio = duration / oldDuration;
+        notes.replaceAll(note -> note.modifyPosition(p -> p * ratio).modifyDuration(d -> d * ratio));
+    }
+
     /**
      * Add a {@link Note} to this {@link PianoRollClip}
      *
