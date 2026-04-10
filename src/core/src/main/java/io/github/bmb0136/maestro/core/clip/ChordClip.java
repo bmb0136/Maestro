@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class ChordClip extends Clip {
     private final ChordBuilder builder;
@@ -26,6 +27,16 @@ public class ChordClip extends Clip {
         clip.setMutable(true);
         clip.setPosition(position);
         clip.setDuration(duration);
+        clip.setMutable(false);
+        return clip;
+    }
+
+    public static ChordClip create(float position, float duration, Consumer<ChordBuilder> builderFunc) {
+        var clip = new ChordClip();
+        clip.setMutable(true);
+        clip.setPosition(position);
+        clip.setDuration(duration);
+        builderFunc.accept(clip.builder);
         clip.setMutable(false);
         return clip;
     }
