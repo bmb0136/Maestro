@@ -176,13 +176,6 @@ public class ChordBuilder {
             case SUS4 -> "sus4";
         });
 
-        // Get slash note (either bass note or inversion) and append
-        PitchName slashNote = view.getSlashNote();
-        if (slashNote != null) {
-            sb.append('/');
-            sb.append(slashNote);
-        }
-
         // Append extensions/alterations
         boolean addParens = alterations.size() > 1;
         if (addParens) {
@@ -201,6 +194,13 @@ public class ChordBuilder {
         }
         if (addParens) {
             sb.append(')');
+        }
+
+        // Get slash note (either bass note or inversion) and append
+        PitchName slashNote = view.getSlashNote();
+        if (slashNote != null) {
+            sb.append('/');
+            sb.append(slashNote);
         }
 
         return sb.toString();
