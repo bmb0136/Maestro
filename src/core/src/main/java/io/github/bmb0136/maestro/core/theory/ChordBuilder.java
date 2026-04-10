@@ -234,6 +234,10 @@ public class ChordBuilder {
             return ChordBuilder.this.getChordName();
         }
 
+        public Optional<Accidental> getAlteration(int scaleDegree) {
+            return Optional.ofNullable(alterations.getOrDefault(scaleDegree, null));
+        }
+
         public List<Tuple2<Accidental, Integer>> getAlterations() {
             var list = new ArrayList<Tuple2<Accidental, Integer>>(alterations.size());
             for (var alt : alterations.entrySet()) {
