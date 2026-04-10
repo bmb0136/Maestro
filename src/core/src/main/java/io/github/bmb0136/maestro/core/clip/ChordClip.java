@@ -69,6 +69,27 @@ public class ChordClip extends Clip {
         builder.setBaseOctave(baseOctave);
     }
 
+    public void addAlteration(@NotNull Accidental accidental, int scaleDegree) {
+        if (!isMutable()) {
+            throw new IllegalStateException("ChordClip is immutable");
+        }
+        builder.addAlteration(accidental, scaleDegree);
+    }
+
+    public void removeAlteration(@NotNull Accidental accidental, int scaleDegree) {
+        if (!isMutable()) {
+            throw new IllegalStateException("ChordClip is immutable");
+        }
+        builder.removeAlteration(accidental, scaleDegree);
+    }
+
+    public void removeAlteration(int scaleDegree) {
+        if (!isMutable()) {
+            throw new IllegalStateException("ChordClip is immutable");
+        }
+        builder.removeAlteration(scaleDegree);
+    }
+
     public ChordBuilder.View getChordBuilderView() {
         return builder.getView();
     }
