@@ -2,18 +2,21 @@ package io.github.bmb0136.maestro.editors.clip;
 
 import io.github.bmb0136.maestro.App;
 import io.github.bmb0136.maestro.core.clip.ChordClip;
-import io.github.bmb0136.maestro.core.event.SetChordClipBaseOctaveEvent;
-import io.github.bmb0136.maestro.core.event.SetChordClipQualityEvent;
-import io.github.bmb0136.maestro.core.event.SetChordClipRootNoteEvent;
-import io.github.bmb0136.maestro.core.event.SetChordClipSlashNoteEvent;
+import io.github.bmb0136.maestro.core.event.*;
+import io.github.bmb0136.maestro.core.theory.Accidental;
 import io.github.bmb0136.maestro.core.theory.ChordQuality;
 import io.github.bmb0136.maestro.core.theory.Pitch;
 import io.github.bmb0136.maestro.core.theory.PitchName;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
+import io.github.bmb0136.maestro.core.util.BiHashMap;
+import io.github.bmb0136.maestro.core.util.Tuple2;
 import io.github.bmb0136.maestro.util.SpinnerUtil;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 
 import java.util.*;
@@ -21,15 +24,38 @@ import java.util.*;
 public class ChordClipEditor extends ClipEditorSubScene<ChordClip> {
 
     private static final String NO_SLASH_NOTE = "None";
+    private static final String NO_ALTERATION = "Select to Add";
+    private static final BiHashMap<String, Tuple2<Accidental, Integer>> ALTERATIONS_MAP = new BiHashMap<>();
+
+    static {
+        StringBuilder sb = new StringBuilder();
+        for (int degree = 1; degree <= 15; degree++) {
+            if (degree == 1 || degree % 2 == 0) {
+                continue;
+            }
+            for (var accidental : Accidental.values()) {
+                sb.setLength(0);
+                sb.append(switch (accidental) {
+                    case NATURAL -> "";
+                    case SHARP -> "#";
+                    case FLAT -> "b";
+                });
+                sb.append(degree);
+                ALTERATIONS_MAP.add(sb.toString(), new Tuple2<>(accidental, degree));
+            }
+        }
+    }
 
     @FXML
-    private Region root;
+    private Region root, optionsList;
     @FXML
-    private ChoiceBox<Object> rootChoiceBox, qualityChoiceBox, slashNoteChoiceBox;
+    private ChoiceBox<Object> rootChoiceBox, qualityChoiceBox, slashNoteChoiceBox, alterationChoiceBox;
     @FXML
     private Label notesLabel;
     @FXML
     private Spinner<Object> baseOctaveSpinner;
+    @FXML
+    private FlowPane alterationsList;
 
     public ChordClipEditor(TimelineManager manager, UUID trackId, UUID clipId) {
         super(manager, trackId, clipId);
@@ -79,6 +105,8 @@ public class ChordClipEditor extends ClipEditorSubScene<ChordClip> {
     private void initialize() {
         root.getStylesheets().add("/DarkMode.css");
 
+        optionsList.prefWidthProperty().bind(root.widthProperty());
+
         clip.addListener(ignored -> {
             var view = clip.get().getChordBuilderView();
             rootChoiceBox.setValue(view.getRootNote().toString());
@@ -86,6 +114,7 @@ public class ChordClipEditor extends ClipEditorSubScene<ChordClip> {
             slashNoteChoiceBox.setValue(Optional.ofNullable(view.getSlashNote()).map(PitchName::toString).orElse(NO_SLASH_NOTE));
             baseOctaveSpinner.getValueFactory().setValue(view.getBaseOctave());
             updateNotesLabel();
+            updateAlterationsList();
         });
         final var initialView = clip.get().getChordBuilderView();
 
@@ -121,6 +150,19 @@ public class ChordClipEditor extends ClipEditorSubScene<ChordClip> {
         // Init notes label
         updateNotesLabel();
 
+        // Init alterations choice box
+        alterationChoiceBox.getItems().clear();
+        alterationChoiceBox.getItems().add(NO_ALTERATION);
+        ALTERATIONS_MAP.values2().stream().sorted(Comparator.comparingInt(Tuple2<Accidental, Integer>::second).thenComparingInt( t -> switch (t.first()) {
+            case FLAT -> -1;
+            case NATURAL -> 0;
+            case SHARP -> 1;
+        })).map(ALTERATIONS_MAP::get2).forEachOrdered(alterationChoiceBox.getItems()::add);
+        alterationChoiceBox.setValue(NO_ALTERATION);
+
+        // Init alterations
+        updateAlterationsList();
+
         // Listen for user input and append events
         rootChoiceBox.setOnAction(e -> {
             var parsed = PitchName.tryParse(rootChoiceBox.getValue().toString()).orElse(PitchName.C);
@@ -153,6 +195,17 @@ public class ChordClipEditor extends ClipEditorSubScene<ChordClip> {
                 new Alert(Alert.AlertType.ERROR, "Failed to set chord slash note: " + result, ButtonType.OK).showAndWait();
             }
         });
+        alterationChoiceBox.setOnAction(e -> {
+            String raw = alterationChoiceBox.getValue().toString();
+            if (!ALTERATIONS_MAP.contains1(raw)) {
+                return;
+            }
+            var parsed = ALTERATIONS_MAP.get1(raw);
+            var result = manager.append(new AddAlterationToChordClipEvent(trackId, clipId, parsed.first(), parsed.second()));
+            if (!result.isOk()) {
+                new Alert(Alert.AlertType.ERROR, "Failed to add chord extension/alteration" + result, ButtonType.OK).showAndWait();
+            }
+        });
     }
 
     private void updateNotesLabel() {
@@ -176,5 +229,30 @@ public class ChordClipEditor extends ClipEditorSubScene<ChordClip> {
         sb.append(view.getChordName());
         sb.append(")");
         notesLabel.setText(sb.toString());
+    }
+
+    private void updateAlterationsList() {
+        final var view = clip.get().getChordBuilderView();
+        alterationsList.getChildren().clear();
+        for (Tuple2<Accidental, Integer> alt : view.getAlterations()) {
+            var box = new HBox();
+            box.setSpacing(8);
+
+            Label label = new Label(ALTERATIONS_MAP.get2(alt));
+            box.getChildren().add(new AnchorPane(label));
+            AnchorPane.setTopAnchor(label, 0.0);
+            AnchorPane.setBottomAnchor(label, 0.0);
+
+            var button = new Button("X");
+            button.setOnAction(e -> {
+                var result = manager.append(new RemoveAlterationFromChordClipEvent(trackId, clipId, alt.first(), alt.second()));
+                if (!result.isOk()) {
+                    new Alert(Alert.AlertType.ERROR, "Failed to remove chord extension/alteration" + result, ButtonType.OK).showAndWait();
+                }
+            });
+            box.getChildren().add(button);
+
+            alterationsList.getChildren().add(box);
+        }
     }
 }
