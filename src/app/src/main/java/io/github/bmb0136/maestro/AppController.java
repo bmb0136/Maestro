@@ -4,10 +4,7 @@ import io.github.bmb0136.maestro.core.clip.ChordClip;
 import io.github.bmb0136.maestro.core.clip.Clip;
 import io.github.bmb0136.maestro.core.clip.PianoRollClip;
 import io.github.bmb0136.maestro.core.clip.ScaleClip;
-import io.github.bmb0136.maestro.core.event.AddModifierToClipEvent;
-import io.github.bmb0136.maestro.core.event.AddTrackToTimelineEvent;
-import io.github.bmb0136.maestro.core.event.RemoveModifierFromClipEvent;
-import io.github.bmb0136.maestro.core.event.RemoveTrackFromTimelineEvent;
+import io.github.bmb0136.maestro.core.event.*;
 import io.github.bmb0136.maestro.core.modifier.AddIntervalAboveModifier;
 import io.github.bmb0136.maestro.core.modifier.Modifier;
 import io.github.bmb0136.maestro.core.modifier.OffsetByIntervalModifier;
@@ -412,6 +409,7 @@ public class AppController implements AutoCloseable {
     private TitledPane createModifierNodeFor(UUID trackId, Clip clip, Modifier modifier) {
         // Setup label + buttons
         HBox title = new HBox();
+        title.setSpacing(4);
 
         Label label = new Label(MODIFIER_LABELS.get2(modifier.getClass()));
         title.getChildren().add(new AnchorPane(label));
@@ -420,11 +418,30 @@ public class AppController implements AutoCloseable {
         AnchorPane.setBottomAnchor(label, 0.0);
         HBox.setHgrow(label.getParent(), Priority.ALWAYS);
 
-        Button deleteButton = new Button("X");
+        Button movePrevious = new Button("↑");
+        movePrevious.setOnAction(e -> {
+            var result = manager.append(new MoveModifierPreviousEvent(trackId, clip.getId(), modifier.getId()));
+            if (!result.isOk()) {
+                new Alert(Alert.AlertType.ERROR, "Failed to reorder modifier: " + result, ButtonType.OK).showAndWait();
+            }
+        });
+        title.getChildren().add(movePrevious);
+
+
+        Button moveNextButton = new Button("↓");
+        moveNextButton.setOnAction(e -> {
+            var result = manager.append(new MoveModifierNextEvent(trackId, clip.getId(), modifier.getId()));
+            if (!result.isOk()) {
+                new Alert(Alert.AlertType.ERROR, "Failed to reorder modifier: " + result, ButtonType.OK).showAndWait();
+            }
+        });
+        title.getChildren().add(moveNextButton);
+
+        Button deleteButton = new Button("×");
         deleteButton.setOnAction(e -> {
             var result = manager.append(new RemoveModifierFromClipEvent(trackId, clip.getId(), modifier.getId()));
             if (!result.isOk()) {
-                new Alert(Alert.AlertType.ERROR, "Failed to delete modifier: " + result, ButtonType.OK);
+                new Alert(Alert.AlertType.ERROR, "Failed to delete modifier: " + result, ButtonType.OK).showAndWait();
             }
         });
         title.getChildren().add(deleteButton);
