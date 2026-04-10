@@ -8,6 +8,7 @@ import io.github.bmb0136.maestro.core.theory.PitchName;
 import io.github.bmb0136.maestro.core.theory.ScaleType;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import io.github.bmb0136.maestro.core.util.BiHashMap;
+import io.github.bmb0136.maestro.core.util.StringUtils;
 import io.github.bmb0136.maestro.util.SpinnerUtil;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -34,18 +35,7 @@ public class ScaleClipEditor extends ClipEditorSubScene<ScaleClip> {
         MODE_MAP.add("Descending", ScaleClip.Mode.DESCENDING);
 
         for (ScaleType type : ScaleType.values()) {
-            char[] temp = type.name().toCharArray();
-            for (int i = 0; i < temp.length; i++) {
-                var c = temp[i];
-                if (c == '_') {
-                    temp[i] = ' ';
-                } else if (i == 0 || temp[i - 1] == ' ') {
-                    temp[i] = Character.toUpperCase(c);
-                } else {
-                    temp[i] = Character.toLowerCase(c);
-                }
-            }
-            SCALE_MAP.add(new String(temp), type);
+            SCALE_MAP.add(StringUtils.upperSnakeCaseToTitleCase(type.name()), type);
         }
     }
 

@@ -1,5 +1,6 @@
 package io.github.bmb0136.maestro.core.event;
 
+import io.github.bmb0136.maestro.core.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -69,16 +70,6 @@ public class EventResult {
     // TODO: come up with something better
     @Override
     public String toString() {
-        // Convert `UPPER_SNAKE_CASE` to `Title Case`
-        char[] chars = name.toCharArray();
-        for (int i = 0; i < chars.length; i++) {
-            var c = chars[i];
-            if (c == '_') {
-                chars[i] = ' ';
-            } else {
-                chars[i] = i < 1 || chars[i - 1] == ' ' ? Character.toUpperCase(c) : Character.toLowerCase(c);
-            }
-        }
-        return new String(chars);
+        return StringUtils.upperSnakeCaseToTitleCase(getName());
     }
 }
