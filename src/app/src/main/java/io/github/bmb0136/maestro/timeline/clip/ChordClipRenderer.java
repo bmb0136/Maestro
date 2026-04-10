@@ -27,14 +27,18 @@ public class ChordClipRenderer {
 	public static void render(@NotNull ChordClip clip, @NotNull GraphicsContext gc, @NotNull Rectangle2D area, @NotNull Color baseColor) {
 
 		gc.save();
-		gc.setFill(baseColor.invert());
+
+		//BackGround Change
+		gc.setFill(baseColor.darker());
 		gc.fillRect(area.getMinX(), area.getMinY(), area.getWidth(), area.getHeight());
 
+        //Sets TextColor
+		Color clipTextColor = Color.WHITE;
 
-		Color clipTextColor = baseColor;
+		//Modifier Function
+		updateModifierCount(gc, area, clipTextColor, clip);
 
-		updateModifierCount(gc, area, clipTextColor.invert(), clip);
-
+		//Chord + NoteList Function
 		NoteUpdater(gc, area, clipTextColor, clip);
 		gc.restore();
 
@@ -46,10 +50,9 @@ public class ChordClipRenderer {
 		gc.clearRect(0, 0, area.getWidth(), area.getHeight());
 		gc.setFill(color);
 
-		//Grabbing the Notes for the Chord **Code Stolen from ChordClipEditor**
+		//Grabbing the Notes for the Chord
 		Label NoteList = new Label();
 		String Notes = "";
-
 		for (Pitch pitch : clip.getChordBuilderView()) {
 			Notes += pitch.name() + ", ";
 
@@ -69,16 +72,18 @@ public class ChordClipRenderer {
 		double length = (area.getMaxX() - area.getMinX()); //Due to how the canvas is rendered, using MaxX & MaxY won't lock the text in-place.
 		double width = (area.getMaxY() - area.getMinY());
 
+		//Plotting the Chord(Name) down; Middle of NoteCard
 		gc.setFont(Chord_font);
 		gc.fillText(Chord_name, area.getMinX() + (length / 2), area.getMinY() + (width / 2));
 
 
+		//Plotting the Chord(list) down; Mid-Bottom of NoteCard
 		gc.setFont(Notelist_font);
 		gc.fillText(NoteList.getText(), area.getMinX() + (length / 2), area.getMinY() + (width - 15));
 
 	}
 
-	// case ChordClip c -> ChordClipRenderer.render(c, gc, area, baseColor);
+
 	//Purpose: Updates the Modifier count for the Selected Clip
 	/// /Area - The New designated Area of the NoteList
 	/// Color - Color of Text
@@ -92,7 +97,6 @@ public class ChordClipRenderer {
 		Label CountModifiers = new Label( + clip.getModifiers().size() + "M");
 
 		CountModifiers.setFont(gc.getFont());
-
 		Font font = new Font(gc.getFont().getName(), 12 + (Math.sqrt(area.getHeight() / 4)));
 		gc.setFont(font);
 
