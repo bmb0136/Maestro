@@ -16,11 +16,11 @@ public class ChordBuilder {
     @NotNull
     private ChordQuality quality = ChordQuality.MAJOR;
     private int baseOctave = 4;
+    private final List<Alteration> alterations = new ArrayList<>();
 
     public View getView() {
         return view;
     }
-
 
     public ChordBuilder setRootNote(@NotNull PitchName pitch) {
         rootNote = pitch;
@@ -81,7 +81,17 @@ public class ChordBuilder {
             pitches.add(rootPitch.addSemitones(interval, quality.getKeySignature(rootNote).isSharpKey()));
         }
 
-        // TODO: add extensions
+        var scale = ScaleFactory.create(ScaleType.MAJOR, rootNote);
+        for (var alteration : alterations) {
+            var pitch = rootPitch.nextAbove(scale.getDegree(alteration.degree()));
+            switch (alteration.kind()) {
+                case SHARP -> pitch = pitch.addSemitones(1, true);
+                case FLAT -> pitch = pitch.addSemitones(-1, false);
+                default -> {}
+            }
+            var name = pitch.name();
+            pitches.removeIf(p -> p.name().isEnharmonicallyEquivalentTo(name));
+        }
 
         // Invert
         for (int i = 0; i < inversionNumber; i++) {
@@ -110,6 +120,7 @@ public class ChordBuilder {
         b.inversionNumber = inversionNumber;
         b.bassNote = bassNote;
         b.baseOctave = baseOctave;
+        b.alterations.addAll(alterations);
         b.recalculatePitches();
         return b;
     }
@@ -149,6 +160,26 @@ public class ChordBuilder {
             sb.append(slashNote);
         }
 
+        // Append extensions/alterations
+        boolean addParens = alterations.size() > 1;
+        if (addParens) {
+            sb.append('(');
+        }
+        for (int i = 0; i < alterations.size(); i++) {
+            var alt = alterations.get(i);
+            switch (alt.kind()) {
+                case SHARP -> sb.append('#');
+                case FLAT -> sb.append('b');
+            }
+            sb.append(alt.degree());
+            if (i != alterations.size() - 1) {
+                sb.append(",");
+            }
+        }
+        if (addParens) {
+            sb.append(')');
+        }
+
         return sb.toString();
     }
 
@@ -184,6 +215,14 @@ public class ChordBuilder {
         public @NotNull Iterator<Pitch> iterator() {
             recalculatePitches();
             return new ArrayList<>(pitches).iterator();
+        }
+    }
+
+    private record Alteration(Kind kind, int degree) {
+        public enum Kind {
+            NATURAL,
+            SHARP,
+            FLAT
         }
     }
 }
