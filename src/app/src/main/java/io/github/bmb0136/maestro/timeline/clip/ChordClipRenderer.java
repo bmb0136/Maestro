@@ -58,23 +58,23 @@ public class ChordClipRenderer {
 		Notes = Notes.substring(0, Notes.length() - 2);
 
 		//Grabbing The Name of the Chord
-		String Chord_name = "Chord: " + clip.getChordBuilderView().getChordName();
+		String Chord_name = clip.getChordBuilderView().getChordName();
 		NoteList.setText(Notes);
 
 		//Boundary Settings
-		Font Notelist_font = new Font(gc.getFont().getName(), 32);
-		Font Chord_font = new Font(gc.getFont().getName(), 16);
+		Font Notelist_font = new Font(gc.getFont().getName(), 16);
+		Font Chord_font = new Font(gc.getFont().getName(), 32);
 		gc.setTextAlign(TextAlignment.CENTER);
 		gc.setTextBaseline(VPos.CENTER);
-
 		double length = (area.getMaxX() - area.getMinX()); //Due to how the canvas is rendered, using MaxX & MaxY won't lock the text in-place.
 		double width = (area.getMaxY() - area.getMinY());
 
-		gc.setFont(Notelist_font);
-		gc.fillText(NoteList.getText(), area.getMinX() + (length / 2), area.getMinY() + (width / 2));
-
 		gc.setFont(Chord_font);
-		gc.fillText(Chord_name, area.getMinX() + (length / 2), area.getMinY() + (width - 15));
+		gc.fillText(Chord_name, area.getMinX() + (length / 2), area.getMinY() + (width / 2));
+
+
+		gc.setFont(Notelist_font);
+		gc.fillText(NoteList.getText(), area.getMinX() + (length / 2), area.getMinY() + (width - 15));
 
 	}
 
@@ -88,7 +88,8 @@ public class ChordClipRenderer {
 		gc.clearRect(0, 0, area.getWidth(), area.getHeight());
 		gc.setFill(color);
 
-		Label CountModifiers = new Label("Mods:" + clip.getModifiers().size());
+		//Label for Modifier
+		Label CountModifiers = new Label( + clip.getModifiers().size() + "M");
 
 		CountModifiers.setFont(gc.getFont());
 
@@ -96,7 +97,7 @@ public class ChordClipRenderer {
 		gc.setFont(font);
 
 		//Only needs the Width of the new Rectangle to stay within Y-Boundaries
-		gc.fillText(CountModifiers.getText(), area.getMaxX() - 60, area.getMinY(), area.getWidth());
+		gc.fillText(CountModifiers.getText(), area.getMaxX() - 25, area.getMinY(), area.getWidth());
 
 
 	}
