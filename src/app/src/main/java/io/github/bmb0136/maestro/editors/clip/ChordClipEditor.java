@@ -13,6 +13,7 @@ import io.github.bmb0136.maestro.core.util.Tuple2;
 import io.github.bmb0136.maestro.util.SpinnerUtil;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.FlowPane;
@@ -237,6 +238,12 @@ public class ChordClipEditor extends ClipEditorSubScene<ChordClip> {
         for (Tuple2<Accidental, Integer> alt : view.getAlterations()) {
             var box = new HBox();
             box.setSpacing(8);
+            // FlowPane does not have a "spacing" property like V/HBox, so fake it with margins
+            if (!alterationsList.getChildren().isEmpty()) {
+                FlowPane.setMargin(box, new Insets(0, 4, 0, 4));
+            } else {
+                FlowPane.setMargin(box, new Insets(0, 4, 0, 0));
+            }
 
             Label label = new Label(ALTERATIONS_MAP.get2(alt));
             box.getChildren().add(new AnchorPane(label));
