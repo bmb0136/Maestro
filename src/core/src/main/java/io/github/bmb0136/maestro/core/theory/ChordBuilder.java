@@ -1,5 +1,6 @@
 package io.github.bmb0136.maestro.core.theory;
 
+import io.github.bmb0136.maestro.core.util.Tuple2;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +17,7 @@ public class ChordBuilder {
     @NotNull
     private ChordQuality quality = ChordQuality.MAJOR;
     private int baseOctave = 4;
-    private final List<Alteration> alterations = new ArrayList<>();
+    private final HashMap<Integer, Accidental> alterations = new HashMap<>();
 
     public View getView() {
         return view;
@@ -71,6 +72,27 @@ public class ChordBuilder {
         return this;
     }
 
+    public ChordBuilder addAlteration(@NotNull Accidental accidental, int scaleDegree) {
+        if (scaleDegree < 1 || scaleDegree > 15) {
+            throw new IllegalArgumentException("Invalid chord alteration scale degree: " + scaleDegree);
+        }
+        alterations.put(scaleDegree, accidental);
+        return this;
+    }
+
+    public ChordBuilder removeAlteration(@NotNull Accidental accidental, int scaleDegree) {
+        Accidental removed = alterations.remove(scaleDegree);
+        if (accidental != removed) {
+            return addAlteration(removed, scaleDegree);
+        }
+        return this;
+    }
+
+    public ChordBuilder removeAlteration(int scaleDegree) {
+        alterations.remove(scaleDegree);
+        return this;
+    }
+
     private void recalculatePitches() {
         pitches.clear();
         var rootPitch = new Pitch(rootNote, baseOctave);
@@ -82,9 +104,9 @@ public class ChordBuilder {
         }
 
         var scale = ScaleFactory.create(ScaleType.MAJOR, rootNote);
-        for (var alteration : alterations) {
-            var pitch = rootPitch.nextAbove(scale.getDegree(alteration.degree()));
-            switch (alteration.kind()) {
+        for (var alt : alterations.entrySet()) {
+            var pitch = rootPitch.nextAbove(scale.getDegree(alt.getKey() - 1));
+            switch (alt.getValue()) {
                 case SHARP -> pitch = pitch.addSemitones(1, true);
                 case FLAT -> pitch = pitch.addSemitones(-1, false);
                 default -> {}
@@ -120,7 +142,7 @@ public class ChordBuilder {
         b.inversionNumber = inversionNumber;
         b.bassNote = bassNote;
         b.baseOctave = baseOctave;
-        b.alterations.addAll(alterations);
+        b.alterations.putAll(alterations);
         b.recalculatePitches();
         return b;
     }
@@ -165,15 +187,15 @@ public class ChordBuilder {
         if (addParens) {
             sb.append('(');
         }
-        for (int i = 0; i < alterations.size(); i++) {
-            var alt = alterations.get(i);
-            switch (alt.kind()) {
+        for (var it = alterations.entrySet().iterator(); it.hasNext(); ) {
+            var alt = it.next();
+            switch (alt.getValue()) {
                 case SHARP -> sb.append('#');
                 case FLAT -> sb.append('b');
             }
-            sb.append(alt.degree());
-            if (i != alterations.size() - 1) {
-                sb.append(",");
+            sb.append(alt.getKey());
+            if (it.hasNext()) {
+                sb.append(',');
             }
         }
         if (addParens) {
@@ -211,18 +233,19 @@ public class ChordBuilder {
             return ChordBuilder.this.getChordName();
         }
 
+        public List<Tuple2<Integer, Accidental>> getAlterations() {
+            var list = new ArrayList<Tuple2<Integer, Accidental>>(alterations.size());
+            for (var alt : alterations.entrySet()) {
+                list.add(new Tuple2<>(alt.getKey(), alt.getValue()));
+            }
+            list.sort(Comparator.comparingInt(Tuple2::first));
+            return Collections.unmodifiableList(list);
+        }
+
         @Override
         public @NotNull Iterator<Pitch> iterator() {
             recalculatePitches();
             return new ArrayList<>(pitches).iterator();
-        }
-    }
-
-    private record Alteration(Kind kind, int degree) {
-        public enum Kind {
-            NATURAL,
-            SHARP,
-            FLAT
         }
     }
 }
