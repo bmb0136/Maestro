@@ -114,6 +114,7 @@ public class ChordBuilder {
             }
             var name = pitch.name();
             pitches.removeIf(p -> p.name().isEnharmonicallyEquivalentTo(name));
+            pitches.add(pitch);
         }
 
         // Invert
