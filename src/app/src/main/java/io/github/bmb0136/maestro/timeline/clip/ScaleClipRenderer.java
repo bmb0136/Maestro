@@ -2,10 +2,12 @@ package io.github.bmb0136.maestro.timeline.clip;
 
 import io.github.bmb0136.maestro.core.clip.ScaleClip;
 import javafx.geometry.Rectangle2D;
+import javafx.geometry.VPos;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Label;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.TextAlignment;
 import org.jetbrains.annotations.NotNull;
 
 public class ScaleClipRenderer {
@@ -22,10 +24,42 @@ public class ScaleClipRenderer {
     gc.setFill(baseColor.darker());
     gc.fillRect(area.getMinX(), area.getMinY(), area.getWidth(), area.getHeight());
     Color textColor = Color.WHITE;
+    pitchUpdater(clip,gc,area,textColor);
         gc.restore();
 
     }
-    private  void  pitchUpdater(){
+    private static void  pitchUpdater(ScaleClip clip, @NotNull GraphicsContext gc, @NotNull Rectangle2D area, @NotNull Color baseColor) {
+        gc.clearRect(area.getMinX(), area.getMinY(), area.getWidth(), area.getHeight());
+        gc.setFill(baseColor);
+        Font font = new Font(gc.getFont().getName(), 18);
+        gc.setFont(font);
+        //String Lines
+        String Pitchstuff = "";
+
+        //Root Pitch
+        Pitchstuff += clip.getRootPitch().name() + " ";
+        String temp = clip.getScale().name().substring(0,1).toUpperCase();
+        temp += clip.getScale().name().toLowerCase().substring(1).toLowerCase();
+        Pitchstuff += temp + "\n";
+
+        //Degrees
+        temp = clip.getMinDegree() + "-"
+           + clip.getMaxDegree() + " ";
+        Pitchstuff += temp;
+
+        //Mode
+        temp = clip.getMode().name().toLowerCase().substring(0,1).toUpperCase() +
+                clip.getMode().name().toLowerCase().substring(1).toLowerCase();
+        Pitchstuff += temp + "\n";
+        //Location
+        gc.setTextAlign(TextAlignment.CENTER);
+        gc.setTextBaseline(VPos.CENTER);
+        double length = (area.getMaxX() - area.getMinX());
+        double width = (area.getMaxY() - area.getMinY());
+
+        gc.fillText(Pitchstuff, area.getMinX() + (length / 2), (area.getMinY() + (width / 2)));
+
+
 
     }
 
