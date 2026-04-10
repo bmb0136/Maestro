@@ -22,21 +22,11 @@ public class ScaleClipRenderer {
     gc.setFill(baseColor.darker());
     gc.fillRect(area.getMinX(), area.getMinY(), area.getWidth(), area.getHeight());
     Color textColor = Color.WHITE;
-        UpdateModifierCount(clip, gc, area, textColor);
         gc.restore();
+
     }
-    private static void UpdateModifierCount(ScaleClip clip, @NotNull GraphicsContext gc, @NotNull Rectangle2D area, @NotNull Color color) {
-        gc.clearRect(0, 0, area.getWidth(), area.getHeight());
-        gc.setFill(color);
+    private  void  pitchUpdater(){
 
-        //Label for Modifier
-        Label CountModifiers = new Label( + clip.getModifiers().size() + "M");
-
-        CountModifiers.setFont(gc.getFont());
-        Font font = new Font(gc.getFont().getName(), 12 + (Math.sqrt(area.getHeight() / 4)));
-        gc.setFont(font);
-
-        //Only needs the Width of the new Rectangle to stay within Y-Boundaries
-        gc.fillText(CountModifiers.getText(), area.getMaxX() - 25, area.getMinY(), area.getWidth());
     }
+
 }

@@ -23,6 +23,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -260,6 +261,7 @@ public class TimelineRenderer {
 
                 gc.setFill(Color.WHITE);
                 gc.fillText(ClipRenderer.getHeaderText(clip), rect.getMinX() + PAD, rect.getMinY() + HEADER_SIZE - PAD);
+                updateModifierCount(gc,rect,Color.WHITE, clip.getModifiers().size(), HEADER_SIZE, PAD); //ModifierCount
 
                 // Ensure everything stays inside
                 gc.beginPath();
@@ -413,5 +415,25 @@ public class TimelineRenderer {
     @FunctionalInterface
     public interface Callback {
         void run(@Nullable UUID trackId, @Nullable UUID clipId, float beats, CallbackType type);
+    }
+
+    //Purpose: Updates the Modifier count for the Selected Clip
+    /// Area  - The New designated Area of the NoteList
+    /// Color - Color of Text
+    private void updateModifierCount(GraphicsContext gc, Rectangle2D area, Color color, int modifierCount, double HEADER_SIZE, double PAD) {
+
+
+        gc.clearRect(0, 0, area.getWidth(), area.getHeight());
+        gc.setFill(color);
+        //Label for Modifier
+        Label CountModifiers = new Label( modifierCount + "M");
+
+        CountModifiers.setFont(gc.getFont());
+        Font font = new Font(gc.getFont().getName(), 12 + (Math.sqrt(area.getHeight() / 4)));
+        gc.setFont(font);
+        //Only needs the Width of the new Rectangle to stay within Y-Boundaries
+        gc.fillText(CountModifiers.getText(), (area.getMaxX() - PAD * 2)  - HEADER_SIZE, area.getMinY() + HEADER_SIZE - PAD);
+
+
     }
 }

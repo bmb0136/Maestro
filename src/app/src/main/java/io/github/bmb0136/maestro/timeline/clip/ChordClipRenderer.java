@@ -36,7 +36,7 @@ public class ChordClipRenderer {
 		Color clipTextColor = Color.WHITE;
 
 		//Modifier Function
-		updateModifierCount(gc, area, clipTextColor, clip);
+		//updateModifierCount(gc, area, clipTextColor, clip);
 
 		//Chord + NoteList Function
 		NoteUpdater(gc, area, clipTextColor, clip);
@@ -84,25 +84,6 @@ public class ChordClipRenderer {
 	}
 
 
-	//Purpose: Updates the Modifier count for the Selected Clip
-	/// /Area - The New designated Area of the NoteList
-	/// Color - Color of Text
-	private static void updateModifierCount(GraphicsContext gc, Rectangle2D area, Color color, ChordClip clip) {
 
 
-		gc.clearRect(0, 0, area.getWidth(), area.getHeight());
-		gc.setFill(color);
-
-		//Label for Modifier
-		Label CountModifiers = new Label( + clip.getModifiers().size() + "M");
-
-		CountModifiers.setFont(gc.getFont());
-		Font font = new Font(gc.getFont().getName(), 12 + (Math.sqrt(area.getHeight() / 4)));
-		gc.setFont(font);
-
-		//Only needs the Width of the new Rectangle to stay within Y-Boundaries
-		gc.fillText(CountModifiers.getText(), area.getMaxX() - 25, area.getMinY(), area.getWidth());
-
-
-	}
 }
