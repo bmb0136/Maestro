@@ -74,7 +74,7 @@ public class ChordClipRenderer {
 
 		//Plotting the Chord(Name) down; Middle of NoteCard
 		gc.setFont(Chord_font);
-		gc.fillText(Chord_name, area.getMinX() + (length / 2), area.getMinY() + (width / 2));
+		gc.fillText(Chord_name, area.getMinX() + (length / 2), area.getMinY() + (width / 2) - 10);
 
 
 		//Plotting the Chord(list) down; Mid-Bottom of NoteCard

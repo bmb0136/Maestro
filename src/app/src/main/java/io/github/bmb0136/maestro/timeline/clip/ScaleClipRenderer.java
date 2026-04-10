@@ -51,6 +51,7 @@ public class ScaleClipRenderer {
         temp = clip.getMode().name().toLowerCase().substring(0,1).toUpperCase() +
                 clip.getMode().name().toLowerCase().substring(1).toLowerCase();
         Pitchstuff += temp + "\n";
+
         //Location
         gc.setTextAlign(TextAlignment.CENTER);
         gc.setTextBaseline(VPos.CENTER);
