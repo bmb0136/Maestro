@@ -9,6 +9,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import org.jetbrains.annotations.NotNull;
+import io.github.bmb0136.maestro.core.util.StringUtils;
 
 public class ScaleClipRenderer {
     /**
@@ -38,8 +39,7 @@ public class ScaleClipRenderer {
 
         //Root Pitch
         Pitchstuff += clip.getRootPitch().name() + " ";
-        String temp = clip.getScale().name().substring(0,1).toUpperCase();
-        temp += clip.getScale().name().toLowerCase().substring(1).toLowerCase();
+        String temp = StringUtils.upperSnakeCaseToTitleCase(clip.getScale().name());
         Pitchstuff += temp + "\n";
 
         //Degrees
