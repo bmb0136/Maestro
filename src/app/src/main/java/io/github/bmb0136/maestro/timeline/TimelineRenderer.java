@@ -7,6 +7,7 @@ import io.github.bmb0136.maestro.core.clip.ScaleClip;
 import io.github.bmb0136.maestro.core.event.AddClipToTrackEvent;
 import io.github.bmb0136.maestro.core.event.RemoveClipFromTrackEvent;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
+import io.github.bmb0136.maestro.core.timeline.Track;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleExpression;
 import javafx.beans.property.*;
@@ -58,6 +59,7 @@ public class TimelineRenderer {
     private final HashSet<UUID> visibleTracks = new HashSet<>();
     private double contextMenuX, contextMenuY;
     private double timelineDragLastX, timelineDragLastY;
+    private ArrayList<UUID> lastTimelineOrder = new ArrayList<>();
 
     public TimelineRenderer(@NotNull TimelineManager manager, @NotNull Canvas canvas, @NotNull SimpleDoubleProperty pixelsPerBeat, Callback callback) {
         this.manager = manager;
@@ -68,15 +70,39 @@ public class TimelineRenderer {
         // This object lives as long as the application, no need to close callback
         //noinspection resource
         manager.registerChangeCallback(target -> {
+            var timeline = target.getTimeline();
             if (target.isTimeline()) {
-                timelineSize.set(target.getTimeline().size());
+                timelineSize.set(timeline.size());
+
+                // Redraw if order of tracks changes
+                ArrayList<UUID> order = new ArrayList<>();
+                for (Track track : timeline) {
+                    order.add(track.getId());
+                }
+
+                if (order.size() != lastTimelineOrder.size()) {
+                    draw();
+                } else {
+                    boolean doRedraw = false;
+                    for (int i = 0; i < order.size(); i++) {
+                        if (!order.get(i).equals(lastTimelineOrder.get(i))) {
+                            doRedraw = true;
+                            break;
+                        }
+                    }
+                    if (doRedraw) {
+                        draw();
+                    }
+                }
+
+                lastTimelineOrder = order;
             }
             // If an on-screen track/clip changes, redraw
             if (target.getTrackId().map(visibleTracks::contains).orElse(false)
                     || target.getClipId().map(visibleClips::containsKey).orElse(false)) {
                 draw();
             }
-            timelineLength.set(target.getTimeline().getDuration());
+            timelineLength.set(timeline.getDuration());
         });
 
         canvas.widthProperty().addListener(ignored -> draw());
