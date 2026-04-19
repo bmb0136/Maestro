@@ -8,10 +8,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.SubScene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 
@@ -36,6 +33,8 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
     private Label nameLabel;
     @FXML
     private TextField nameEditField;
+    @FXML
+    private Button upButton, downButton;
     private String lastName = "???";
 
     private TrackSubScene(TimelineManager manager, UUID trackId, BiConsumer<UUID, CallbackType> callback) {
@@ -46,13 +45,20 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
         this.callback = callback;
 
         changeCallback = manager.registerChangeCallback(target -> {
+            var timeline = target.getTimeline();
+
+            if (target.isTimeline()) {
+                upButton.setDisable(timeline.indexOf(trackId) == 0);
+                downButton.setDisable(timeline.indexOf(trackId) == timeline.size() - 1);
+            }
+
             if (!target.isTrack()) {
                 return;
             }
             if (!target.getTrackId().map(id -> id.equals(trackId)).orElse(false)) {
                 return;
             }
-            var track = target.getTrackId().flatMap(target.getTimeline()::getTrack).orElseThrow();
+            var track = target.getTrackId().flatMap(timeline::getTrack).orElseThrow();
 
             lastName = track.getName();
             nameEditField.setText(lastName);
@@ -76,7 +82,8 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
     private void initialize() {
         root.getStylesheets().add("/DarkMode.css");
 
-        var track = manager.get().getTrack(trackId).orElseThrow();
+        var timeline = manager.get();
+        var track = timeline.getTrack(trackId).orElseThrow();
         lastName = track.getName();
 
         // Init name label
@@ -94,6 +101,9 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
                 nameEditField.setVisible(false);
             }
         });
+
+        upButton.setDisable(timeline.indexOf(trackId) == 0);
+        downButton.setDisable(timeline.indexOf(trackId) == timeline.size() - 1);
     }
 
     @FXML
@@ -118,12 +128,24 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
         callback.accept(trackId, CallbackType.DELETE);
     }
 
+    @FXML
+    private void onUpButtonClicked() {
+        callback.accept(trackId, CallbackType.MOVE_UP);
+    }
+
+    @FXML
+    private void onDownButtonClicked() {
+        callback.accept(trackId, CallbackType.MOVE_DOWN);
+    }
+
     @Override
     public void close() throws Exception {
         changeCallback.close();
     }
 
     public enum CallbackType {
-        DELETE
+        DELETE,
+        MOVE_UP,
+        MOVE_DOWN
     }
 }

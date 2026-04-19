@@ -75,6 +75,32 @@ public class Timeline implements Iterable<Track> {
         return false;
     }
 
+    public boolean moveNext(int index) {
+        if (!isMutable()) {
+            throw new IllegalStateException("Timeline is immutable");
+        }
+        if (index < 0 || index + 1 >= tracks.size()) {
+            return false;
+        }
+        var temp = tracks.get(index);
+        tracks.set(index, tracks.get(index + 1));
+        tracks.set(index + 1, temp);
+        return true;
+    }
+
+    public boolean movePrevious(int index) {
+        if (!isMutable()) {
+            throw new IllegalStateException("Timeline is immutable");
+        }
+        if (index < 1 || index >= tracks.size()) {
+            return false;
+        }
+        var temp = tracks.get(index);
+        tracks.set(index, tracks.get(index - 1));
+        tracks.set(index - 1, temp);
+        return true;
+    }
+
     public int size() {
         return tracks.size();
     }

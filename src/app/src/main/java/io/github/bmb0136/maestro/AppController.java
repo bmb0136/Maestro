@@ -362,6 +362,18 @@ public class AppController implements AutoCloseable {
                     new Alert(Alert.AlertType.ERROR, "Failed to delete track: " + result, ButtonType.OK).showAndWait();
                 }
             }
+            case MOVE_UP -> {
+                var result = manager.append(new MoveTrackPreviousEvent(trackId));
+                if (!result.isOk()) {
+                    new Alert(Alert.AlertType.ERROR, "Failed to move track: " + result, ButtonType.OK).showAndWait();
+                }
+            }
+            case MOVE_DOWN -> {
+                var result = manager.append(new MoveTrackNextEvent(trackId));
+                if (!result.isOk()) {
+                    new Alert(Alert.AlertType.ERROR, "Failed to move track: " + result, ButtonType.OK).showAndWait();
+                }
+            }
             case null, default -> throw new IllegalArgumentException();
         }
     }
