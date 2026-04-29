@@ -76,7 +76,7 @@ public abstract class Clip implements Iterable<Note> {
         copy.setPosition(position);
         copy.setDuration(duration);
         for (Modifier m : modifiers) {
-            copy.modifiers.addModifier(m);
+            copy.modifiers.addModifier(m.copy(newId));
         }
         copy.setMutable(false);
         return copy;
