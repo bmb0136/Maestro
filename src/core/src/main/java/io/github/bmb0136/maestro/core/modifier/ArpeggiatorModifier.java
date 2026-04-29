@@ -1,6 +1,7 @@
 package io.github.bmb0136.maestro.core.modifier;
 
 import io.github.bmb0136.maestro.core.theory.Note;
+import io.github.bmb0136.maestro.core.util.NoteUtils;
 import io.github.bmb0136.maestro.core.util.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
@@ -87,29 +88,10 @@ public class ArpeggiatorModifier extends Modifier {
             return;
         }
 
-        ArrayList<Tuple2<Float, List<Note>>> groups = new ArrayList<>();
+        List<Tuple2<Float, List<Note>>> groups;
         switch (inputMode) {
-            case HELD -> {
-                for (Note n : notes) {
-                    boolean foundGroup = false;
-
-                    for (var tuple : groups) {
-                        if (Math.abs(n.position() - tuple.first()) < 1e-6f) {
-                            if (Math.abs(n.duration() - tuple.second().getFirst().duration()) >= 1e-6f) {
-                                continue;
-                            }
-                            tuple.second().add(n);
-                            foundGroup = true;
-                            break;
-                        }
-                    }
-
-                    if (!foundGroup) {
-                        groups.add(new Tuple2<>(n.position(), new ArrayList<>(List.of(n))));
-                    }
-                }
-            }
-            case ALL -> groups.add(new Tuple2<>(0f, notes));
+            case HELD -> groups = NoteUtils.groupByPosition(notes);
+            case ALL -> groups = List.of(new Tuple2<>(0f, notes));
             default -> throw new IllegalStateException("Unexpected value: " + inputMode);
         }
 
