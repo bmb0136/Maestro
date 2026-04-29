@@ -153,6 +153,18 @@ public class SimpleModifierEditor<T extends Modifier> extends ModifierEditorSubs
         hbox.managedProperty().bind(hbox.visibleProperty());
     }
 
+    protected void addCustom(Region node) {
+        addCustom(node, TRUE);
+    }
+
+    protected void addCustom(Region node, ObservableValue<Boolean> visibleCondition) {
+        components.getChildren().add(node);
+        node.prefWidthProperty().bind(components.widthProperty());
+        node.heightProperty().addListener(this::recalculateHeight);
+        node.visibleProperty().bind(visibleCondition);
+        node.managedProperty().bind(node.visibleProperty());
+    }
+
     private void recalculateHeight(Observable ignored) {
         double total = 0;
         for (Node node : components.getChildren()) {
