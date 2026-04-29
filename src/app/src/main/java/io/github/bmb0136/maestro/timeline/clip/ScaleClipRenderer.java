@@ -38,7 +38,7 @@ public class ScaleClipRenderer {
         String Pitchstuff = "";
 
         //Root Pitch
-        Pitchstuff += clip.getRootPitch().name() + " ";
+        Pitchstuff += clip.getRootPitch() + " ";
         String temp = StringUtils.upperSnakeCaseToTitleCase(clip.getScale().name());
         Pitchstuff += temp + "\n";
 
