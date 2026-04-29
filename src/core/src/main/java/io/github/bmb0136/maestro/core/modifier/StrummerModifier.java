@@ -31,6 +31,9 @@ public class StrummerModifier extends Modifier {
         this.divisions = divisions;
         PatternItem[] newPattern = new PatternItem[divisions];
         System.arraycopy(pattern, 0, newPattern, 0, Math.min(pattern.length, newPattern.length));
+        for (int i = pattern.length; i < newPattern.length; i++) {
+            newPattern[i] = PatternItem.OFF;
+        }
         pattern = newPattern;
     }
 
@@ -42,28 +45,30 @@ public class StrummerModifier extends Modifier {
             return false;
         }
 
-        if (i == 0) {
-            switch (pattern[0]) {
-                case OFF -> {
-                    pattern[0] = value ? PatternItem.ON : PatternItem.OFF;
-                    return value;
-                }
-                case ON -> {
-                    pattern[0] = value ? PatternItem.ON : PatternItem.OFF;
-                    return !value;
-                }
-                // Can't be CONTINUE because there's no note to continue
-                default -> throw new IllegalStateException("Unexpected value: " + pattern[0]);
-            }
-        }
-
         var oldValue = pattern[i];
         pattern[i] = switch (pattern[i]) {
             case OFF, CONTINUE -> value ? PatternItem.ON : PatternItem.OFF;
-            case ON -> value ? PatternItem.CONTINUE : PatternItem.OFF;
+            case ON -> {
+                if (value) {
+                    if (i == 0) {
+                        yield PatternItem.ON;
+                    }
+                    yield PatternItem.CONTINUE;
+                }
+
+                yield PatternItem.OFF;
+            }
         };
 
-        return pattern[i] != oldValue;
+        boolean anyChanged = false;
+        for (int j = 0; j < pattern.length; j++) {
+            if (j >= 1 && pattern[j] == PatternItem.CONTINUE && pattern[j - 1] == PatternItem.OFF) {
+                pattern[j] = PatternItem.ON;
+                anyChanged = true;
+            }
+        }
+
+        return pattern[i] != oldValue || anyChanged;
     }
 
     public List<PatternItem> getPattern() {
@@ -121,7 +126,8 @@ public class StrummerModifier extends Modifier {
         notes.addAll(output);
     }
 
-    private @NotNull ArrayList<Tuple2<Float, Float>> renderPatternPositions() {
+    @NotNull
+    public ArrayList<Tuple2<Float, Float>> renderPatternPositions() {
         ArrayList<Tuple2<Float, Float>> positions = new ArrayList<>();
         final float delta = 1.0f / divisions;
         for (int i = 0; i < pattern.length; i++) {
