@@ -158,6 +158,21 @@ public class TimelineRenderer {
         });
 
         addMenuItem(clipContextMenu.getItems(), "Delete", this::clipContextMenuOnDeleteHandler);
+        addMenuItem(clipContextMenu.getItems(), "Duplicate", this::clipContextMenuOnDuplicateHandler);
+    }
+
+    private void clipContextMenuOnDuplicateHandler(ActionEvent actionEvent) {
+        if (!(clipContextMenu.getUserData() instanceof UUID clipId)) {
+            throw new IllegalStateException("TimelineRenderer.clipContextMenu: missing clip ID in getUserData()");
+        }
+        var timeline = manager.get();
+        var trackId = timeline.getTrackForClip(clipId).orElseThrow();
+        var clip = timeline.getTrack(trackId).flatMap(t -> t.getClip(clipId)).orElseThrow();
+
+        var result = manager.append(new AddClipToTrackEvent(trackId, clip.copyWithPosition(clip.getPosition() + clip.getDuration())));
+        if (!result.isOk()) {
+            new Alert(Alert.AlertType.ERROR, "Failed to duplicate clip: " + result, ButtonType.OK).showAndWait();
+        }
     }
 
     private static void addMenuItem(ObservableList<MenuItem> menuItems, String text, EventHandler<ActionEvent> onAction) {
