@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class ChordClip extends Clip {
     private final ChordBuilder builder;
@@ -26,6 +27,16 @@ public class ChordClip extends Clip {
         clip.setMutable(true);
         clip.setPosition(position);
         clip.setDuration(duration);
+        clip.setMutable(false);
+        return clip;
+    }
+
+    public static ChordClip create(float position, float duration, Consumer<ChordBuilder> builderFunc) {
+        var clip = new ChordClip();
+        clip.setMutable(true);
+        clip.setPosition(position);
+        clip.setDuration(duration);
+        builderFunc.accept(clip.builder);
         clip.setMutable(false);
         return clip;
     }
@@ -56,6 +67,27 @@ public class ChordClip extends Clip {
             throw new IllegalStateException("ChordClip is immutable");
         }
         builder.setBaseOctave(baseOctave);
+    }
+
+    public void addAlteration(@NotNull Accidental accidental, int scaleDegree) {
+        if (!isMutable()) {
+            throw new IllegalStateException("ChordClip is immutable");
+        }
+        builder.addAlteration(accidental, scaleDegree);
+    }
+
+    public void removeAlteration(@NotNull Accidental accidental, int scaleDegree) {
+        if (!isMutable()) {
+            throw new IllegalStateException("ChordClip is immutable");
+        }
+        builder.removeAlteration(accidental, scaleDegree);
+    }
+
+    public void removeAlteration(int scaleDegree) {
+        if (!isMutable()) {
+            throw new IllegalStateException("ChordClip is immutable");
+        }
+        builder.removeAlteration(scaleDegree);
     }
 
     public ChordBuilder.View getChordBuilderView() {

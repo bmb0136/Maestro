@@ -58,6 +58,7 @@ public class PlaybackEngine implements AutoCloseable {
     }
 
     public void setBpm(int bpm) {
+        bpm = Math.max(1, bpm);
         if (canSetBpm()) {
             this.bpm.set(bpm);
             bpmWrapper.set(bpm);

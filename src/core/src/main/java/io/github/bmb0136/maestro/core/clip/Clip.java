@@ -61,6 +61,14 @@ public abstract class Clip implements Iterable<Note> {
         this.mutable = mutable;
     }
 
+    public Clip copyWithPosition(float newPosition) {
+        var clip = copy(true);
+        clip.setMutable(true);
+        clip.setPosition(newPosition);
+        clip.setMutable(false);
+        return clip;
+    }
+
     public Clip copy(boolean newId) {
         var copy = createCopy(newId);
         assert newId == (!id.equals(copy.id));
@@ -68,7 +76,7 @@ public abstract class Clip implements Iterable<Note> {
         copy.setPosition(position);
         copy.setDuration(duration);
         for (Modifier m : modifiers) {
-            copy.modifiers.addModifier(m);
+            copy.modifiers.addModifier(m.copy(newId));
         }
         copy.setMutable(false);
         return copy;

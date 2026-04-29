@@ -4,13 +4,8 @@ import io.github.bmb0136.maestro.core.clip.ChordClip;
 import io.github.bmb0136.maestro.core.clip.Clip;
 import io.github.bmb0136.maestro.core.clip.PianoRollClip;
 import io.github.bmb0136.maestro.core.clip.ScaleClip;
-import io.github.bmb0136.maestro.core.event.AddModifierToClipEvent;
-import io.github.bmb0136.maestro.core.event.AddTrackToTimelineEvent;
-import io.github.bmb0136.maestro.core.event.RemoveModifierFromClipEvent;
-import io.github.bmb0136.maestro.core.event.RemoveTrackFromTimelineEvent;
-import io.github.bmb0136.maestro.core.modifier.AddIntervalAboveModifier;
-import io.github.bmb0136.maestro.core.modifier.Modifier;
-import io.github.bmb0136.maestro.core.modifier.OffsetByIntervalModifier;
+import io.github.bmb0136.maestro.core.event.*;
+import io.github.bmb0136.maestro.core.modifier.*;
 import io.github.bmb0136.maestro.core.timeline.Timeline;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import io.github.bmb0136.maestro.core.timeline.Track;
@@ -19,9 +14,7 @@ import io.github.bmb0136.maestro.core.util.Tuple2;
 import io.github.bmb0136.maestro.editors.clip.ChordClipEditor;
 import io.github.bmb0136.maestro.editors.clip.PianoRollEditor;
 import io.github.bmb0136.maestro.editors.clip.ScaleClipEditor;
-import io.github.bmb0136.maestro.editors.modifier.AddIntervalAboveModifierEditor;
-import io.github.bmb0136.maestro.editors.modifier.ModifierEditorSubscene;
-import io.github.bmb0136.maestro.editors.modifier.OffsetByIntervalModifierEditor;
+import io.github.bmb0136.maestro.editors.modifier.*;
 import io.github.bmb0136.maestro.playback.PlaybackEngine;
 import io.github.bmb0136.maestro.timeline.TimelineRenderer;
 import io.github.bmb0136.maestro.timeline.TrackSubScene;
@@ -30,12 +23,14 @@ import javafx.beans.binding.DoubleExpression;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ListChangeListener;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.SubScene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.*;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.*;
@@ -59,6 +54,14 @@ public class AppController implements AutoCloseable {
         MODIFIER_LABELS.add("Add Interval Above", AddIntervalAboveModifier.class);
         MODIFIER_FACTORIES.put(AddIntervalAboveModifier.class, AddIntervalAboveModifier::new);
         MODIFIER_EDITOR_FACTORIES.put(AddIntervalAboveModifier.class, AddIntervalAboveModifierEditor::new);
+
+        MODIFIER_LABELS.add("Arpeggiator", ArpeggiatorModifier.class);
+        MODIFIER_FACTORIES.put(ArpeggiatorModifier.class, ArpeggiatorModifier::new);
+        MODIFIER_EDITOR_FACTORIES.put(ArpeggiatorModifier.class, ArpeggiatorModifierEditor::new);
+
+        MODIFIER_LABELS.add("Strummer", StrummerModifier.class);
+        MODIFIER_FACTORIES.put(StrummerModifier.class, StrummerModifier::new);
+        MODIFIER_EDITOR_FACTORIES.put(StrummerModifier.class, StrummerModifierEditor::new);
     }
 
     private final TimelineManager manager = new TimelineManager(1024, new Timeline());
@@ -95,6 +98,12 @@ public class AppController implements AutoCloseable {
     private UUID lastOpenEditor = null;
     private double bpmDragStartY;
     private int bpmDragStartValue;
+    @Nullable
+    private Modifier modifierClipboard = null;
+    @Nullable
+    private UUID lastModifierListTrackId = null;
+    @Nullable
+    private UUID lastModifierListClipId = null;
 
     @FXML
     private void initialize() {
@@ -168,6 +177,7 @@ public class AppController implements AutoCloseable {
         selectedClip.addListener((ignored1, ignored2, newValue) -> {
             if (newValue == null) {
                 modifierList.getChildren().clear();
+                refreshModifierList(null, null);
                 return;
             }
             var clip = manager.get().getTrack(newValue.first()).flatMap(t -> t.getClip(newValue.second())).orElseThrow();
@@ -365,6 +375,18 @@ public class AppController implements AutoCloseable {
                     new Alert(Alert.AlertType.ERROR, "Failed to delete track: " + result, ButtonType.OK).showAndWait();
                 }
             }
+            case MOVE_UP -> {
+                var result = manager.append(new MoveTrackPreviousEvent(trackId));
+                if (!result.isOk()) {
+                    new Alert(Alert.AlertType.ERROR, "Failed to move track: " + result, ButtonType.OK).showAndWait();
+                }
+            }
+            case MOVE_DOWN -> {
+                var result = manager.append(new MoveTrackNextEvent(trackId));
+                if (!result.isOk()) {
+                    new Alert(Alert.AlertType.ERROR, "Failed to move track: " + result, ButtonType.OK).showAndWait();
+                }
+            }
             case null, default -> throw new IllegalArgumentException();
         }
     }
@@ -390,6 +412,9 @@ public class AppController implements AutoCloseable {
     }
 
     private void refreshModifierList(UUID trackId, Clip clip) {
+        lastModifierListTrackId = trackId;
+        lastModifierListClipId = Optional.ofNullable(clip).map(Clip::getId).orElse(null);
+
         var children = modifierList.getChildren();
         for (Node child : children) {
             if (child instanceof TitledPane pane && pane.getContent() instanceof AutoCloseable closeable) {
@@ -412,6 +437,7 @@ public class AppController implements AutoCloseable {
     private TitledPane createModifierNodeFor(UUID trackId, Clip clip, Modifier modifier) {
         // Setup label + buttons
         HBox title = new HBox();
+        title.setSpacing(4);
 
         Label label = new Label(MODIFIER_LABELS.get2(modifier.getClass()));
         title.getChildren().add(new AnchorPane(label));
@@ -420,11 +446,40 @@ public class AppController implements AutoCloseable {
         AnchorPane.setBottomAnchor(label, 0.0);
         HBox.setHgrow(label.getParent(), Priority.ALWAYS);
 
-        Button deleteButton = new Button("X");
+        ContextMenu ctx = new ContextMenu();
+        MenuItem copy = new MenuItem("Copy");
+        copy.setOnAction(e -> modifierClipboard = modifier.copy(true));
+        ctx.getItems().add(copy);
+        title.setOnMouseClicked(e -> {
+            if (e.getButton() == MouseButton.SECONDARY) {
+                ctx.show(title, e.getScreenX(), e.getScreenY());
+            }
+        });
+
+        Button movePrevious = new Button("↑");
+        movePrevious.setOnAction(e -> {
+            var result = manager.append(new MoveModifierPreviousEvent(trackId, clip.getId(), modifier.getId()));
+            if (!result.isOk()) {
+                new Alert(Alert.AlertType.ERROR, "Failed to reorder modifier: " + result, ButtonType.OK).showAndWait();
+            }
+        });
+        title.getChildren().add(movePrevious);
+
+
+        Button moveNextButton = new Button("↓");
+        moveNextButton.setOnAction(e -> {
+            var result = manager.append(new MoveModifierNextEvent(trackId, clip.getId(), modifier.getId()));
+            if (!result.isOk()) {
+                new Alert(Alert.AlertType.ERROR, "Failed to reorder modifier: " + result, ButtonType.OK).showAndWait();
+            }
+        });
+        title.getChildren().add(moveNextButton);
+
+        Button deleteButton = new Button("×");
         deleteButton.setOnAction(e -> {
             var result = manager.append(new RemoveModifierFromClipEvent(trackId, clip.getId(), modifier.getId()));
             if (!result.isOk()) {
-                new Alert(Alert.AlertType.ERROR, "Failed to delete modifier: " + result, ButtonType.OK);
+                new Alert(Alert.AlertType.ERROR, "Failed to delete modifier: " + result, ButtonType.OK).showAndWait();
             }
         });
         title.getChildren().add(deleteButton);
@@ -448,6 +503,24 @@ public class AppController implements AutoCloseable {
         pane.setContent(subscene);
 
         return pane;
+    }
+
+    @FXML
+    private void onModifierPasteButtonClicked(ActionEvent e) {
+        if (modifierClipboard == null) {
+            new Alert(Alert.AlertType.ERROR, "Copy a modifier first", ButtonType.OK).showAndWait();
+            return;
+        }
+
+        if (lastModifierListTrackId == null || lastModifierListClipId == null) {
+            new Alert(Alert.AlertType.ERROR, "Please select a clip first", ButtonType.OK).showAndWait();
+            return;
+        }
+
+        var result = manager.append(new AddModifierToClipEvent(lastModifierListTrackId, lastModifierListClipId, modifierClipboard.copy(true)));
+        if (!result.isOk()) {
+            new Alert(Alert.AlertType.ERROR, "Failed to paste modifier: " + result, ButtonType.OK).showAndWait();
+        }
     }
 
     @Override

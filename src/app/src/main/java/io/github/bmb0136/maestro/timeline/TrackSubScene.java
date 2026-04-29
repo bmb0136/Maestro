@@ -1,22 +1,23 @@
 package io.github.bmb0136.maestro.timeline;
 
 import io.github.bmb0136.maestro.App;
-import io.github.bmb0136.maestro.core.event.SetTrackNameEvent;
+import io.github.bmb0136.maestro.core.event.*;
+import io.github.bmb0136.maestro.core.timeline.Timeline;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import javafx.beans.binding.Bindings;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.SubScene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -29,13 +30,15 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
     private final UUID trackId;
     private final BiConsumer<UUID, CallbackType> callback;
     private final AutoCloseable changeCallback;
-
+    private final ContextMenu contextMenu = new ContextMenu();
     @FXML
     private Parent root;
     @FXML
     private Label nameLabel;
     @FXML
     private TextField nameEditField;
+    @FXML
+    private Button upButton, downButton;
     private String lastName = "???";
 
     private TrackSubScene(TimelineManager manager, UUID trackId, BiConsumer<UUID, CallbackType> callback) {
@@ -46,17 +49,28 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
         this.callback = callback;
 
         changeCallback = manager.registerChangeCallback(target -> {
+            var timeline = target.getTimeline();
+
+            if (target.isTimeline()) {
+                upButton.setDisable(timeline.indexOf(trackId) == 0);
+                downButton.setDisable(timeline.indexOf(trackId) == timeline.size() - 1);
+            }
+
             if (!target.isTrack()) {
                 return;
             }
             if (!target.getTrackId().map(id -> id.equals(trackId)).orElse(false)) {
                 return;
             }
-            var track = target.getTrackId().flatMap(target.getTimeline()::getTrack).orElseThrow();
+            var track = target.getTrackId().flatMap(timeline::getTrack).orElseThrow();
 
             lastName = track.getName();
             nameEditField.setText(lastName);
         });
+
+        MenuItem duplicate = new MenuItem("Duplicate");
+        duplicate.setOnAction(this::onDuplicate);
+        contextMenu.getItems().add(duplicate);
     }
 
     public static TrackSubScene create(TimelineManager manager, UUID trackId, BiConsumer<UUID, CallbackType> callback) {
@@ -72,11 +86,39 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
         }
     }
 
+    private void onDuplicate(ActionEvent e) {
+        ArrayList<Event<?>> events = new ArrayList<>();
+        Timeline timeline = manager.get();
+
+        // Copy the track, which puts it at the end of the track list
+        var copy = timeline.getTrack(trackId).orElseThrow().copy(true);
+        events.add(new AddTrackToTimelineEvent(copy));
+
+        // Move it to be after to the current track
+        int targetIndex = timeline.indexOf(trackId) + 1;
+        for (int i = timeline.size(); i > targetIndex; i--) {
+            events.add(new MoveTrackPreviousEvent(copy.getId()));
+        }
+
+        var result = manager.append(events.size() > 1 ? new EventGroup(events) : events.getFirst());
+        if (!result.isOk()) {
+            new Alert(Alert.AlertType.ERROR, "Failed to duplicate track: " + result, ButtonType.OK).showAndWait();
+        }
+    }
+
+    private void onRootClicked(MouseEvent e) {
+        if (e.getButton() == MouseButton.SECONDARY) {
+            contextMenu.show(root, e.getScreenX(), e.getScreenY());
+        }
+    }
+
     @FXML
     private void initialize() {
         root.getStylesheets().add("/DarkMode.css");
+        root.setOnMouseClicked(this::onRootClicked);
 
-        var track = manager.get().getTrack(trackId).orElseThrow();
+        var timeline = manager.get();
+        var track = timeline.getTrack(trackId).orElseThrow();
         lastName = track.getName();
 
         // Init name label
@@ -94,6 +136,9 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
                 nameEditField.setVisible(false);
             }
         });
+
+        upButton.setDisable(timeline.indexOf(trackId) == 0);
+        downButton.setDisable(timeline.indexOf(trackId) == timeline.size() - 1);
     }
 
     @FXML
@@ -118,12 +163,24 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
         callback.accept(trackId, CallbackType.DELETE);
     }
 
+    @FXML
+    private void onUpButtonClicked() {
+        callback.accept(trackId, CallbackType.MOVE_UP);
+    }
+
+    @FXML
+    private void onDownButtonClicked() {
+        callback.accept(trackId, CallbackType.MOVE_DOWN);
+    }
+
     @Override
     public void close() throws Exception {
         changeCallback.close();
     }
 
     public enum CallbackType {
-        DELETE
+        DELETE,
+        MOVE_UP,
+        MOVE_DOWN
     }
 }
