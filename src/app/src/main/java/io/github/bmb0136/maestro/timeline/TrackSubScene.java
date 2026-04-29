@@ -96,7 +96,7 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
 
     private void onRootClicked(MouseEvent e) {
         if (e.getButton() == MouseButton.SECONDARY) {
-            contextMenu.show(root, e.getX(), e.getY());
+            contextMenu.show(root, e.getScreenX(), e.getScreenY());
         }
     }
 
