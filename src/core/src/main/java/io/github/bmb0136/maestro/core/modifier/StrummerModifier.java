@@ -35,6 +35,9 @@ public class StrummerModifier extends Modifier {
     }
 
     public boolean setPatternItem(int i, boolean value) {
+        if (!isMutable()) {
+            throw new IllegalStateException("StrummerModifier is immutable");
+        }
         if (i < 0 || i >= pattern.length) {
             return false;
         }
