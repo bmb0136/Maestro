@@ -3,6 +3,7 @@ package io.github.bmb0136.maestro.timeline;
 import io.github.bmb0136.maestro.core.clip.*;
 import io.github.bmb0136.maestro.core.event.AddClipToTrackEvent;
 import io.github.bmb0136.maestro.core.event.RemoveClipFromTrackEvent;
+import io.github.bmb0136.maestro.core.theory.Note;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import io.github.bmb0136.maestro.core.timeline.Track;
 import javafx.beans.binding.Bindings;
@@ -160,6 +161,32 @@ public class TimelineRenderer {
         addMenuItem(clipContextMenu.getItems(), "Delete", this::clipContextMenuOnDeleteHandler);
         addMenuItem(clipContextMenu.getItems(), "Duplicate", this::clipContextMenuOnDuplicateHandler);
         addMenuItem(clipContextMenu.getItems(), "Copy", this::clipContextMenuOnCopyHandler);
+        addMenuItem(clipContextMenu.getItems(), "To Piano Roll", this::clipContextMenuToPianoRollHandler);
+    }
+
+    private void clipContextMenuToPianoRollHandler(ActionEvent e) {
+        if (!(clipContextMenu.getUserData() instanceof UUID clipId)) {
+            throw new IllegalStateException("TimelineRenderer.clipContextMenu: missing clip ID in getUserData()");
+        }
+        var timeline = manager.get();
+        var trackId = timeline.getTrackForClip(clipId).orElseThrow();
+        var clip = timeline.getTrack(trackId).flatMap(t -> t.getClip(clipId)).orElseThrow();
+
+        if (clip instanceof PianoRollClip) {
+            return;
+        }
+
+        ArrayList<Note> notes = new ArrayList<>();
+        clip.forEach(notes::add);
+        clip.getModifiers().applyTo(notes);
+
+        var result = manager.appendGroup(
+                new RemoveClipFromTrackEvent(trackId, clip.getId()),
+                new AddClipToTrackEvent(trackId, PianoRollClip.create(clip.getPosition(), clip.getDuration(), notes))
+        );
+        if (!result.isOk()) {
+            new Alert(Alert.AlertType.ERROR, "Failed to convert clip to piano roll: " + result, ButtonType.OK).showAndWait();
+        }
     }
 
     private static void addMenuItem(ObservableList<MenuItem> menuItems, String text, EventHandler<ActionEvent> onAction) {
