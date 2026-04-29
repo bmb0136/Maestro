@@ -18,7 +18,7 @@ public class ArpeggiatorModifier extends Modifier {
     }
 
     public void setNoteDuration(float noteDuration) {
-        if (isMutable()) {
+        if (!isMutable()) {
             throw new IllegalStateException("ArpeggiatorModifier is immutable");
         }
         this.noteDuration = noteDuration;
@@ -29,7 +29,7 @@ public class ArpeggiatorModifier extends Modifier {
     }
 
     public void setInputMode(InputMode inputMode) {
-        if (isMutable()) {
+        if (!isMutable()) {
             throw new IllegalStateException("ArpeggiatorModifier is immutable");
         }
         this.inputMode = inputMode;
@@ -40,7 +40,7 @@ public class ArpeggiatorModifier extends Modifier {
     }
 
     public void setOutputMode(OutputMode outputMode) {
-        if (isMutable()) {
+        if (!isMutable()) {
             throw new IllegalStateException("ArpeggiatorModifier is immutable");
         }
         this.outputMode = outputMode;
@@ -51,7 +51,7 @@ public class ArpeggiatorModifier extends Modifier {
     }
 
     public void setSeed(int seed) {
-        if (isMutable()) {
+        if (!isMutable()) {
             throw new IllegalStateException("ArpeggiatorModifier is immutable");
         }
         this.seed = seed;
@@ -62,7 +62,7 @@ public class ArpeggiatorModifier extends Modifier {
     }
 
     public void setRepeat(boolean repeat) {
-        if (isMutable()) {
+        if (!isMutable()) {
             throw new IllegalStateException("ArpeggiatorModifier is immutable");
         }
         this.repeat = repeat;
@@ -72,6 +72,11 @@ public class ArpeggiatorModifier extends Modifier {
     protected Modifier createCopy(boolean newId) {
         var copy = new ArpeggiatorModifier();
         copy.setMutable(true);
+        copy.setInputMode(inputMode);
+        copy.setOutputMode(outputMode);
+        copy.setSeed(seed);
+        copy.setRepeat(repeat);
+        copy.setNoteDuration(noteDuration);
         copy.setMutable(false);
         return copy;
     }

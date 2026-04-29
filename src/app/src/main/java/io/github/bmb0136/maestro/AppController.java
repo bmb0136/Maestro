@@ -6,6 +6,7 @@ import io.github.bmb0136.maestro.core.clip.PianoRollClip;
 import io.github.bmb0136.maestro.core.clip.ScaleClip;
 import io.github.bmb0136.maestro.core.event.*;
 import io.github.bmb0136.maestro.core.modifier.AddIntervalAboveModifier;
+import io.github.bmb0136.maestro.core.modifier.ArpeggiatorModifier;
 import io.github.bmb0136.maestro.core.modifier.Modifier;
 import io.github.bmb0136.maestro.core.modifier.OffsetByIntervalModifier;
 import io.github.bmb0136.maestro.core.timeline.Timeline;
@@ -17,6 +18,7 @@ import io.github.bmb0136.maestro.editors.clip.ChordClipEditor;
 import io.github.bmb0136.maestro.editors.clip.PianoRollEditor;
 import io.github.bmb0136.maestro.editors.clip.ScaleClipEditor;
 import io.github.bmb0136.maestro.editors.modifier.AddIntervalAboveModifierEditor;
+import io.github.bmb0136.maestro.editors.modifier.ArpeggiatorModifierEditor;
 import io.github.bmb0136.maestro.editors.modifier.ModifierEditorSubscene;
 import io.github.bmb0136.maestro.editors.modifier.OffsetByIntervalModifierEditor;
 import io.github.bmb0136.maestro.playback.PlaybackEngine;
@@ -58,6 +60,10 @@ public class AppController implements AutoCloseable {
         MODIFIER_LABELS.add("Add Interval Above", AddIntervalAboveModifier.class);
         MODIFIER_FACTORIES.put(AddIntervalAboveModifier.class, AddIntervalAboveModifier::new);
         MODIFIER_EDITOR_FACTORIES.put(AddIntervalAboveModifier.class, AddIntervalAboveModifierEditor::new);
+
+        MODIFIER_LABELS.add("Arpeggiator", ArpeggiatorModifier.class);
+        MODIFIER_FACTORIES.put(ArpeggiatorModifier.class, ArpeggiatorModifier::new);
+        MODIFIER_EDITOR_FACTORIES.put(ArpeggiatorModifier.class, ArpeggiatorModifierEditor::new);
     }
 
     private final TimelineManager manager = new TimelineManager(1024, new Timeline());
