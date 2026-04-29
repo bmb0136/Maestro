@@ -1,9 +1,6 @@
 package io.github.bmb0136.maestro.timeline;
 
-import io.github.bmb0136.maestro.core.clip.ChordClip;
-import io.github.bmb0136.maestro.core.clip.ClipFactory;
-import io.github.bmb0136.maestro.core.clip.PianoRollClip;
-import io.github.bmb0136.maestro.core.clip.ScaleClip;
+import io.github.bmb0136.maestro.core.clip.*;
 import io.github.bmb0136.maestro.core.event.AddClipToTrackEvent;
 import io.github.bmb0136.maestro.core.event.RemoveClipFromTrackEvent;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
@@ -60,6 +57,9 @@ public class TimelineRenderer {
     private double contextMenuX, contextMenuY;
     private double timelineDragLastX, timelineDragLastY;
     private ArrayList<UUID> lastTimelineOrder = new ArrayList<>();
+    // Clip copy+paste
+    private UUID clipboardTrackId = null;
+    private Clip clipboard = null;
 
     public TimelineRenderer(@NotNull TimelineManager manager, @NotNull Canvas canvas, @NotNull SimpleDoubleProperty pixelsPerBeat, Callback callback) {
         this.manager = manager;
@@ -147,6 +147,7 @@ public class TimelineRenderer {
         addMenuItem(addClipMenu.getItems(), "Chord", e -> rootContextMenuOnAddClipHandler(e, ChordClip::create));
         addMenuItem(addClipMenu.getItems(), "Scale", e -> rootContextMenuOnAddClipHandler(e, ScaleClip::create));
         trackContextMenu.getItems().add(addClipMenu);
+        addMenuItem(trackContextMenu.getItems(), "Paste", this::rootContextMenuOnPasteHandler);
 
         // Notify main window when selection changes
         selectedClip.addListener((ignored1, oldValue, newValue) -> {
@@ -159,6 +160,28 @@ public class TimelineRenderer {
 
         addMenuItem(clipContextMenu.getItems(), "Delete", this::clipContextMenuOnDeleteHandler);
         addMenuItem(clipContextMenu.getItems(), "Duplicate", this::clipContextMenuOnDuplicateHandler);
+        addMenuItem(clipContextMenu.getItems(), "Copy", this::clipContextMenuOnCopyHandler);
+    }
+
+    private void rootContextMenuOnPasteHandler(ActionEvent actionEvent) {
+        if (clipboard == null) {
+            new Alert(Alert.AlertType.ERROR, "Copy a clip firstFailed to paste clip", ButtonType.OK).showAndWait();
+            return;
+        }
+
+        float position = (int) localXToBeats(contextMenuX);
+        var track = manager.get().getTrack((int) localYToTracks(contextMenuY));
+        var result = manager.append(new AddClipToTrackEvent(track.getId(), clipboard.copyWithPosition(position)));
+        if (!result.isOk()) {
+            new Alert(Alert.AlertType.ERROR, "Failed to paste clip: " + result, ButtonType.OK).showAndWait();
+        }
+    }
+
+    private void clipContextMenuOnCopyHandler(ActionEvent actionEvent) {
+        if (!(clipContextMenu.getUserData() instanceof UUID clipId)) {
+            throw new IllegalStateException("TimelineRenderer.clipContextMenu: missing clip ID in getUserData()");
+        }
+        clipboard = manager.get().getClip(clipId).orElseThrow().copy(false);
     }
 
     private void clipContextMenuOnDuplicateHandler(ActionEvent actionEvent) {
