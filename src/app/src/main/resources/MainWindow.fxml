@@ -156,7 +156,7 @@
                               <ChoiceBox fx:id="modifierSelector" maxHeight="-Infinity" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" />
                            </children>
                         </AnchorPane>
-                        <Button mnemonicParsing="false" prefHeight="40.0" text="Paste" HBox.hgrow="NEVER" />
+                        <Button mnemonicParsing="false" onAction="#onModifierPasteButtonClicked" prefHeight="40.0" text="Paste" HBox.hgrow="NEVER" />
                      </children>
                   </HBox>
                   <ScrollPane hbarPolicy="NEVER" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">

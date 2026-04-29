@@ -27,12 +27,14 @@ import javafx.beans.binding.DoubleExpression;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ListChangeListener;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.SubScene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.*;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.*;
@@ -92,6 +94,12 @@ public class AppController implements AutoCloseable {
     private UUID lastOpenEditor = null;
     private double bpmDragStartY;
     private int bpmDragStartValue;
+    @Nullable
+    private Modifier modifierClipboard = null;
+    @Nullable
+    private UUID lastModifierListTrackId = null;
+    @Nullable
+    private UUID lastModifierListClipId = null;
 
     @FXML
     private void initialize() {
@@ -165,6 +173,7 @@ public class AppController implements AutoCloseable {
         selectedClip.addListener((ignored1, ignored2, newValue) -> {
             if (newValue == null) {
                 modifierList.getChildren().clear();
+                refreshModifierList(null, null);
                 return;
             }
             var clip = manager.get().getTrack(newValue.first()).flatMap(t -> t.getClip(newValue.second())).orElseThrow();
@@ -399,6 +408,9 @@ public class AppController implements AutoCloseable {
     }
 
     private void refreshModifierList(UUID trackId, Clip clip) {
+        lastModifierListTrackId = trackId;
+        lastModifierListClipId = Optional.ofNullable(clip).map(Clip::getId).orElse(null);
+
         var children = modifierList.getChildren();
         for (Node child : children) {
             if (child instanceof TitledPane pane && pane.getContent() instanceof AutoCloseable closeable) {
@@ -429,6 +441,16 @@ public class AppController implements AutoCloseable {
         AnchorPane.setTopAnchor(label, 0.0);
         AnchorPane.setBottomAnchor(label, 0.0);
         HBox.setHgrow(label.getParent(), Priority.ALWAYS);
+
+        ContextMenu ctx = new ContextMenu();
+        MenuItem copy = new MenuItem("Copy");
+        copy.setOnAction(e -> modifierClipboard = modifier.copy(true));
+        ctx.getItems().add(copy);
+        title.setOnMouseClicked(e -> {
+            if (e.getButton() == MouseButton.SECONDARY) {
+                ctx.show(title, e.getScreenX(), e.getScreenY());
+            }
+        });
 
         Button movePrevious = new Button("↑");
         movePrevious.setOnAction(e -> {
@@ -477,6 +499,24 @@ public class AppController implements AutoCloseable {
         pane.setContent(subscene);
 
         return pane;
+    }
+
+    @FXML
+    private void onModifierPasteButtonClicked(ActionEvent e) {
+        if (modifierClipboard == null) {
+            new Alert(Alert.AlertType.ERROR, "Copy a modifier first", ButtonType.OK).showAndWait();
+            return;
+        }
+
+        if (lastModifierListTrackId == null || lastModifierListClipId == null) {
+            new Alert(Alert.AlertType.ERROR, "Please select a clip first", ButtonType.OK).showAndWait();
+            return;
+        }
+
+        var result = manager.append(new AddModifierToClipEvent(lastModifierListTrackId, lastModifierListClipId, modifierClipboard.copy(true)));
+        if (!result.isOk()) {
+            new Alert(Alert.AlertType.ERROR, "Failed to paste modifier: " + result, ButtonType.OK).showAndWait();
+        }
     }
 
     @Override
