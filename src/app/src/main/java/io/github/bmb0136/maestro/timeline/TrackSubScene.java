@@ -1,19 +1,23 @@
 package io.github.bmb0136.maestro.timeline;
 
 import io.github.bmb0136.maestro.App;
-import io.github.bmb0136.maestro.core.event.SetTrackNameEvent;
+import io.github.bmb0136.maestro.core.event.*;
+import io.github.bmb0136.maestro.core.timeline.Timeline;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
 import javafx.beans.binding.Bindings;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.SubScene;
 import javafx.scene.control.*;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -36,6 +40,7 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
     @FXML
     private Button upButton, downButton;
     private String lastName = "???";
+    private final ContextMenu contextMenu = new ContextMenu();
 
     private TrackSubScene(TimelineManager manager, UUID trackId, BiConsumer<UUID, CallbackType> callback) {
         // Dummy node (can't pass null here)
@@ -63,6 +68,36 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
             lastName = track.getName();
             nameEditField.setText(lastName);
         });
+
+        MenuItem duplicate = new MenuItem("Duplicate");
+        duplicate.setOnAction(this::onDuplicate);
+        contextMenu.getItems().add(duplicate);
+    }
+
+    private void onDuplicate(ActionEvent e) {
+        ArrayList<Event<?>> events = new ArrayList<>();
+        Timeline timeline = manager.get();
+
+        // Copy the track, which puts it at the end of the track list
+        var copy = timeline.getTrack(trackId).orElseThrow().copy(true);
+        events.add(new AddTrackToTimelineEvent(copy));
+
+        // Move it to be after to the current track
+        int targetIndex = timeline.indexOf(trackId) + 1;
+        for (int i = timeline.size(); i > targetIndex; i--) {
+            events.add(new MoveTrackPreviousEvent(copy.getId()));
+        }
+
+        var result = manager.append(events.size() > 1 ? new EventGroup(events) : events.getFirst());
+        if (!result.isOk()) {
+            new Alert(Alert.AlertType.ERROR, "Failed to duplicate track: " + result, ButtonType.OK).showAndWait();
+        }
+    }
+
+    private void onRootClicked(MouseEvent e) {
+        if (e.getButton() == MouseButton.SECONDARY) {
+            contextMenu.show(root, e.getX(), e.getY());
+        }
     }
 
     public static TrackSubScene create(TimelineManager manager, UUID trackId, BiConsumer<UUID, CallbackType> callback) {
@@ -81,6 +116,7 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
     @FXML
     private void initialize() {
         root.getStylesheets().add("/DarkMode.css");
+        root.setOnMouseClicked(this::onRootClicked);
 
         var timeline = manager.get();
         var track = timeline.getTrack(trackId).orElseThrow();
