@@ -5,6 +5,7 @@ import io.github.bmb0136.maestro.core.event.AddClipToTrackEvent;
 import io.github.bmb0136.maestro.core.event.RemoveClipFromTrackEvent;
 import io.github.bmb0136.maestro.core.theory.Note;
 import io.github.bmb0136.maestro.core.timeline.TimelineManager;
+import io.github.bmb0136.maestro.timeline.clip.ClipRenderer;
 import io.github.bmb0136.maestro.core.timeline.Track;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleExpression;
@@ -21,6 +22,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -331,9 +333,33 @@ public class TimelineRenderer {
                 var rect = new Rectangle2D(startX, tracksToLocalY(trackIndex), endX - startX, TrackSubScene.HEIGHT);
                 visibleClips.put(clip.getId(), rect);
 
-                gc.setFill(clip.getId().equals(clipBeingEdited.get()) ? Color.ORANGE : Color.BLUE);
+                gc.save();
 
-                gc.fillRect(rect.getMinX(), rect.getMinY(), rect.getWidth(), rect.getHeight());
+
+                // Set "base color" based on if the clip is selected or not
+                var baseColor = clip.getId().equals(clipBeingEdited.get()) ? Color.ORANGE : Color.BLUE;
+
+                // Fill header + background
+                final double PAD = 3;
+                final double HEADER_SIZE = gc.getFont().getSize() + (2 * PAD);
+                var inside = new Rectangle2D(rect.getMinX(), rect.getMinY() + HEADER_SIZE, rect.getWidth(), rect.getHeight() - HEADER_SIZE);
+
+                gc.setFill(baseColor);
+                gc.fillRect(rect.getMinX(), rect.getMinY(), rect.getWidth(), HEADER_SIZE);
+                gc.setFill(baseColor.darker());
+                gc.fillRect(inside.getMinX(), inside.getMinY(), inside.getWidth(), inside.getHeight());
+
+                gc.setFill(Color.WHITE);
+                gc.fillText(ClipRenderer.getHeaderText(clip), rect.getMinX() + PAD, rect.getMinY() + HEADER_SIZE - PAD);
+                updateModifierCount(gc,rect,Color.WHITE, clip.getModifiers().size(), HEADER_SIZE, PAD); //ModifierCount
+
+                // Ensure everything stays inside
+                gc.beginPath();
+                gc.rect(rect.getMinX(), rect.getMinY(), rect.getWidth(), rect.getHeight());
+                gc.clip();
+
+                ClipRenderer.renderClip(clip, gc, inside, baseColor);
+                gc.restore();
 
                 gc.setLineWidth(3);
                 if (clip.getId().equals(selectedClip.get())) {
@@ -479,5 +505,25 @@ public class TimelineRenderer {
     @FunctionalInterface
     public interface Callback {
         void run(@Nullable UUID trackId, @Nullable UUID clipId, float beats, CallbackType type);
+    }
+
+    //Purpose: Updates the Modifier count for the Selected Clip
+    /// Area  - The New designated Area of the NoteList
+    /// Color - Color of Text
+    private void updateModifierCount(GraphicsContext gc, Rectangle2D area, Color color, int modifierCount, double HEADER_SIZE, double PAD) {
+
+
+        gc.clearRect(0, 0, area.getWidth(), area.getHeight());
+        gc.setFill(color);
+        //Label for Modifier
+        Label CountModifiers = new Label( modifierCount + "M");
+
+        CountModifiers.setFont(gc.getFont());
+        Font font = new Font(gc.getFont().getName(), 12 + (Math.sqrt(area.getHeight() / 4)));
+        gc.setFont(font);
+        //Only needs the Width of the new Rectangle to stay within Y-Boundaries
+        gc.fillText(CountModifiers.getText(), (area.getMaxX() - PAD * 2)  - HEADER_SIZE, area.getMinY() + HEADER_SIZE - PAD);
+
+
     }
 }
