@@ -30,7 +30,7 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
     private final UUID trackId;
     private final BiConsumer<UUID, CallbackType> callback;
     private final AutoCloseable changeCallback;
-
+    private final ContextMenu contextMenu = new ContextMenu();
     @FXML
     private Parent root;
     @FXML
@@ -40,7 +40,6 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
     @FXML
     private Button upButton, downButton;
     private String lastName = "???";
-    private final ContextMenu contextMenu = new ContextMenu();
 
     private TrackSubScene(TimelineManager manager, UUID trackId, BiConsumer<UUID, CallbackType> callback) {
         // Dummy node (can't pass null here)
@@ -74,6 +73,19 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
         contextMenu.getItems().add(duplicate);
     }
 
+    public static TrackSubScene create(TimelineManager manager, UUID trackId, BiConsumer<UUID, CallbackType> callback) {
+        URL resource = Objects.requireNonNull(App.class.getResource("/Track.fxml"));
+        FXMLLoader loader = new FXMLLoader(resource);
+        try {
+            TrackSubScene s = new TrackSubScene(manager, trackId, callback);
+            loader.setController(s);
+            s.setRoot(loader.load());
+            return s;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void onDuplicate(ActionEvent e) {
         ArrayList<Event<?>> events = new ArrayList<>();
         Timeline timeline = manager.get();
@@ -97,19 +109,6 @@ public class TrackSubScene extends SubScene implements AutoCloseable {
     private void onRootClicked(MouseEvent e) {
         if (e.getButton() == MouseButton.SECONDARY) {
             contextMenu.show(root, e.getScreenX(), e.getScreenY());
-        }
-    }
-
-    public static TrackSubScene create(TimelineManager manager, UUID trackId, BiConsumer<UUID, CallbackType> callback) {
-        URL resource = Objects.requireNonNull(App.class.getResource("/Track.fxml"));
-        FXMLLoader loader = new FXMLLoader(resource);
-        try {
-            TrackSubScene s = new TrackSubScene(manager, trackId, callback);
-            loader.setController(s);
-            s.setRoot(loader.load());
-            return s;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
     }
 

@@ -58,7 +58,6 @@ public class TimelineRenderer {
     private double timelineDragLastX, timelineDragLastY;
     private ArrayList<UUID> lastTimelineOrder = new ArrayList<>();
     // Clip copy+paste
-    private UUID clipboardTrackId = null;
     private Clip clipboard = null;
 
     public TimelineRenderer(@NotNull TimelineManager manager, @NotNull Canvas canvas, @NotNull SimpleDoubleProperty pixelsPerBeat, Callback callback) {
@@ -163,6 +162,13 @@ public class TimelineRenderer {
         addMenuItem(clipContextMenu.getItems(), "Copy", this::clipContextMenuOnCopyHandler);
     }
 
+    private static void addMenuItem(ObservableList<MenuItem> menuItems, String text, EventHandler<ActionEvent> onAction) {
+        var item = new MenuItem();
+        item.setText(text);
+        item.setOnAction(onAction);
+        menuItems.add(item);
+    }
+
     private void rootContextMenuOnPasteHandler(ActionEvent actionEvent) {
         if (clipboard == null) {
             new Alert(Alert.AlertType.ERROR, "Copy a clip firstFailed to paste clip", ButtonType.OK).showAndWait();
@@ -196,13 +202,6 @@ public class TimelineRenderer {
         if (!result.isOk()) {
             new Alert(Alert.AlertType.ERROR, "Failed to duplicate clip: " + result, ButtonType.OK).showAndWait();
         }
-    }
-
-    private static void addMenuItem(ObservableList<MenuItem> menuItems, String text, EventHandler<ActionEvent> onAction) {
-        var item = new MenuItem();
-        item.setText(text);
-        item.setOnAction(onAction);
-        menuItems.add(item);
     }
 
     private void clipContextMenuOnDeleteHandler(ActionEvent e) {
